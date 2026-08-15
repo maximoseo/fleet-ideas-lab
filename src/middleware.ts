@@ -18,6 +18,8 @@ const COOKIE_NAME = 'dl_session';
 
 /** Exact paths reachable without a session. */
 const PUBLIC_EXACT = new Set([
+  '/api/app/version',
+  '/api/app/download',
   '/login',
   '/api/auth/login',
   '/api/auth/logout',
