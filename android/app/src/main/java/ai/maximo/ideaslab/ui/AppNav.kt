@@ -33,6 +33,7 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
     val hideBar = route == "login"
 
     Scaffold(
+        contentWindowInsets = WindowInsets.navigationBars,
         bottomBar = {
             if (!hideBar) BottomBar(navController, route)
         }

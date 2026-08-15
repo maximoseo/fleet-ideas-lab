@@ -5,6 +5,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
 import { FLEET_PROJECTS, FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, type FleetDomain } from "@/lib/fleet";
+import TrustLine from "@/components/TrustLine";
 
 const VIOLET = STYLES.violet;
 const DOMAINS: (FleetDomain | "all")[] = ["all", "seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"];
@@ -98,7 +99,7 @@ export default function InventoryPage() {
   return (
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }}>
       <SiteHeader subtitle="Inventory • Fleet grid" />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 pb-10">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-10">
         {/* Hero */}
         <div className="rounded-2xl border border-white/10 p-5 sm:p-6" style={{ background: `linear-gradient(135deg, ${VIOLET.surface}, ${VIOLET.elevated})`, borderColor: VIOLET.border }}>
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -108,6 +109,7 @@ export default function InventoryPage() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/ideas" className="inline-flex min-h-[36px] items-center rounded-full bg-violet-600 px-4 text-[13px] font-semibold text-white hover:bg-violet-500">Explore Ideas →</Link>
                 <Link href="/gaps" className="inline-flex min-h-[36px] items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Gap Radar</Link>
+                <Link href="/ideas" className="inline-flex min-h-[36px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-4 text-[13px] font-semibold text-violet-200 hover:bg-violet-500/15">Find more ideas ↻</Link>
               </div>
             </div>
             <div className="grid grid-cols-3 gap-3 w-full sm:w-auto">
@@ -219,7 +221,12 @@ export default function InventoryPage() {
         </div>
 
         {/* Ideas teaser */}
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="mt-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-white">Ideas teaser</h2>
+            <Link href="/ideas" className="inline-flex min-h-[36px] items-center rounded-full bg-violet-600 px-4 text-[12px] font-semibold text-white hover:bg-violet-500">Find more ideas ↻</Link>
+          </div>
+          <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-3">
           {FLEET_IDEAS.slice(0, 3).map((idea) => (
             <Link key={idea.id} href="/ideas" className="rounded-2xl border border-violet-500/20 bg-violet-500/10 p-4 hover:bg-violet-500/15 transition">
               <div className="text-[11px] font-bold uppercase tracking-widest text-violet-300">{DOMAIN_LABEL[idea.domain]} · {idea.effort} · {idea.priority}</div>
@@ -228,6 +235,8 @@ export default function InventoryPage() {
             </Link>
           ))}
         </div>
+        </div>
+        <TrustLine />
       </main>
     </div>
   );

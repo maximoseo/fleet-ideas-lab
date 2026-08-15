@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import SiteHeader from "@/components/SiteHeader";
+import TrustLine from "@/components/TrustLine";
 import { STYLES } from "@/lib/styles";
 import { FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR } from "@/lib/fleet";
 
@@ -136,6 +137,7 @@ export default function CreatePage() {
             </div>
           </div>
         </div>
+        <TrustLine />
       </main>
     </div>
   );

@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
+import TrustLine from "@/components/TrustLine";
 import { STYLES } from "@/lib/styles";
 import { DOMAIN_LABEL } from "@/lib/fleet";
 
@@ -49,7 +50,7 @@ export default function GapsPage() {
   return (
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }}>
       <SiteHeader subtitle="Domains × Capabilities · white-space" />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Gap Radar</h1>
@@ -163,6 +164,7 @@ export default function GapsPage() {
           <Link href="/" className="inline-flex min-h-[44px] items-center rounded-full border border-white/15 bg-white/5 px-5 text-sm font-semibold text-white hover:bg-white/10">← Inventory</Link>
           <Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create scaffold →</Link>
         </div>
+        <TrustLine />
       </main>
     </div>
   );

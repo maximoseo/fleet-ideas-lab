@@ -72,6 +72,7 @@ export default function MobileTabBar() {
                 </Link>
               ))}
             </div>
+            <div className="mt-3 border-t border-white/10 pt-3 text-center text-[11px] text-white/30">Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session</div>
           </div>
         </div>
       ) : null}

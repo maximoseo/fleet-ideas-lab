@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import TrustLine from "@/components/TrustLine";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
 import { FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus } from "@/lib/fleet";
@@ -26,9 +27,10 @@ export default function IdeasPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [scaffolding, setScaffolding] = useState<string | null>(null);
   const [scaffoldResult, setScaffoldResult] = useState<string | null>(null);
+  const [shuffleSeed, setShuffleSeed] = useState(0);
 
   const filtered = useMemo(() => {
-    return FLEET_IDEAS.filter((it) => {
+    const base = FLEET_IDEAS.filter((it) => {
       if (domain !== "all" && it.domain !== domain) return false;
       if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
       if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
@@ -36,7 +38,11 @@ export default function IdeasPage() {
       if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
-  }, [domain, effort, impact, status, q]);
+    if (shuffleSeed === 0) return base;
+    const n = base.length || 1;
+    const k = shuffleSeed % n;
+    return [...base.slice(k), ...base.slice(0, k)];
+  }, [domain, effort, impact, status, q, shuffleSeed]);
 
   async function copyPrompt(prompt: string) {
     await navigator.clipboard.writeText(prompt);
@@ -68,13 +74,13 @@ export default function IdeasPage() {
   return (
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }}>
       <SiteHeader subtitle="12 ideas • filters & scaffold" />
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8">
+      <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Ideas</h1>
             <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>12 dashboard concepts derived from gap radar. Filter by domain, effort, impact, status. Actions: Open dashboard, Copy prompt, Scaffold stub.</p>
           </div>
-          <Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create from Idea →</Link>
+          <div className="flex gap-2"><button onClick={() => setShuffleSeed((s) => s + 1)} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20">Find more ideas ↻</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create →</Link></div>
         </div>
 
         {/* Filters */}
@@ -161,6 +167,7 @@ export default function IdeasPage() {
             {toast}
           </div>
         ) : null}
+        <TrustLine />
       </main>
     </div>
   );
