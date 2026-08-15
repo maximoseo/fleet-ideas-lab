@@ -33,7 +33,7 @@ fun InventoryScreen(onNotifications: () -> Unit = {}) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Fleet Inventory", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("${FleetData.sites.size} sites \u00b7 violet #7C3AED", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
+                Text("${FleetData.sites.size} verified \u00b7 audit 2026-08-15 \u00b7 violet #7C3AED", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
             }
             FilledTonalButton(onClick = { shuffleSeed++ }, modifier = Modifier.height(36.dp), contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)) {
                 Text("Find more \u21bb", style = MaterialTheme.typography.labelMedium)

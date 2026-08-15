@@ -105,7 +105,7 @@ export default function InventoryPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Fleet Inventory</h1>
-              <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>12 products across 8 domains. Health, deploys, and gaps at a glance. Filter by domain or status — explore white-space via the mini-radar.</p>
+              <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>37 verified dashboards across 13 domains — live Vercel fleet. Filter by domain, status, or search. Every URL is a real production alias, health from last deploy date. Audit 2026-08-15.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/ideas" className="inline-flex min-h-[36px] items-center rounded-full bg-violet-600 px-4 text-[13px] font-semibold text-white hover:bg-violet-500">Explore Ideas →</Link>
                 <Link href="/gaps" className="inline-flex min-h-[36px] items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Gap Radar</Link>
@@ -237,6 +237,20 @@ export default function InventoryPage() {
         </div>
         </div>
         <TrustLine />
+        <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.02] p-4">
+          <details>
+            <summary className="cursor-pointer list-none text-[12px] font-semibold text-white/70 hover:text-white flex items-center gap-2">
+              <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-white/10 text-[11px]">ⓘ</span>
+              Audit trail — verified 2026-08-15
+            </summary>
+            <div className="mt-3 space-y-2 text-[12px] leading-5 text-white/55">
+              <p><span className="font-semibold text-white/80">Sources:</span> Vercel <span className="font-mono text-white/70">/v9/projects?teamId=team_NVnIOFO7th3wYtoyRoqJnLhr</span> — 46 projects (team maximo-seo, 3 pages, framework nextjs/vite/unknown), Hostinger WHM <span className="font-mono">node1488.myfcloud.com:2087</span> read-only probe (0 tokens in vault → <span className="text-amber-300">TBD — WHM not yet wired for this app</span>), local <span className="font-mono">/root/projects</span> (9 local-only, non-dashboards: jarvis-hud, brain-dashboard, grr-*, etc. — excluded).</p>
+              <p><span className="font-semibold text-white/80">Filter:</span> 46 minus 9 utilities (maximo-seo marketing, apk-download, ronyb-deploy, summit-garage-prototype, seo-audit-report, site-scan-fix, todo-tasks, to-do-tasks, dp-work) → <span className="font-bold text-white">37 verified dashboards</span>. Each entry has live production alias + updatedAt (YYYY-MM-DD) + health (healthy ≤3d / degraded 4–7d / stale &gt;7d) + clean domain mapping.</p>
+              <p><span className="font-semibold text-white/80">Duplicates:</span> <span className="font-mono text-white/70">competitor-intelligence</span> vs <span className="font-mono text-white/70">competitor-intelligence-dashboard</span> are <span className="font-semibold">two distinct Vercel projects</span> with different aliases (competitor-intel.maximo-seo.ai vs competitor-intelligence.maximo-seo.ai) — kept separate with notes. No invented entries remain.</p>
+              <p className="text-white/35">Generated from <span className="font-mono">/tmp/vercel-projects.json</span> + <span className="font-mono">src/lib/fleet.ts</span> as single source of truth — mirrored to <span className="font-mono">android/data/FleetData.kt</span>.</p>
+            </div>
+          </details>
+        </div>
       </main>
     </div>
   );

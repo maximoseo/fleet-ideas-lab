@@ -1,4 +1,10 @@
-/** Unified fleet lib — supports engine (audit/gaps) + Web UI (inventory/ideas) */
+/**
+ * Fleet Ideas Lab — Unified fleet lib
+ * AUDIT: 2026-08-15 — sources: Vercel 46 projects (team maximo-seo, /v9/projects?teamId=team_NVn...), Hostinger WHM read-only probe (0 tokens in vault → TBD), local /root/projects (9 local-only not on Vercel, not dashboards).
+ * VERIFIED: every entry has a real Vercel project + production alias + updatedAt. 9 utilities excluded (maximo-seo, apk-download, ronyb-deploy, summit-garage-prototype, seo-audit-report, site-scan-fix, todo-tasks, to-do-tasks, dp-work).
+ * HEALTH: healthy ≤3d, degraded 4-7d, stale >7d from 2026-08-15. URLs are live production aliases (HEAD 200 expected).
+ * ALIASES: competitor-intelligence vs competitor-intelligence-dashboard are two separate Vercel projects (both live, different aliases) — kept distinct with notes.
+ */
 export type FleetDomain =
   | "seo"
   | "content"
@@ -32,32 +38,58 @@ export const DOMAIN_COLOR: Record<string, string> = {
   geo: "#22d3ee", whm: "#a3a3a3", competitor: "#f87171", reporting: "#818cf8", "client-ops": "#facc15",
 };
 
-// Engine FleetProject shape
+// Engine FleetProject shape — source tracks where it was verified
 export interface FleetProject {
   slug: string;
   name: string;
   domains: DomainTag[];
   capabilities: Capability[];
   health: "healthy" | "stale" | "degraded" | "unknown";
-  updated: string; // YYYY-MM-DD
-  url?: string;
+  updated: string; // YYYY-MM-DD from Vercel updatedAt
+  url?: string; // production alias
   description?: string;
+  source?: "vercel" | "hostinger" | "local";
 }
 
-// Engine inventory — deterministic, used by audit/gaps/ideas
+// Engine inventory — 37 verified dashboards (46 Vercel minus 9 utilities), deterministic, used by audit/gaps/ideas
 export const FLEET_INVENTORY: FleetProject[] = [
-  { slug: "site-intel-dashboard", name: "Site Intel Dashboard", domains: ["seo", "reporting"], capabilities: ["analytics", "reporting", "visualization"], health: "healthy", updated: "2026-08-08", url: "https://site-intel.maximo-seo.ai", description: "Core SEO intelligence — crawl, index, and SERP tracking." },
-  { slug: "content-forge", name: "Content Forge", domains: ["content", "seo"], capabilities: ["analytics", "automation", "visualization"], health: "healthy", updated: "2026-08-07", url: "https://content-forge.maximo-seo.ai", description: "AI content engine — briefs, drafts, and optimization." },
-  { slug: "local-rank-lab", name: "Local Rank Lab", domains: ["local", "seo"], capabilities: ["analytics", "reporting", "visualization"], health: "healthy", updated: "2026-08-09", url: "https://local-rank.maximo-seo.ai", description: "GBP & local pack tracking with competitor gap analysis." },
-  { slug: "analytics-hub", name: "Analytics Hub", domains: ["analytics", "reporting"], capabilities: ["analytics", "visualization", "alerts"], health: "healthy", updated: "2026-08-05", url: "https://analytics.maximo-seo.ai", description: "Unified GA4 + GSC + rank data with anomaly detection." },
-  { slug: "auto-ops", name: "Auto Ops", domains: ["automation", "reporting"], capabilities: ["automation", "alerts", "analytics"], health: "healthy", updated: "2026-08-09", url: "https://ops.maximo-seo.ai", description: "n8n orchestration — cron, webhooks, and fleet sync." },
-  { slug: "design-lab", name: "Design Lab", domains: ["design", "reporting"], capabilities: ["visualization", "reporting", "analytics"], health: "healthy", updated: "2026-08-09", url: "https://design-lab.maximo-seo.ai", description: "Premium redesign lab — Style Arena, Slop Detector, mockups." },
-  { slug: "outreach-pulse", name: "Outreach Pulse", domains: ["competitor", "seo"], capabilities: ["analytics", "alerts"], health: "degraded", updated: "2026-07-28", url: "https://outreach.maximo-seo.ai", description: "Link prospecting and outreach pipeline with inbox sync." },
-  { slug: "tech-audit-pro", name: "Tech Audit Pro", domains: ["seo", "technical"], capabilities: ["analytics", "reporting", "visualization"], health: "healthy", updated: "2026-08-04", url: "https://tech-audit.maximo-seo.ai", description: "Lighthouse + crawl + schema validation suite." },
-  { slug: "keyword-atlas", name: "Keyword Atlas", domains: ["seo", "content"], capabilities: ["analytics", "visualization"], health: "stale", updated: "2026-07-20", url: "https://keyword-atlas.maximo-seo.ai", description: "Keyword clustering and intent mapping at scale." },
-  { slug: "fleet-ideas-lab", name: "Fleet Ideas Lab", domains: ["automation", "reporting", "client-ops"], capabilities: ["analytics", "visualization", "reporting"], health: "healthy", updated: "2026-08-09", url: "https://fleet-ideas-lab.maximo-seo.ai", description: "This app — fleet inventory, gap radar & idea engine." },
-  { slug: "rank-tracker-lite", name: "Rank Tracker Lite", domains: ["seo"], capabilities: ["analytics", "alerts"], health: "stale", updated: "2026-07-15", url: "https://rank-lite.maximo-seo.ai", description: "Lightweight daily rank tracker for SMB quick wins." },
-  { slug: "review-engine", name: "Review Engine", domains: ["local", "client-ops"], capabilities: ["automation", "alerts"], health: "degraded", updated: "2026-07-30", url: "https://reviews.maximo-seo.ai", description: "Review request automation + sentiment + response drafts." },
+  { slug: "fleet-hub", name: "Fleet Hub", domains: ["automation", "reporting"], capabilities: ["reporting", "automation"], health: "healthy", updated: "2026-08-15", url: "https://hub.maximo-seo.ai", description: "Fleet Hub — central fleet control & navigation", source: "vercel" },
+  { slug: "fleet-ideas-lab", name: "Fleet Ideas Lab", domains: ["automation", "reporting"], capabilities: ["reporting", "automation"], health: "healthy", updated: "2026-08-15", url: "https://fleet-ideas-lab.vercel.app", description: "Fleet Ideas Lab — inventory, gap radar & idea engine (this app)", source: "vercel" },
+  { slug: "content-automation", name: "Content Automation", domains: ["content", "automation"], capabilities: ["automation"], health: "healthy", updated: "2026-08-15", url: "https://content-automation.maximo-seo.ai", description: "Content Automation — end-to-end content pipeline", source: "vercel" },
+  { slug: "report-engine", name: "Report Engine", domains: ["reporting", "analytics"], capabilities: ["reporting"], health: "healthy", updated: "2026-08-15", url: "https://reports.maximo-seo.ai", description: "Report Engine — automated SEO & ops reports", source: "vercel" },
+  { slug: "sitewatch", name: "SiteWatch", domains: ["technical", "analytics"], capabilities: ["reporting", "alerts"], health: "healthy", updated: "2026-08-15", url: "https://sitewatch-roan.vercel.app", description: "SiteWatch — uptime & change monitoring", source: "vercel" },
+  { slug: "sitewatch2", name: "SiteWatch 2", domains: ["technical", "analytics"], capabilities: ["reporting", "alerts"], health: "healthy", updated: "2026-08-15", url: "https://sitewatch2.vercel.app", description: "SiteWatch 2 — next-gen site monitoring", source: "vercel" },
+  { slug: "site-intel-dashboard", name: "Site Intel Dashboard", domains: ["seo", "analytics"], capabilities: ["analytics", "reporting"], health: "healthy", updated: "2026-08-15", url: "https://site-intel.maximo-seo.ai", description: "Site Intel Dashboard — core crawl, index & SERP intel", source: "vercel" },
+  { slug: "fleet-command-center", name: "Fleet Command Center", domains: ["automation", "client-ops"], capabilities: ["automation"], health: "healthy", updated: "2026-08-15", url: "https://fleet-command.maximo-seo.ai", description: "Fleet Command Center — ops command & routing", source: "vercel" },
+  { slug: "seo-analytics-hub", name: "SEO Analytics Hub", domains: ["analytics", "seo"], capabilities: ["analytics", "reporting"], health: "healthy", updated: "2026-08-15", url: "https://seo-analytics-hub.maximo-seo.ai", description: "SEO Analytics Hub — GA4 + GSC unified analytics", source: "vercel" },
+  { slug: "seo-audit-dashboard", name: "SEO Audit Dashboard", domains: ["seo", "technical"], capabilities: ["analytics", "alerts"], health: "healthy", updated: "2026-08-15", url: "https://seo-audit-dashboard.maximo-seo.ai", description: "SEO Audit Dashboard — technical & on-page audits", source: "vercel" },
+  { slug: "seo-dashboard", name: "SEO Dashboard", domains: ["seo", "analytics"], capabilities: ["analytics", "reporting"], health: "healthy", updated: "2026-08-14", url: "https://seo-dashboard-roan.vercel.app", description: "SEO Dashboard — lightweight SEO overview", source: "vercel" },
+  { slug: "prompt-forge-code", name: "Prompt Forge Code", domains: ["automation", "technical"], capabilities: ["automation", "alerts"], health: "healthy", updated: "2026-08-14", url: "https://prompt-forge-code.vercel.app", description: "Prompt Forge Code — code gen & prompt tooling", source: "vercel" },
+  { slug: "loop-engineering-dashboard", name: "Loop Engineering", domains: ["automation", "analytics"], capabilities: ["reporting", "automation"], health: "healthy", updated: "2026-08-14", url: "https://loop-engineering.maximo-seo.ai", description: "Loop Engineering — automation loops & feedback", source: "vercel" },
+  { slug: "prompt-forge", name: "Prompt Forge", domains: ["content", "automation"], capabilities: ["automation"], health: "healthy", updated: "2026-08-14", url: "https://prompt-forge.maximo-seo.ai", description: "Prompt Forge — prompt library & forge", source: "vercel" },
+  { slug: "github-repos-radar", name: "GitHub Repos Radar", domains: ["technical", "analytics"], capabilities: ["reporting", "alerts"], health: "healthy", updated: "2026-08-14", url: "https://github-repos-radar.vercel.app", description: "GitHub Repos Radar — repo health & activity", source: "vercel" },
+  { slug: "dashboards-panel", name: "Dashboards Panel", domains: ["reporting", "design"], capabilities: ["reporting", "visualization"], health: "healthy", updated: "2026-08-14", url: "https://ds-panel.maximo-seo.ai", description: "Dashboards Panel — portfolio of all Maximo dashboards", source: "vercel" },
+  { slug: "design-lab", name: "Design Lab", domains: ["design", "content"], capabilities: ["visualization"], health: "healthy", updated: "2026-08-13", url: "https://design-lab.maximo-seo.ai", description: "Design Lab — Style Arena, Slop Detector & mockups (Premium Editorial)", source: "vercel" },
+  { slug: "local-seo-dashboard", name: "Local SEO Dashboard", domains: ["local", "seo"], capabilities: ["analytics"], health: "healthy", updated: "2026-08-13", url: "https://local-seo.maximo-seo.ai", description: "Local SEO Dashboard — GBP, citations & local pack", source: "vercel" },
+  { slug: "competitor-intelligence", name: "Competitor Intelligence", domains: ["competitor", "seo"], capabilities: ["analytics"], health: "healthy", updated: "2026-08-13", url: "https://competitor-intel.maximo-seo.ai", description: "Competitor Intelligence — competitor intel (alias competitor-intel)", source: "vercel" },
+  { slug: "competitor-intelligence-dashboard", name: "Competitor Intelligence Dashboard", domains: ["competitor", "seo"], capabilities: ["analytics"], health: "healthy", updated: "2026-08-13", url: "https://competitor-intelligence.maximo-seo.ai", description: "Competitor Intelligence Dashboard — competitor intel (canonical)", source: "vercel" },
+  { slug: "ai-visibility-dashboard", name: "AI Visibility Dashboard", domains: ["geo", "analytics"], capabilities: ["reporting"], health: "healthy", updated: "2026-08-13", url: "https://ai-visibility.maximo-seo.ai", description: "AI Visibility — GEO/AEO & AI answer visibility", source: "vercel" },
+  { slug: "central-brain-dashboard", name: "Central Brain Dashboard", domains: ["analytics", "automation"], capabilities: ["reporting", "automation"], health: "healthy", updated: "2026-08-13", url: "https://central-brain.maximo-seo.ai", description: "Central Brain — central analytics brain", source: "vercel" },
+  { slug: "brain-dashboard-maximo-seo", name: "Brain Dashboard", domains: ["analytics", "automation"], capabilities: ["reporting", "automation"], health: "healthy", updated: "2026-08-13", url: "https://brain.maximo-seo.ai", description: "Brain Dashboard — Maximo brain (alias brain.maximo-seo.ai)", source: "vercel" },
+  { slug: "agent-fleet", name: "Agent Fleet", domains: ["automation", "whm"], capabilities: ["automation"], health: "healthy", updated: "2026-08-13", url: "https://fleet.maximo-seo.ai", description: "Agent Fleet — fleet of AI agents", source: "vercel" },
+  { slug: "seo-dashboard-work", name: "SEO Dashboard Work", domains: ["seo", "analytics"], capabilities: ["analytics", "reporting"], health: "healthy", updated: "2026-08-13", url: "https://seo-dashboard.maximo-seo.ai", description: "SEO Dashboard Work — working SEO dashboard", source: "vercel" },
+  { slug: "subscription-quota-hq", name: "Subscription Quota HQ", domains: ["client-ops", "analytics"], capabilities: ["reporting"], health: "healthy", updated: "2026-08-13", url: "https://subscription-quota-hq.vercel.app", description: "Subscription Quota HQ — quota & subscription control", source: "vercel" },
+  { slug: "traffic-sim-dashboard", name: "Traffic Sim", domains: ["analytics", "technical"], capabilities: ["reporting", "alerts"], health: "healthy", updated: "2026-08-13", url: "https://trafficlab.maximo-seo.ai", description: "Traffic Sim — traffic simulation lab", source: "vercel" },
+  { slug: "indexer-dashboard", name: "Indexer Dashboard", domains: ["technical", "seo"], capabilities: ["analytics", "alerts"], health: "healthy", updated: "2026-08-13", url: "https://indexer.maximo-seo.ai", description: "Indexer — indexation & crawl budget", source: "vercel" },
+  { slug: "agentic-os-dashboard", name: "Agentic OS Dashboard", domains: ["automation", "analytics"], capabilities: ["reporting", "automation"], health: "healthy", updated: "2026-08-13", url: "https://agentic-os-dashboard.maximo-seo.ai", description: "Agentic OS — agentic operating system", source: "vercel" },
+  { slug: "rep-center", name: "Rep Center", domains: ["outreach", "local"], capabilities: ["analytics"], health: "healthy", updated: "2026-08-13", url: "https://rep.maximo-seo.ai", description: "Rep Center — reputation & review center", source: "vercel" },
+  { slug: "content-decay-dashboard", name: "Content Decay Dashboard", domains: ["content", "analytics"], capabilities: ["reporting"], health: "healthy", updated: "2026-08-12", url: "https://content-decay.maximo-seo.ai", description: "Content Decay — decay detection & refresh queue", source: "vercel" },
+  { slug: "service-vault", name: "Service Vault", domains: ["client-ops", "whm"], capabilities: ["analytics"], health: "healthy", updated: "2026-08-12", url: "https://service-vault.maximo-seo.ai", description: "Service Vault — service credentials & vault", source: "vercel" },
+  { slug: "status-page", name: "Status Page", domains: ["technical", "reporting"], capabilities: ["reporting", "alerts"], health: "healthy", updated: "2026-08-12", url: "https://status.maximo-seo.ai", description: "Status Page — fleet health & status", source: "vercel" },
+  { slug: "clients-automation-dashboard", name: "Clients Automation", domains: ["automation", "client-ops"], capabilities: ["automation"], health: "degraded", updated: "2026-08-11", url: "https://automations.maximo-seo.ai", description: "Clients Automation — client automations (automations.maximo-seo.ai)", source: "vercel" },
+  { slug: "wp-command-center", name: "WP Command Center", domains: ["whm", "automation"], capabilities: ["automation"], health: "degraded", updated: "2026-08-11", url: "https://wp-command-center.maximo-seo.ai", description: "WP Command Center — WordPress fleet command", source: "vercel" },
+  { slug: "site-vault", name: "Site Vault", domains: ["whm", "technical"], capabilities: ["alerts"], health: "degraded", updated: "2026-08-11", url: "https://site-vault.maximo-seo.ai", description: "Site Vault — site inventory & vault", source: "vercel" },
+  { slug: "n8n-dashboard-v3", name: "n8n Dashboard", domains: ["automation", "technical"], capabilities: ["automation", "alerts"], health: "degraded", updated: "2026-08-08", url: "https://n8n.maximo-seo.ai", description: "n8n Dashboard — workflow automation (n8n.maximo-seo.ai)", source: "vercel" },
 ];
 
 export function getSlugs(): Set<string> {
