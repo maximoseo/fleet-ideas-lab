@@ -29,13 +29,15 @@ const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/sit
  */
 async function verifyTurnstile(token: string | undefined, ip: string | null): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
+  const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
   if (!secret) {
-    console.warn('[login] TURNSTILE_SECRET_KEY not set — Turnstile check skipped (fleet-ideas-lab meta-dashboard)');
+    // No secret configured — allow (dev/preview fallback). In production this is a WARN but not a block.
+    if (isProd) console.warn('[login] TURNSTILE_SECRET_KEY not set in production — allowing login (configure Cloudflare Turnstile to harden)');
     return true;
   }
   if (!token) {
-    console.warn('[login] turnstileToken missing — allowing login with server-side fallback (fleet-ideas-lab)');
-    return true;
+    console.warn('[login] turnstileToken missing — rejecting (TURNSTILE_SECRET_KEY is set)');
+    return false;
   }
   try {
     const form = new URLSearchParams();

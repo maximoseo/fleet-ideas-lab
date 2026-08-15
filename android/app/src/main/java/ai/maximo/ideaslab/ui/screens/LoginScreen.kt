@@ -182,25 +182,32 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
 
 @Composable
 private fun TurnstileWebView(onToken: (String) -> Unit) {
+    var ready by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
     AndroidView(factory = { ctx ->
         WebView(ctx).apply {
             settings.javaScriptEnabled = true
             settings.domStorageEnabled = true
             addJavascriptInterface(object {
-                @JavascriptInterface fun onToken(token: String) { post { onToken(token) } }
+                @JavascriptInterface fun onToken(token: String) { post { onToken(token); ready = token.isNotEmpty() } }
             }, "AndroidTurnstile")
-            webViewClient = WebViewClient()
-            loadDataWithBaseURL(
-                "https://fleet-ideas-lab.maximo-seo.ai",
-                """
+            webViewClient = object : WebViewClient() {
+                override fun onPageFinished(view: WebView?, url: String?) { super.onPageFinished(view, url) }
+            }
+            // Real Cloudflare Turnstile managed widget
+            val sitekey = "0x4AAAAAAEQyCmGw2i6fiaAq"
+            val html = """
                 <html><head><meta name="viewport" content="width=device-width, initial-scale=1"/>
-                <script>
-                  setTimeout(()=>{ try{ AndroidTurnstile.onToken(""); }catch(e){} }, 300);
-                </script>
-                </head><body style="margin:0;background:transparent"></body></html>
-                """.trimIndent(),
-                "text/html", "utf-8", null
-            )
+                <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+                </head><body style="margin:0;background:transparent;display:flex;justify-content:center;align-items:center;min-height:72px">
+                  <div class="cf-turnstile" data-sitekey="$sitekey" data-callback="onTurnstile" data-theme="dark" data-size="normal"></div>
+                  <script>
+                    function onTurnstile(token) { try { AndroidTurnstile.onToken(token); } catch(e){} }
+                    // Fallback: if widget not rendered in 8s, signal empty so user can still try (server will reject if secret is set)
+                    setTimeout(function(){ try{ if(!document.querySelector('iframe')) AndroidTurnstile.onToken(""); }catch(e){} }, 8000);
+                  </script>
+                </body></html>
+            """.trimIndent()
+            loadDataWithBaseURL("https://fleet-ideas-lab.vercel.app", html, "text/html", "utf-8", null)
         }
-    }, modifier = Modifier.fillMaxWidth().height(1.dp))
+    }, modifier = Modifier.fillMaxWidth().height(if (ready) 72.dp else 72.dp))
 }
