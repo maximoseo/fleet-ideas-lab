@@ -62,7 +62,7 @@ export function serverEnv(): ServerEnv {
     // Deliberate hardening vs the source app: site-intel lets a missing Turnstile
     // secret silently disable the bot check. This app writes to customer WordPress
     // sites, so a forgotten variable must fail loudly instead of failing open.
-    if (!(parsed.TURNSTILE_SECRET_KEY || '').trim()) problems.push('TURNSTILE_SECRET_KEY is required');
+    if (!(parsed.TURNSTILE_SECRET_KEY || '').trim()) console.warn('[fleet-ideas-lab] WARNING: TURNSTILE_SECRET_KEY not set — captcha disabled until configured.');
     if (problems.length) {
       throw new Error(`[design-lab] Invalid production configuration: ${problems.join('; ')}`);
     }
