@@ -99,6 +99,19 @@ Mode: ${isVercel ? "vercel-tmp (ephemeral)" : "hostinger-persisted"}
     return NextResponse.json({ error: `Scaffold failed: ${msg} — ${isVercel ? "on Vercel /tmp is ephemeral; check Vercel logs" : "check /root/projects permissions"}` }, { status: 500 });
   }
 
+  // Traceability: also write to fleet history (same JSON as /api/fleet/history — file fallback)
+  try {
+    const histPath = path.join(baseDir, "fleet-history.json");
+    let hist: unknown[] = [];
+    try { if (fs.existsSync(histPath)) hist = JSON.parse(fs.readFileSync(histPath, "utf8")); } catch {}
+    if (!Array.isArray(hist)) hist = [];
+    const entry = { id: `${Date.now()}-${Math.random().toString(36).slice(2,6)}`, kind: "scaffold", slug, ideaId: ideaId || undefined, dir: targetDir, mode: isVercel ? "vercel-tmp" : "hostinger-persisted", targetSlug, title: slug, created_at: new Date().toISOString(), user: undefined };
+    (hist as unknown[]).push(entry);
+    const trimmed = (hist as unknown[]).slice(-200);
+    try { fs.mkdirSync(path.dirname(histPath), { recursive: true }); } catch {}
+    fs.writeFileSync(histPath, JSON.stringify(trimmed, null, 2) + "\n", "utf8");
+  } catch (e) { console.warn("[scaffold] history write failed", String(e)); }
+
   return NextResponse.json({
     ok: true,
     slug,
@@ -108,5 +121,6 @@ Mode: ${isVercel ? "vercel-tmp (ephemeral)" : "hostinger-persisted"}
     targetSlug,
     mode: isVercel ? "vercel-tmp" : "hostinger-persisted",
     note: isVercel ? "Preview scaffold in /tmp — ephemeral; clone to /root/projects/<slug> on your dev server" : "Persisted at /root/projects/<slug> on dev server",
+    historyPath: path.join(baseDir, "fleet-history.json"),
   });
 }

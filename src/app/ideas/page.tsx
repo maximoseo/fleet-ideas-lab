@@ -55,8 +55,16 @@ export default function IdeasPage() {
   async function copyPrompt(idea: FleetIdea) {
     const full = buildAgentPrompt(idea);
     await navigator.clipboard.writeText(full);
-    setToast("Full agent brief copied (" + idea.slug + ")");
-    setTimeout(() => setToast(null), 2200);
+    setToast("Full agent brief copied (" + idea.slug + ") — also logged to History");
+    setTimeout(() => setToast(null), 2600);
+    // Provenance: best-effort log copy event to fleet history (for P0 traceability)
+    try {
+      await fetch("/api/fleet/history", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ kind: "copy", slug: idea.slug, ideaId: idea.id, title: idea.title, targetSlug: idea.targetSlug, gapScore: idea.gapScore }),
+      });
+    } catch {}
   }
 
   async function doScaffold(idea: FleetIdea) {
@@ -163,8 +171,14 @@ export default function IdeasPage() {
         </div>
 
         {scaffoldResult ? (
-          <div className="mt-4 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 py-3 text-sm text-violet-100">{scaffoldResult}</div>
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 py-3">
+            <span className="flex-1 text-sm text-violet-100">{scaffoldResult}</span>
+            <a href="/history" className="inline-flex min-h-[36px] shrink-0 items-center rounded-full bg-white px-4 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">View in History →</a>
+          </div>
         ) : null}
+        <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] leading-4 text-white/35">
+          On <span className="font-mono text-white/60">fleet-ideas-lab.vercel.app</span> scaffolds land in <span className="font-mono text-violet-200">/tmp/&lt;slug&gt;</span> (ephemeral — Vercel sandbox). On Hostinger <span className="font-mono text-white/60">srv1813877</span> they persist at <span className="font-mono text-violet-200">/root/projects/&lt;slug&gt;</span>. History keeps a trace either way — see <a href="/history" className="text-violet-300 underline">History</a>.
+        </div>
 
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((idea) => (
@@ -191,6 +205,9 @@ export default function IdeasPage() {
                 <span className={`rounded-full px-2 py-0.5 font-bold ${idea.gapScore < 30 ? "bg-white text-[#0f0b1a]" : idea.gapScore < 50 ? "bg-red-500 text-white" : idea.gapScore < 70 ? "bg-amber-500 text-black" : "bg-emerald-500 text-white"}`}>Gap {idea.gapScore}%</span>
                 {idea.targetSlug ? <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-white/60">→ {idea.targetSlug}</span> : null}
                 <span className="text-white/30">{idea.kind === "new" ? "New dashboard" : "Add as tab inside existing"}</span>
+              </div>
+              <div className="mt-2 rounded-lg border border-amber-500/15 bg-amber-500/5 px-3 py-2 text-[11px] leading-4 text-amber-100/70">
+                <span className="font-bold text-amber-200">Evidence (inline):</span> {idea.evidence}
               </div>
 
               {/* Professional brief toggle */}

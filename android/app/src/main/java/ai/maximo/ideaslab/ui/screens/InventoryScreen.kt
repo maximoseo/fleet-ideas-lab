@@ -16,11 +16,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ai.maximo.ideaslab.data.FleetData
+import ai.maximo.ideaslab.ui.CommandPaletteSheet
+import androidx.navigation.NavController
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 
 @Composable
-fun InventoryScreen(onNotifications: () -> Unit = {}) {
+fun InventoryScreen(navController: NavController? = null, onNotifications: () -> Unit = {}) {
     var shuffleSeed by remember { mutableStateOf(0) }
+    var paletteOpen by remember { mutableStateOf(false) }
     val sites = remember(shuffleSeed) {
         if (shuffleSeed == 0) FleetData.sites else {
             val n = FleetData.sites.size
@@ -38,6 +41,7 @@ fun InventoryScreen(onNotifications: () -> Unit = {}) {
             FilledTonalButton(onClick = { shuffleSeed++ }, modifier = Modifier.height(36.dp), contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)) {
                 Text("Find more \u21bb", style = MaterialTheme.typography.labelMedium)
             }
+            OutlinedButton(onClick = { paletteOpen = true }, modifier = Modifier.height(36.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)) { Text("\u2318K", style = MaterialTheme.typography.labelMedium) }
             IconButton(onClick = onNotifications, modifier = Modifier.size(36.dp)) {
                 Text("\uD83D\uDD14", style = MaterialTheme.typography.titleMedium)
             }
@@ -100,13 +104,16 @@ fun InventoryScreen(onNotifications: () -> Unit = {}) {
                 }
             }
         }
+        if (paletteOpen && navController != null) {
+            CommandPaletteSheet(open = true, onClose = { paletteOpen = false }, nav = navController)
+        }
     }
 }
 
 @Composable
-fun InventoryScreenWithUpdate(api: ai.maximo.ideaslab.data.ApiClient, onNotifications: () -> Unit = {}) {
+fun InventoryScreenWithUpdate(navController: NavController, api: ai.maximo.ideaslab.data.ApiClient, onNotifications: () -> Unit = {}) {
     Column(Modifier.fillMaxSize()) {
         UpdateBanner()
-        InventoryScreen(onNotifications = onNotifications)
+        InventoryScreen(navController = navController, onNotifications = onNotifications)
     }
 }

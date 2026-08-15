@@ -18,6 +18,8 @@ class ApiClient(private val sessionStore: SessionStore) {
     private val client = OkHttpClient.Builder()
         .connectTimeout(20, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build()
     private val base = BuildConfig.BASE_URL.trimEnd('/')
+    fun baseUrl(): String = base
+    suspend fun getToken(): String? = sessionStore.getSession()
 
     suspend fun login(username: String, password: String, turnstileToken: String = ""): LoginResult = withContext(Dispatchers.IO) {
         try {

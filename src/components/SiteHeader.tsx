@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import CommandPalette from "@/components/CommandPalette";
 
 const NAV = [
   { href: "/", label: "Inventory", hint: "Fleet overview" },
@@ -21,6 +23,12 @@ const MORE = [
 
 export default function SiteHeader({ subtitle }: { subtitle?: string }) {
   const pathname = usePathname();
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPaletteOpen((v: boolean) => !v); } };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
@@ -74,6 +82,9 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
         </nav>
 
         <div className="hidden lg:flex items-center gap-2">
+          <button onClick={() => setPaletteOpen(true)} className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] font-medium text-white/70 hover:bg-white/10" aria-label="Command palette">
+            ⌘K <span className="hidden xl:inline text-white/40">Jump</span>
+          </button>
           <Link
             href="/create"
             className="inline-flex min-h-[36px] items-center rounded-full bg-violet-600 px-4 text-[13px] font-semibold text-white hover:bg-violet-500 transition"
@@ -82,6 +93,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
           </Link>
         </div>
 
+        <button onClick={() => setPaletteOpen(true)} className="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60" aria-label="Search">⌘</button>
         {/* mobile quick nav */}
         <nav className="flex items-center gap-1 lg:hidden" aria-label="Mobile primary">
           {NAV.map((item) => {
@@ -98,6 +110,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
           })}
         </nav>
       </div>
+      <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </header>
   );
 }

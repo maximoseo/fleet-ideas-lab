@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
-import { FLEET_PROJECTS, FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, type FleetDomain } from "@/lib/fleet";
+import { FLEET_PROJECTS, FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, GAP_SCORES, gapLevel, type FleetDomain, type Capability } from "@/lib/fleet";
 import TrustLine from "@/components/TrustLine";
 
 const VIOLET = STYLES.violet;
@@ -35,39 +35,34 @@ function HealthBar({ h }: { h: number }) {
 }
 
 function MiniGapRadar() {
-  // tiny 6x8 heat for preview
+  // Derived — single source of truth: GAP_SCORES (domain x capability % from 37 dashboards)
   const domains: FleetDomain[] = ["seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"];
-  const caps = ["Monitor", "Analyze", "Create", "Optimize", "Automate", "Report"];
-  // use GAP_SCORES mock mapping from fleet lib
-  const score = (d: string, c: string) => {
-    const map: Record<string, Record<string, number>> = {
-      seo: { Monitor: 88, Analyze: 82, Create: 35, Optimize: 58, Automate: 62, Report: 75 },
-      content: { Monitor: 42, Analyze: 68, Create: 85, Optimize: 72, Automate: 48, Report: 55 },
-      local: { Monitor: 78, Analyze: 62, Create: 38, Optimize: 52, Automate: 55, Report: 68 },
-      analytics: { Monitor: 72, Analyze: 88, Create: 22, Optimize: 45, Automate: 40, Report: 90 },
-      automation: { Monitor: 65, Analyze: 55, Create: 50, Optimize: 48, Automate: 92, Report: 38 },
-      design: { Monitor: 35, Analyze: 78, Create: 88, Optimize: 70, Automate: 42, Report: 45 },
-      outreach: { Monitor: 58, Analyze: 52, Create: 48, Optimize: 35, Automate: 62, Report: 50 },
-      technical: { Monitor: 80, Analyze: 75, Create: 32, Optimize: 68, Automate: 58, Report: 62 },
-    };
-    return map[d]?.[c] ?? 50;
+  const caps: Capability[] = ["analytics", "alerts", "automation", "reporting", "visualization"];
+  const capLabel: Record<string, string> = { analytics: "ANL", alerts: "ALT", automation: "AUT", reporting: "REP", visualization: "VIS" };
+  const cellColor = (s: number) => {
+    const lvl = gapLevel(s);
+    if (lvl === "strong") return "bg-emerald-500/80";
+    if (lvl === "ok") return "bg-amber-500/70";
+    if (lvl === "gap") return "bg-red-500/60";
+    return "bg-white/10";
   };
-  const cellColor = (s: number) => s >= 70 ? "bg-emerald-500/80" : s >= 50 ? "bg-amber-500/70" : s >= 30 ? "bg-red-500/60" : "bg-white/10";
   return (
     <div className="overflow-x-auto">
-      <div className="grid" style={{ gridTemplateColumns: `70px repeat(${caps.length}, 32px)`, gap: 4 }}>
+      <div className="grid" style={{ gridTemplateColumns: `70px repeat(${caps.length}, 36px)`, gap: 4 }}>
         <div />
-        {caps.map((c) => <div key={c} className="text-center text-[9px] font-bold uppercase tracking-widest text-white/40">{c.slice(0, 3)}</div>)}
+        {caps.map((c) => <div key={c} className="text-center text-[9px] font-bold uppercase tracking-widest text-white/40">{capLabel[c]}</div>)}
         {domains.map((d) => (
-          <>
-            <div key={`l-${d}`} className="text-right pr-2 text-[11px] font-medium text-white/60 self-center">{DOMAIN_LABEL[d]}</div>
+          <div key={`row-${d}`} className="contents">
+            <div className="text-right pr-2 text-[11px] font-medium text-white/60 self-center">{DOMAIN_LABEL[d]}</div>
             {caps.map((c) => {
-              const s = score(d, c);
-              return <div key={`${d}-${c}`} title={`${d} × ${c}: ${s}`} className={`h-7 rounded-md ${cellColor(s)} flex items-center justify-center text-[10px] font-bold ${s < 30 ? "text-white/60" : "text-white/90"}`}>{s}</div>;
+              const s = GAP_SCORES[d]?.[c] ?? 8;
+              const lvl = gapLevel(s);
+              return <div key={`${d}-${c}`} title={`${DOMAIN_LABEL[d]} x ${c}: ${s}% (${lvl}) — derived from 37 dashboards`} className={`h-7 rounded-md ${cellColor(s)} flex items-center justify-center text-[10px] font-bold ${s < 30 ? "text-white/60" : "text-white/90"}`}>{s}</div>;
             })}
-          </>
+          </div>
         ))}
       </div>
+      <p className="mt-2 text-[10px] leading-3 text-white/30">ANL=analytics · ALT=alerts · AUT=automation · REP=reporting · VIS=visualization · Scores = coverage % derived from FLEET_INVENTORY (not mock)</p>
     </div>
   );
 }
@@ -190,6 +185,15 @@ export default function InventoryPage() {
                     <span key={c} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/60">{c}</span>
                   ))}
                 </div>
+                <div className="mt-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-[11px] leading-4 text-white/40">
+                  <span className="font-semibold text-white/60">Evidence:</span> derived from 37 — primary <span className="text-white/60">{DOMAIN_LABEL[p.domain]}</span>
+                  <span className="mx-1 text-white/20">·</span>
+                  caps <span className="font-mono text-white/50">{p.capabilities.join(", ")}</span>
+                  <span className="mx-1 text-white/20">·</span>
+                  <a href={`/gaps#${p.domain}`} className="text-violet-300 hover:text-violet-200 underline">View gaps for {DOMAIN_LABEL[p.domain]}</a>
+                  <span className="mx-1 text-white/20">·</span>
+                  <a href="/ideas" className="text-violet-300 hover:text-violet-200 underline">Ideas for this domain</a>
+                </div>
                 <div className="mt-4">
                   <div className="mb-1 flex items-center justify-between text-[11px]">
                     <span className="font-semibold uppercase tracking-widest text-white/40">Health</span>
@@ -227,7 +231,7 @@ export default function InventoryPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-white">Gap Mini-Radar</h2>
-              <p className="text-xs" style={{ color: VIOLET.textSecondary }}>Domains × Capabilities · highlights white-space (score &lt; 30) — full matrix on Gaps page.</p>
+              <p className="text-xs" style={{ color: VIOLET.textSecondary }}>Derived Domains × Capabilities (analytics/alerts/automation/reporting/visualization) · white-space &lt;30 = opportunity · Scores from 37 dashboards, same source as Gaps page.</p>
             </div>
             <Link href="/gaps" className="inline-flex min-h-[36px] items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Open Gap Radar →</Link>
           </div>
