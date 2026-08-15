@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.FleetData
+import ai.maximo.ideaslab.data.buildAgentPrompt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -137,21 +138,43 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                             }
                         }
                         Spacer(Modifier.height(10.dp))
+                        var showConfirm by remember(idea.slug) { mutableStateOf(false) }
+                        if (showConfirm) {
+                            AlertDialog(
+                                onDismissRequest = { showConfirm = false },
+                                title = { Text(if (idea.kind == "new") "Create new dashboard: " + idea.slug + "?" else "Add tab to " + idea.targetSlug + "?") },
+                                text = {
+                                    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        Text(if (idea.kind == "new") "This will scaffold a new Next.js project at /root/projects/" + idea.slug + " (or /tmp/" + idea.slug + " on Vercel \u2014 ephemeral). No inventory entry until Vercel alias is live." else "This will scaffold at /root/projects/" + idea.slug + " as a feature branch for " + idea.targetSlug + " \u2014 merge as tab inside " + idea.targetSlug + ", not a standalone project.", style = MaterialTheme.typography.bodySmall)
+                                        Text("Widgets: " + idea.prompt.take(120) + "\u2026", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+                                        Text("Gap " + idea.gapScore + "% \u00b7 " + idea.evidence.take(100), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+                                    }
+                                },
+                                confirmButton = {
+                                    Button(onClick = {
+                                        showConfirm = false
+                                        busySlug = idea.slug
+                                        scope.launch {
+                                            val res = api.scaffold(idea.slug, idea.slug, idea.kind, idea.targetSlug.ifEmpty { null })
+                                            busySlug = null
+                                            Toast.makeText(ctx, if(res.ok) res.message else (res.error ?: "Failed"), Toast.LENGTH_LONG).show()
+                                        }
+                                    }, colors = ButtonDefaults.buttonColors(containerColor = if (idea.kind == "new") Color(0xFF10B981) else Color(0xFFF59E0B))) {
+                                        Text(if (idea.kind == "new") "Create dashboard" else "Scaffold tab")
+                                    }
+                                },
+                                dismissButton = { TextButton(onClick = { showConfirm = false }) { Text("Cancel") } }
+                            )
+                        }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                             OutlinedButton(onClick = {
-                                clipboard.setText(AnnotatedString(idea.prompt))
-                                Toast.makeText(ctx, "Copied: ${idea.title}", Toast.LENGTH_SHORT).show()
-                            }, modifier = Modifier.weight(1f)) { Text("Copy") }
-                            Button(onClick = {
-                                busySlug = idea.slug
-                                scope.launch {
-                                    val res = api.scaffold(idea.slug)
-                                    busySlug = null
-                                    Toast.makeText(ctx, if(res.ok) res.message else (res.error ?: "Failed"), Toast.LENGTH_LONG).show()
-                                }
-                            }, modifier = Modifier.weight(1f), enabled = busySlug != idea.slug,
-                                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF7C3AED))
-                            ) { Text(if(busySlug==idea.slug) "\u2026" else "Scaffold") }
+                                val full = buildAgentPrompt(idea)
+                                clipboard.setText(AnnotatedString(full))
+                                Toast.makeText(ctx, "Full agent brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
+                            }, modifier = Modifier.weight(1f)) { Text("Copy brief") }
+                            Button(onClick = { showConfirm = true }, modifier = Modifier.weight(1f), enabled = busySlug != idea.slug,
+                                colors = ButtonDefaults.buttonColors(containerColor = if (idea.kind == "new") Color(0xFF7C3AED) else Color(0xFFF59E0B))
+                            ) { Text(if(busySlug==idea.slug) "\u2026" else if (idea.kind == "new") "Create dashboard" else "Scaffold tab") }
                         }
                     }
                 }

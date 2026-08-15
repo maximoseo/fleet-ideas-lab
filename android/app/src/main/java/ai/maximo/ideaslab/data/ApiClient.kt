@@ -62,12 +62,18 @@ class ApiClient(private val sessionStore: SessionStore) {
         } catch(e: Exception) { AnalyzeResult(false, error=e.message) }
     }
 
-    /** Fleet scaffold — POST /api/fleet/scaffold with dl_session cookie */
-    suspend fun scaffold(slug: String): ScaffoldResult = withContext(Dispatchers.IO) {
+    /** Fleet scaffold — POST /api/fleet/scaffold with dl_session cookie (Vercel-aware) */
+    suspend fun scaffold(slug: String, ideaId: String? = null, kind: String? = null, targetSlug: String? = null): ScaffoldResult = withContext(Dispatchers.IO) {
         try {
             val token = sessionStore.getSession() ?: return@withContext ScaffoldResult(false, error="Not authenticated — please login")
             if (slug.isBlank()) return@withContext ScaffoldResult(false, error="Slug required")
-            val body = JSONObject().put("slug", slug.trim()).toString().toRequestBody("application/json".toMediaType())
+            val jsonBody = JSONObject().apply {
+                put("slug", slug.trim())
+                if (ideaId != null) put("ideaId", ideaId)
+                if (kind != null) put("kind", kind)
+                if (targetSlug != null) put("targetSlug", targetSlug)
+            }
+            val body = jsonBody.toString().toRequestBody("application/json".toMediaType())
             val req = Request.Builder()
                 .url("$base/api/fleet/scaffold")
                 .header("Cookie", "dl_session=$token")
@@ -77,10 +83,21 @@ class ApiClient(private val sessionStore: SessionStore) {
             val txt = res.body?.string() ?: ""
             val json = try { JSONObject(txt) } catch(_: Exception) { JSONObject() }
             if (res.isSuccessful) {
-                ScaffoldResult(true, json.optString("message", "Scaffolded: $slug"))
+                val dir = json.optString("dir", "")
+                val mode = json.optString("mode", "")
+                val note = json.optString("note", "")
+                val k = json.optString("kind", kind ?: "new")
+                val target = json.optString("targetSlug", targetSlug ?: "")
+                val prefix = if (k == "enhancement") "Tab scaffolded" else "Dashboard scaffolded"
+                val targetNote = if (k == "enhancement" && target.isNotEmpty()) " \u2014 feature branch for $target (merge as tab)" else " \u2014 new standalone dashboard"
+                val modeNote = if (mode == "vercel-tmp") " (Vercel /tmp \u2014 ephemeral)" else ""
+                val msg = "$prefix $slug at $dir$modeNote$targetNote" + (if (note.isNotEmpty()) " \u00b7 $note" else "")
+                ScaffoldResult(true, msg)
             } else {
                 ScaffoldResult(false, error=json.optString("error", "Scaffold failed (${res.code})"))
             }
         } catch (e: Exception) { ScaffoldResult(false, error=e.message ?: "Network error") }
     }
+    // Back-compat overload
+    suspend fun scaffoldSimple(slug: String): ScaffoldResult = scaffold(slug)
 }

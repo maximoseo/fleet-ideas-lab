@@ -5,7 +5,8 @@ import Link from "next/link";
 import TrustLine from "@/components/TrustLine";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
-import { FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus } from "@/lib/fleet";
+import { FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus, type FleetIdea } from "@/lib/fleet";
+import { buildAgentPrompt } from "@/lib/agentPrompt";
 
 const VIOLET = STYLES.violet;
 
@@ -28,6 +29,7 @@ export default function IdeasPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [scaffolding, setScaffolding] = useState<string | null>(null);
   const [scaffoldResult, setScaffoldResult] = useState<string | null>(null);
+  const [confirmIdea, setConfirmIdea] = useState<FleetIdea | null>(null);
   const [shuffleSeed, setShuffleSeed] = useState(0);
   const [reloading, setReloading] = useState(false);
   const [pullY, setPullY] = useState(0);
@@ -50,30 +52,34 @@ export default function IdeasPage() {
     return [...base.slice(k), ...base.slice(0, k)];
   }, [domain, effort, impact, status, kind, q, shuffleSeed]);
 
-  async function copyPrompt(prompt: string) {
-    await navigator.clipboard.writeText(prompt);
-    setToast("Prompt copied");
-    setTimeout(() => setToast(null), 1800);
+  async function copyPrompt(idea: FleetIdea) {
+    const full = buildAgentPrompt(idea);
+    await navigator.clipboard.writeText(full);
+    setToast("Full agent brief copied (" + idea.slug + ")");
+    setTimeout(() => setToast(null), 2200);
   }
 
-  async function doScaffold(idea: typeof FLEET_IDEAS[number]) {
+  async function doScaffold(idea: FleetIdea) {
     setScaffolding(idea.id);
     setScaffoldResult(null);
+    setConfirmIdea(null);
     try {
       const res = await fetch("/api/fleet/scaffold", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug: idea.slug, ideaId: idea.id }),
+        body: JSON.stringify({ slug: idea.slug, ideaId: idea.id, kind: idea.kind, targetSlug: idea.targetSlug || undefined }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
-      setScaffoldResult(`\u2713 Scaffolded ${data.slug} at ${data.dir}`);
+      const modeNote = data.mode === "vercel-tmp" ? " (Vercel /tmp — ephemeral, clone to /root/projects/" + data.slug + " on dev server)" : "";
+      const kindNote = data.kind === "enhancement" && data.targetSlug ? " — feature branch for " + data.targetSlug + " (merge as tab)" : " — new standalone dashboard";
+      setScaffoldResult("\u2713 " + (data.kind === "enhancement" ? "Tab scaffolded" : "Dashboard scaffolded") + " " + data.slug + " at " + data.dir + modeNote + kindNote + (data.note ? " · " + data.note : ""));
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed";
-      setScaffoldResult(`\u2717 ${msg}`);
+      setScaffoldResult("\u2717 " + msg);
     } finally {
       setScaffolding(null);
-      setTimeout(() => setScaffoldResult(null), 4000);
+      setTimeout(() => setScaffoldResult(null), 6000);
     }
   }
 
@@ -211,9 +217,9 @@ export default function IdeasPage() {
                 ) : (
                   <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-white/40">No URL</span>
                 )}
-                <button onClick={() => copyPrompt(idea.prompt)} className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 text-[12px] font-semibold text-white hover:bg-white/10">Copy prompt</button>
-                <button onClick={() => doScaffold(idea)} disabled={scaffolding === idea.id} className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-2 text-[12px] font-semibold disabled:opacity-50 ${idea.kind === "enhancement" ? "border border-amber-500/30 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20" : "bg-violet-600 text-white hover:bg-violet-500"}`}> 
-                  {scaffolding === idea.id ? "\u2026" : idea.kind === "enhancement" ? "Scaffold tab" : "Scaffold"}
+                <button onClick={() => copyPrompt(idea)} title="Copy full agent brief (Markdown) — Web Next.js + Android Kotlin + data + widgets + acceptance" className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 text-[12px] font-semibold text-white hover:bg-white/10">Copy brief</button>
+                <button onClick={() => setConfirmIdea(idea)} disabled={scaffolding === idea.id} title={idea.kind === "enhancement" ? "Scaffold as feature tab inside " + (idea.targetSlug || "") + " at /root/projects/" + idea.slug + " (or /tmp on Vercel)" : "Create new dashboard at /root/projects/" + idea.slug + " (or /tmp on Vercel)"} className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-2 text-[12px] font-semibold disabled:opacity-50 ${idea.kind === "enhancement" ? "border border-amber-500/30 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20" : "bg-violet-600 text-white hover:bg-violet-500"}`}> 
+                  {scaffolding === idea.id ? "\u2026" : idea.kind === "enhancement" ? "Scaffold tab \u2192 " + (idea.targetSlug || "") : "Create dashboard"}
                 </button>
               </div>
               <div className="mt-2 text-center text-[11px] text-white/30">{idea.slug}</div>
@@ -231,6 +237,28 @@ export default function IdeasPage() {
         {toast ? (
           <div className="fixed bottom-20 lg:bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0f0b1a] shadow-xl">
             {toast}
+          </div>
+        ) : null}
+        {/* Scaffold confirmation — distinct for new vs enhancement */}
+        {confirmIdea ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setConfirmIdea(null)}>
+            <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold ${confirmIdea.kind === "new" ? "bg-emerald-500 text-white" : "bg-amber-500 text-black"}`}>{confirmIdea.kind === "new" ? "NEW DASHBOARD" : "ENHANCEMENT → " + (confirmIdea.targetSlug || "")}</div>
+              <h3 className="mt-3 text-lg font-bold text-white">{confirmIdea.kind === "new" ? "Create new dashboard: " + confirmIdea.slug + "?" : "Add feature tab to " + (confirmIdea.targetSlug || "") + "?"}</h3>
+              <p className="mt-2 text-sm leading-5 text-white/60">
+                {confirmIdea.kind === "new"
+                  ? "This will scaffold a new Next.js project at /root/projects/" + confirmIdea.slug + " (or /tmp/" + confirmIdea.slug + " on Vercel — ephemeral, clone to dev server). Includes package.json + README.md. No inventory entry is added until the Vercel alias is verified live. Source: this Fleet Ideas Lab brief."
+                  : "This will scaffold at /root/projects/" + confirmIdea.slug + " as a feature branch for " + (confirmIdea.targetSlug || "") + " — intended to be merged as a tab inside " + (confirmIdea.targetSlug || "") + ", not a standalone project or Vercel site."}
+              </p>
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-[11px] leading-4 text-white/50">
+                <div>Slug: <span className="font-mono text-white/70">{confirmIdea.slug}</span> · Gap {confirmIdea.gapScore}% · {confirmIdea.evidence.slice(0, 120)}…</div>
+                <div className="mt-1">Widgets: {confirmIdea.widgets.join(" · ")}</div>
+              </div>
+              <div className="mt-5 flex gap-3">
+                <button onClick={() => setConfirmIdea(null)} className="flex-1 rounded-full border border-white/15 bg-white/5 py-3 text-sm font-semibold text-white hover:bg-white/10">Cancel</button>
+                <button onClick={() => doScaffold(confirmIdea)} className={`flex-1 rounded-full py-3 text-sm font-semibold ${confirmIdea.kind === "new" ? "bg-emerald-500 text-white hover:bg-emerald-600" : "bg-amber-500 text-black hover:bg-amber-600"}`}>{confirmIdea.kind === "new" ? "Create dashboard" : "Scaffold tab"}</button>
+              </div>
+            </div>
           </div>
         ) : null}
         <TrustLine />
