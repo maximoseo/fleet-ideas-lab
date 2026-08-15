@@ -21,16 +21,18 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.FleetData
+import ai.maximo.ideaslab.data.FleetFavoritesStore
 import ai.maximo.ideaslab.data.buildAgentPrompt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
+fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onNotifications: () -> Unit = {}) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
@@ -38,13 +40,20 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
     var shuffleSeed by remember { mutableStateOf(0) }
     var refreshing by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf<String?>(null) }
+    var showOnlyFavorites by remember { mutableStateOf(false) }
 
-    val ideas = remember(shuffleSeed) {
+    val favSet by favoritesStore?.favoritesFlow()?.collectAsState(initial = emptySet()) ?: remember { mutableStateOf(emptySet<String>()) }
+    val store = favoritesStore
+
+    val baseIdeas = remember(shuffleSeed) {
         val n = FleetData.ideas.size
         if (shuffleSeed == 0) FleetData.ideas else {
             val k = shuffleSeed % n
             FleetData.ideas.drop(k) + FleetData.ideas.take(k)
         }
+    }
+    val ideas = remember(baseIdeas, showOnlyFavorites, favSet) {
+        if (!showOnlyFavorites) baseIdeas else baseIdeas.filter { it.slug in favSet }
     }
 
     fun doReload() {
@@ -53,38 +62,37 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
             delay(400)
             shuffleSeed++
             refreshing = false
-            Toast.makeText(ctx, "Reloaded \u00b7 ${ideas.size} ideas", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "Reloaded \u00b7 ${ideas.size} ideas" + if (showOnlyFavorites) " (favorites)" else "", Toast.LENGTH_SHORT).show()
         }
     }
 
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
 
-    // Rich briefs mirrored from web fleet.ts
     val briefs = remember {
         mapOf(
-            "serp-volatility-war-room" to Triple("Site Intel exists but lacks war-room view.", "Enhance site-intel with War-Room tab — not a new dashboard", "Validated: seo\u00d7analytics 96% strong — enhancement, not white-space"),
-
-            "gbp-health-monitor" to Triple("Local SEO exists — lacks GBP health tab.", "Enhance local-seo with Health tab — not new dashboard", "Validated: local\u00d7analytics 67% ok — feature gap"),
-            "anomaly-explain-engine" to Triple("Alerts without explanation are noise — ignored.", "Timeline + LLM Root Cause + Impact Estimate + Suggested Action", "Alerts become decisions, MTTR drops"),
+            "serp-volatility-war-room" to Triple("Site Intel exists but lacks war-room view.", "Enhance site-intel with War-Room tab \u2014 not a new dashboard", "Validated: seo\u00d7analytics 96% strong \u2014 enhancement, not white-space"),
+            "gbp-health-monitor" to Triple("Local SEO exists \u2014 lacks GBP health tab.", "Enhance local-seo with Health tab \u2014 not new dashboard", "Validated: local\u00d7analytics 67% ok \u2014 feature gap"),
+            "anomaly-explain-engine" to Triple("Alerts without explanation are noise \u2014 ignored.", "Timeline + LLM Root Cause + Impact Estimate + Suggested Action", "Alerts become decisions, MTTR drops"),
             "outreach-inbox-commander" to Triple("~20% replies lost in Gmail noise.", "Thread List + Reply Score + Follow-up Timer + Template Inject", "Recover replies, halve busywork"),
-            "schema-studio" to Triple("Schema errors silently kill rich results — invisible CTR loss.", "JSON-LD Editor + Validator + Rich Result Preview + Fix Diff", "Recover eligibility + CTR with safety net"),
-            "design-token-pipeline" to Triple("Tokens are manual — no WP pipeline.", "Token Editor + WP Sync + Preview Frame + Version History", "Ship design-system to WP in one click"),
-            "content-brief-autopilot" to Triple("Content Automation exists — lacks brief autopilot.", "Enhance content-automation with Brief tab — not new", "Validated: content\u00d7automation 67% ok"),
-            "local-citation-pulse" to Triple("Local SEO lacks citation diffing — NAP across 40+ dirs.", "Enhance local-seo with Citation Pulse tab", "Validated: local\u00d7reporting 33% gap — feature-level"),
-            "fleet-cron-observatory" to Triple("50+ crons — silent failures cost hours weekly.", "Timeline + Failure Heatmap + Run Logs + Retry", "Zero silent failures"),
-            "link-velocity-tracker" to Triple("Competitor Intel exists — lacks velocity view.", "Enhance competitor-intel with Link Velocity tab", "Validated: outreach\u00d7analytics 96% strong — enhancement"),
-            "cwv-budget-guard" to Triple("SiteWatch monitors uptime — lacks CWV budget gate.", "Enhance sitewatch with CWV Guard tab", "Validated: technical\u00d7alerts 86% strong — feature"),
+            "schema-studio" to Triple("Schema errors silently kill rich results \u2014 invisible CTR loss.", "JSON-LD Editor + Validator + Rich Result Preview + Fix Diff", "Recover eligibility + CTR with safety net"),
+            "design-token-pipeline" to Triple("Tokens are manual \u2014 no WP pipeline.", "Token Editor + WP Sync + Preview Frame + Version History", "Ship design-system to WP in one click"),
+            "content-brief-autopilot" to Triple("Content Automation exists \u2014 lacks brief autopilot.", "Enhance content-automation with Brief tab \u2014 not new", "Validated: content\u00d7automation 67% ok"),
+            "local-citation-pulse" to Triple("Local SEO lacks citation diffing \u2014 NAP across 40+ dirs.", "Enhance local-seo with Citation Pulse tab", "Validated: local\u00d7reporting 33% gap \u2014 feature-level"),
+            "fleet-cron-observatory" to Triple("50+ crons \u2014 silent failures cost hours weekly.", "Timeline + Failure Heatmap + Run Logs + Retry", "Zero silent failures"),
+            "link-velocity-tracker" to Triple("Competitor Intel exists \u2014 lacks velocity view.", "Enhance competitor-intel with Link Velocity tab", "Validated: outreach\u00d7analytics 96% strong \u2014 enhancement"),
+            "cwv-budget-guard" to Triple("SiteWatch monitors uptime \u2014 lacks CWV budget gate.", "Enhance sitewatch with CWV Guard tab", "Validated: technical\u00d7alerts 86% strong \u2014 feature"),
         )
     }
 
-    Box(Modifier.fillMaxSize().pullRefresh(pullState)) {
-        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(top = 16.dp, bottom = 0.dp)) {
+    Box(Modifier.fillMaxSize().statusBarsPadding().pullRefresh(pullState)) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 0.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Fleet Ideas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${ideas.size} deduplicated briefs \u00b7 5 new + 6 enhance \u00b7 Pull to reload", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
+                    Text("Fleet Ideas Lab", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text("${ideas.size} shown \u00b7 5 new + 6 enhance \u00b7 Pull to reload" + if (showOnlyFavorites) " \u00b7 \u2605 favorites" else "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), maxLines = 2, overflow = TextOverflow.Ellipsis)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    FilterChip(selected = showOnlyFavorites, onClick = { showOnlyFavorites = !showOnlyFavorites }, label = { Text("\u2605 ${favSet.size}") }, leadingIcon = { Text(if (showOnlyFavorites) "\u2605" else "\u2606") })
                     FilledTonalButton(onClick = { doReload() }, enabled = !refreshing, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
                         Text(if (refreshing) "\u21bb Reloading\u2026" else "\u21bb Reload")
                     }
@@ -97,6 +105,17 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                 Spacer(Modifier.width(6.dp))
                 Text("Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
             }
+            if (ideas.isEmpty() && showOnlyFavorites) {
+                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF1A1428)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(16.dp)).padding(24.dp), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("\u2606 No favorites yet", style = MaterialTheme.typography.titleSmall, color = Color(0xFFF0ECF7))
+                        Spacer(Modifier.height(4.dp))
+                        Text("Tap \u2661 on any idea to save it \u2014 persists after restart", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9CA3AF))
+                        Spacer(Modifier.height(12.dp))
+                        OutlinedButton(onClick = { showOnlyFavorites = false }) { Text("Show all 11") }
+                    }
+                }
+            }
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize(),
@@ -105,12 +124,24 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                 items(ideas) { idea ->
                     val brief = briefs[idea.slug]
                     val isOpen = expanded == idea.slug
+                    val isFav = idea.slug in favSet
                     Column(Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFF1A1428)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(16.dp)).padding(12.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(idea.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFFF0ECF7), modifier = Modifier.weight(1f))
-                            Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                                Box(Modifier.clip(RoundedCornerShape(999.dp)).background(when(idea.impact){ "high"->Color(0xFF7C3AED); "med"->Color(0xFF2563EB); else->Color(0xFF6B7280) }.copy(alpha=0.2f)).padding(horizontal=8.dp, vertical=2.dp)) {
-                                    Text(idea.impact, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))
+                            Text(idea.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFFF0ECF7), modifier = Modifier.weight(1f).padding(end = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
+                            Column(horizontalAlignment = Alignment.End) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    FilledTonalButton(onClick = {
+                                        if (store != null) scope.launch {
+                                            store.toggleFavorite(idea.slug)
+                                            val nowFav = store.isFavorite(idea.slug)
+                                            Toast.makeText(ctx, if (nowFav) "Saved \u2605 ${idea.slug}" else "Removed ${idea.slug}", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp), colors = ButtonDefaults.filledTonalButtonColors(containerColor = if (isFav) Color(0xFFF59E0B).copy(alpha=0.25f) else Color.White.copy(alpha=0.06f)), modifier = Modifier.height(28.dp)) {
+                                        Text(if (isFav) "\u2665" else "\u2661", style = MaterialTheme.typography.labelSmall, color = if (isFav) Color(0xFFF59E0B) else Color(0xFF9CA3AF))
+                                    }
+                                    Box(Modifier.clip(RoundedCornerShape(999.dp)).background(when(idea.impact){ "high"->Color(0xFF7C3AED); "med"->Color(0xFF2563EB); else->Color(0xFF6B7280) }.copy(alpha=0.2f)).padding(horizontal=8.dp, vertical=2.dp)) {
+                                        Text(idea.impact, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))
+                                    }
                                 }
                                 Spacer(Modifier.height(2.dp))
                                 val kindBg = if (idea.kind == "new") Color(0xFF10B981) else Color(0xFFF59E0B)
@@ -120,10 +151,9 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                             }
                         }
                         Spacer(Modifier.height(4.dp))
-                        Text("${idea.category} \u00b7 ${idea.slug}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA89BC2))
+                        Text("${idea.category} \u00b7 ${idea.slug}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA89BC2), maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.height(6.dp))
-                        Text(idea.prompt, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA89BC2), maxLines = if (isOpen) Int.MAX_VALUE else 3)
-                        // Brief toggle
+                        Text(idea.prompt, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA89BC2), maxLines = if (isOpen) Int.MAX_VALUE else 3, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.height(8.dp))
                         OutlinedButton(onClick = { expanded = if (isOpen) null else idea.slug }, modifier = Modifier.fillMaxWidth()) {
                             Text(if (isOpen) "Hide brief \u25b2" else "Professional brief \u25bc")
@@ -134,7 +164,7 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                                 Text("Problem: ${brief.first}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFF87171))
                                 Text("Solution: ${brief.second}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFA78BFA))
                                 Text("Benefit: ${brief.third}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF86EFAC))
-                                Text("Next: Scaffold → wire data (vault TBD) → ship", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+                                Text("Next: Scaffold \u2192 wire data (vault TBD) \u2192 ship", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
                             }
                         }
                         Spacer(Modifier.height(10.dp))

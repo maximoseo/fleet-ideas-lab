@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
+import androidx.activity.enableEdgeToEdge
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.fragment.app.FragmentActivity
 import androidx.navigation.compose.rememberNavController
 import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.NotificationHelper
+import ai.maximo.ideaslab.data.FleetFavoritesStore
 import ai.maximo.ideaslab.data.SessionStore
 import ai.maximo.ideaslab.data.UpdateCheckWorker
 import ai.maximo.ideaslab.ui.AppNav
@@ -21,6 +23,7 @@ import ai.maximo.ideaslab.ui.theme.FleetIdeasLabTheme
 
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
         installSplashScreen()
         super.onCreate(savedInstanceState)
         NotificationHelper.ensureChannels(applicationContext)
@@ -31,6 +34,7 @@ class MainActivity : FragmentActivity() {
             }
         }
         val sessionStore = SessionStore(applicationContext)
+        val favoritesStore = FleetFavoritesStore(applicationContext)
         val api = ApiClient(sessionStore)
         val open = intent?.getStringExtra("open")
         setContent {
@@ -50,7 +54,7 @@ class MainActivity : FragmentActivity() {
                     }
                 }
                 if (start != null) {
-                    AppNav(navController = nav, startDestination = start!!, api = api, sessionStore = sessionStore)
+                    AppNav(navController = nav, startDestination = start!!, api = api, sessionStore = sessionStore, favoritesStore = favoritesStore)
                 } else {
                     Box(Modifier.fillMaxSize()) {}
                 }

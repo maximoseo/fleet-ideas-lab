@@ -15,15 +15,32 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import ai.maximo.ideaslab.data.FleetData
 import ai.maximo.ideaslab.ui.CommandPaletteSheet
 import androidx.navigation.NavController
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun InventoryScreen(navController: NavController? = null, onNotifications: () -> Unit = {}) {
     var shuffleSeed by remember { mutableStateOf(0) }
     var paletteOpen by remember { mutableStateOf(false) }
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var refreshing by remember { mutableStateOf(false) }
+    fun doReload() { scope.launch { refreshing = true; delay(400); shuffleSeed++; refreshing = false; Toast.makeText(ctx, "Reloaded \u00b7 ${FleetData.sites.size} sites", Toast.LENGTH_SHORT).show() } }
+    val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
     val sites = remember(shuffleSeed) {
         if (shuffleSeed == 0) FleetData.sites else {
             val n = FleetData.sites.size
@@ -31,7 +48,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
             FleetData.sites.drop(k) + FleetData.sites.take(k)
         }
     }
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().statusBarsPadding()) {
         // Header with Find more ideas
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -42,6 +59,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                 Text("Find more \u21bb", style = MaterialTheme.typography.labelMedium)
             }
             OutlinedButton(onClick = { paletteOpen = true }, modifier = Modifier.height(36.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)) { Text("\u2318K", style = MaterialTheme.typography.labelMedium) }
+            FilledTonalButton(onClick = { doReload() }, enabled = !refreshing, modifier = Modifier.height(36.dp), contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp)) { Text(if (refreshing) "\u21bb" else "\u21bb Reload", style = MaterialTheme.typography.labelMedium) }
             IconButton(onClick = onNotifications, modifier = Modifier.size(36.dp)) {
                 Text("\uD83D\uDD14", style = MaterialTheme.typography.titleMedium)
             }
@@ -62,8 +80,9 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
             Spacer(Modifier.width(6.dp))
             Text("Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
         }
+        Box(Modifier.fillMaxSize().pullRefresh(pullState)) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Adaptive(minSize = 160.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.fillMaxSize(),
@@ -104,6 +123,8 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                 }
             }
         }
+            PullRefreshIndicator(refreshing = refreshing, state = pullState, modifier = Modifier.align(androidx.compose.ui.Alignment.TopCenter), backgroundColor = androidx.compose.ui.graphics.Color.White, contentColor = androidx.compose.ui.graphics.Color(0xFF7C3AED))
+        }
         if (paletteOpen && navController != null) {
             CommandPaletteSheet(open = true, onClose = { paletteOpen = false }, nav = navController)
         }
@@ -112,7 +133,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
 
 @Composable
 fun InventoryScreenWithUpdate(navController: NavController, api: ai.maximo.ideaslab.data.ApiClient, onNotifications: () -> Unit = {}) {
-    Column(Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().statusBarsPadding()) {
         UpdateBanner()
         InventoryScreen(navController = navController, onNotifications = onNotifications)
     }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useRef, useCallback } from "react";
+import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import TrustLine from "@/components/TrustLine";
 import SiteHeader from "@/components/SiteHeader";
@@ -29,6 +29,11 @@ export default function IdeasPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [scaffolding, setScaffolding] = useState<string | null>(null);
   const [scaffoldResult, setScaffoldResult] = useState<string | null>(null);
+  const [favs, setFavs] = useState<Set<string>>(new Set());
+  const [favOnly, setFavOnly] = useState(false);
+  useEffect(() => { try { const raw = localStorage.getItem("fleet_favorites"); if (raw) setFavs(new Set(JSON.parse(raw) as string[])); } catch {} }, []);
+  function toggleFav(slug: string) { setFavs((prev) => { const next = new Set(prev); if (next.has(slug)) next.delete(slug); else next.add(slug); try { localStorage.setItem("fleet_favorites", JSON.stringify([...next])); } catch {} return next; }); }
+
   const [confirmIdea, setConfirmIdea] = useState<FleetIdea | null>(null);
   const [shuffleSeed, setShuffleSeed] = useState(0);
   const [reloading, setReloading] = useState(false);
@@ -43,6 +48,7 @@ export default function IdeasPage() {
       if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
       if (status !== ("all" as unknown as IdeaStatus) && it.status !== status) return false;
       if (kind !== "all" && (it as unknown as { kind: string }).kind !== kind) return false;
+      if (favOnly && !favs.has(it.slug)) return false;
       if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow} ${it.problem} ${it.solution}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
@@ -50,7 +56,7 @@ export default function IdeasPage() {
     const n = base.length || 1;
     const k = shuffleSeed % n;
     return [...base.slice(k), ...base.slice(0, k)];
-  }, [domain, effort, impact, status, kind, q, shuffleSeed]);
+  }, [domain, effort, impact, status, kind, q, shuffleSeed, favOnly, favs]);
 
   async function copyPrompt(idea: FleetIdea) {
     const full = buildAgentPrompt(idea);
@@ -136,6 +142,7 @@ export default function IdeasPage() {
         {/* Filters */}
         <div className="mt-5 space-y-3">
           <div className="flex flex-wrap gap-2">
+            <button onClick={() => setFavOnly((v) => !v)} className={`min-h-[32px] rounded-full px-3 text-[12px] font-bold transition border ${favOnly ? "bg-amber-500 text-black border-amber-500" : "bg-white/[0.04] text-white/60 border-white/10 hover:text-white"}`}>\u2605 {favs.size}{favOnly ? " \u00b7 Favorites" : ""}</button>
             <div className="flex flex-wrap gap-1.5 rounded-full border border-white/10 bg-white/[0.04] p-1">
               {(["all", "seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"] as const).map((d) => (
                 <button key={d} onClick={() => setDomain(d as FleetDomain | "all")} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold transition ${domain === d ? "bg-violet-600 text-white" : "text-white/60 hover:text-white"}`}>{d === "all" ? "All Domains" : DOMAIN_LABEL[d]}</button>
@@ -188,6 +195,7 @@ export default function IdeasPage() {
                 <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: DOMAIN_COLOR[idea.domain] }}>{DOMAIN_LABEL[idea.domain]}</span>
                 <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${badgeEffort(idea.effort)}`}>{idea.effort}</span>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badgePriority(idea.priority)}`}>{idea.priority}</span>
+                <button onClick={() => toggleFav(idea.slug)} className={`ml-1 rounded-full px-2 py-0.5 text-[12px] font-bold border ${favs.has(idea.slug) ? "bg-amber-500 text-black border-amber-500" : "bg-white/5 text-white/40 border-white/10 hover:text-white"}`}>{favs.has(idea.slug) ? "\u2665" : "\u2661"}</button>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${idea.kind === "new" ? "bg-emerald-500 text-white" : "bg-amber-500 text-black"}`}>{idea.kind === "new" ? "NEW" : "ENHANCE"}</span>
                 <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${idea.impact === "high" ? "bg-emerald-500/15 text-emerald-300" : idea.impact === "medium" ? "bg-amber-500/15 text-amber-300" : "bg-white/10 text-white/60"}`}>{idea.impact}</span>
               </div>
@@ -246,8 +254,8 @@ export default function IdeasPage() {
 
         {filtered.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <p className="text-sm text-white/60">No ideas match your filters.</p>
-            <button onClick={() => { setDomain("all"); setEffort("all" as unknown as Effort); setImpact("all" as unknown as Impact); setStatus("all" as unknown as IdeaStatus); setKind("all"); setQ(""); }} className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10">Clear filters</button>
+            <p className="text-sm text-white/60">{favOnly && favs.size === 0 ? "\u2606 No favorites yet \u2014 tap \u2661 on any idea" : favOnly ? "No favorites match your filters" : "No ideas match your filters."}</p>
+            <button onClick={() => { setDomain("all"); setEffort("all" as unknown as Effort); setImpact("all" as unknown as Impact); setStatus("all" as unknown as IdeaStatus); setKind("all"); setFavOnly(false); setQ(""); }} className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10">Clear filters</button>
           </div>
         ) : null}
 
