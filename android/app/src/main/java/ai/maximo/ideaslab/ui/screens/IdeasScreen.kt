@@ -61,18 +61,18 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
     // Rich briefs mirrored from web fleet.ts
     val briefs = remember {
         mapOf(
-            "serp-volatility-war-room" to Triple("SERP spikes leave clients blind — no Winners/Losers or SERP feature view.", "War Room: Volatility Index + Winners/Losers + SERP feature share + Alert feed", "Ops triage in minutes — client comms with evidence"),
-            "content-decay-radar" to Triple("30% of blog traffic decays after 6mo — discovered too late.", "Decay Score + 90-day trend + Refresh Queue + one-click Brief", "Recover 10-30% decaying traffic systematically"),
-            "gbp-health-monitor" to Triple("Suspensions up 40% YoY — one stale field can kill revenue.", "Risk + Completeness + Photo Freshness + Review Velocity, daily", "Prevent suspensions, boost local pack eligibility"),
+            "serp-volatility-war-room" to Triple("Site Intel exists but lacks war-room view.", "Enhance site-intel with War-Room tab — not a new dashboard", "Validated: seo\u00d7analytics 96% strong — enhancement, not white-space"),
+
+            "gbp-health-monitor" to Triple("Local SEO exists — lacks GBP health tab.", "Enhance local-seo with Health tab — not new dashboard", "Validated: local\u00d7analytics 67% ok — feature gap"),
             "anomaly-explain-engine" to Triple("Alerts without explanation are noise — ignored.", "Timeline + LLM Root Cause + Impact Estimate + Suggested Action", "Alerts become decisions, MTTR drops"),
             "outreach-inbox-commander" to Triple("~20% replies lost in Gmail noise.", "Thread List + Reply Score + Follow-up Timer + Template Inject", "Recover replies, halve busywork"),
             "schema-studio" to Triple("Schema errors silently kill rich results — invisible CTR loss.", "JSON-LD Editor + Validator + Rich Result Preview + Fix Diff", "Recover eligibility + CTR with safety net"),
             "design-token-pipeline" to Triple("Tokens are manual — no WP pipeline.", "Token Editor + WP Sync + Preview Frame + Version History", "Ship design-system to WP in one click"),
-            "content-brief-autopilot" to Triple("Briefs are the #1 bottleneck.", "SERP Brief + Outline + Entity Map + Competitor Gap", "10x brief throughput, entity-rich"),
-            "local-citation-pulse" to Triple("1 in 5 local packs derailed by NAP across 40+ dirs.", "Citation Map + NAP Diff + Fix Queue + Authority Score", "Systematic fix, measurable in weeks"),
+            "content-brief-autopilot" to Triple("Content Automation exists — lacks brief autopilot.", "Enhance content-automation with Brief tab — not new", "Validated: content\u00d7automation 67% ok"),
+            "local-citation-pulse" to Triple("Local SEO lacks citation diffing — NAP across 40+ dirs.", "Enhance local-seo with Citation Pulse tab", "Validated: local\u00d7reporting 33% gap — feature-level"),
             "fleet-cron-observatory" to Triple("50+ crons — silent failures cost hours weekly.", "Timeline + Failure Heatmap + Run Logs + Retry", "Zero silent failures"),
-            "link-velocity-tracker" to Triple("Competitor velocity is a leading indicator — invisible until late.", "Velocity Chart + New/Lost + Anchor Mix + Risk Flag", "Spot acceleration early"),
-            "cwv-budget-guard" to Triple("CWV regressions ship silently.", "Gauges + Budget Bar + Regression Diff + Deploy Gate", "Block regressions before users see them"),
+            "link-velocity-tracker" to Triple("Competitor Intel exists — lacks velocity view.", "Enhance competitor-intel with Link Velocity tab", "Validated: outreach\u00d7analytics 96% strong — enhancement"),
+            "cwv-budget-guard" to Triple("SiteWatch monitors uptime — lacks CWV budget gate.", "Enhance sitewatch with CWV Guard tab", "Validated: technical\u00d7alerts 86% strong — feature"),
         )
     }
 
@@ -81,7 +81,7 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
                     Text("Fleet Ideas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text("${ideas.size} professional briefs \u00b7 Pull to reload", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
+                    Text("${ideas.size} deduplicated briefs \u00b7 5 new + 6 enhance \u00b7 Pull to reload", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     FilledTonalButton(onClick = { doReload() }, enabled = !refreshing, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
@@ -107,8 +107,15 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                     Column(Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFF1A1428)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(16.dp)).padding(12.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(idea.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFFF0ECF7), modifier = Modifier.weight(1f))
-                            Box(Modifier.clip(RoundedCornerShape(999.dp)).background(when(idea.impact){ "high"->Color(0xFF7C3AED); "med"->Color(0xFF2563EB); else->Color(0xFF6B7280) }.copy(alpha=0.2f)).padding(horizontal=8.dp, vertical=2.dp)) {
-                                Text(idea.impact, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))
+                            Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
+                                Box(Modifier.clip(RoundedCornerShape(999.dp)).background(when(idea.impact){ "high"->Color(0xFF7C3AED); "med"->Color(0xFF2563EB); else->Color(0xFF6B7280) }.copy(alpha=0.2f)).padding(horizontal=8.dp, vertical=2.dp)) {
+                                    Text(idea.impact, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))
+                                }
+                                Spacer(Modifier.height(2.dp))
+                                val kindBg = if (idea.kind == "new") Color(0xFF10B981) else Color(0xFFF59E0B)
+                                Box(Modifier.clip(RoundedCornerShape(999.dp)).background(kindBg.copy(alpha=0.2f)).padding(horizontal=6.dp, vertical=1.dp)) {
+                                    Text(if (idea.kind == "new") "NEW" else "ENHANCE", style = MaterialTheme.typography.labelSmall, color = kindBg, fontWeight = FontWeight.Bold)
+                                }
                             }
                         }
                         Spacer(Modifier.height(4.dp))

@@ -23,6 +23,7 @@ export default function IdeasPage() {
   const [effort, setEffort] = useState<Effort | "all">("all" as unknown as Effort);
   const [impact, setImpact] = useState<Impact | "all">("all" as unknown as Impact);
   const [status, setStatus] = useState<IdeaStatus | "all">("all" as unknown as IdeaStatus);
+  const [kind, setKind] = useState<"all" | "new" | "enhancement">("all");
   const [q, setQ] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const [scaffolding, setScaffolding] = useState<string | null>(null);
@@ -39,6 +40,7 @@ export default function IdeasPage() {
       if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
       if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
       if (status !== ("all" as unknown as IdeaStatus) && it.status !== status) return false;
+      if (kind !== "all" && (it as unknown as { kind: string }).kind !== kind) return false;
       if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow} ${it.problem} ${it.solution}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
@@ -46,7 +48,7 @@ export default function IdeasPage() {
     const n = base.length || 1;
     const k = shuffleSeed % n;
     return [...base.slice(k), ...base.slice(0, k)];
-  }, [domain, effort, impact, status, q, shuffleSeed]);
+  }, [domain, effort, impact, status, kind, q, shuffleSeed]);
 
   async function copyPrompt(prompt: string) {
     await navigator.clipboard.writeText(prompt);
@@ -112,7 +114,7 @@ export default function IdeasPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Ideas</h1>
-            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>12 professional dashboard briefs — each with Problem, Solution, Benefit, Data needed, Feasibility, and Next step. Filter by domain, effort, impact, status. Tap a card to expand the full brief. Actions: Open dashboard, Copy prompt, Scaffold stub.</p>
+            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>{FLEET_IDEAS.length} professional briefs — deduplicated against 37 live dashboards. <span className="font-semibold text-emerald-300">5 New dashboards</span> (white-space) + <span className="font-semibold text-amber-300">6 Enhancements</span> (add as tab inside existing dashboard) — 1 duplicate removed (Content Decay already live). Tap to expand full brief with evidence.</p>
           </div>
           <div className="flex gap-2"><button onClick={doReload} disabled={reloading} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20 disabled:opacity-50">{reloading ? "\u21bb Reloading\u2026" : "Find more ideas \u21bb"}</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create \u2192</Link></div>
         </div>
@@ -123,6 +125,11 @@ export default function IdeasPage() {
             <div className="flex flex-wrap gap-1.5 rounded-full border border-white/10 bg-white/[0.04] p-1">
               {(["all", "seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"] as const).map((d) => (
                 <button key={d} onClick={() => setDomain(d as FleetDomain | "all")} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold transition ${domain === d ? "bg-violet-600 text-white" : "text-white/60 hover:text-white"}`}>{d === "all" ? "All Domains" : DOMAIN_LABEL[d]}</button>
+              ))}
+            </div>
+            <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+              {(["all", "new", "enhancement"] as const).map((k) => (
+                <button key={k} onClick={() => setKind(k)} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold capitalize ${kind === k ? "bg-violet-600 text-white" : "text-white/60 hover:text-white"}`}>{k === "all" ? "All kinds" : k === "new" ? "New" : "Enhancement"}</button>
               ))}
             </div>
           </div>
@@ -161,6 +168,7 @@ export default function IdeasPage() {
                 <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: DOMAIN_COLOR[idea.domain] }}>{DOMAIN_LABEL[idea.domain]}</span>
                 <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold ${badgeEffort(idea.effort)}`}>{idea.effort}</span>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badgePriority(idea.priority)}`}>{idea.priority}</span>
+                <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${idea.kind === "new" ? "bg-emerald-500 text-white" : "bg-amber-500 text-black"}`}>{idea.kind === "new" ? "NEW" : "ENHANCE"}</span>
                 <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${idea.impact === "high" ? "bg-emerald-500/15 text-emerald-300" : idea.impact === "medium" ? "bg-amber-500/15 text-amber-300" : "bg-white/10 text-white/60"}`}>{idea.impact}</span>
               </div>
               <h3 className="mt-2 text-[15px] font-bold leading-tight text-white">{idea.title}</h3>
@@ -172,6 +180,11 @@ export default function IdeasPage() {
                 {idea.widgets.slice(0, 4).map((w) => (
                   <span key={w} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/60">{w}</span>
                 ))}
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[11px]">
+                <span className={`rounded-full px-2 py-0.5 font-bold ${idea.gapScore < 30 ? "bg-white text-[#0f0b1a]" : idea.gapScore < 50 ? "bg-red-500 text-white" : idea.gapScore < 70 ? "bg-amber-500 text-black" : "bg-emerald-500 text-white"}`}>Gap {idea.gapScore}%</span>
+                {idea.targetSlug ? <span className="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-white/60">→ {idea.targetSlug}</span> : null}
+                <span className="text-white/30">{idea.kind === "new" ? "New dashboard" : "Add as tab inside existing"}</span>
               </div>
 
               {/* Professional brief toggle */}
@@ -187,7 +200,8 @@ export default function IdeasPage() {
                   <div><span className="font-bold text-emerald-300">Benefit:</span> <span className="text-white/70">{idea.benefit}</span></div>
                   <div><span className="font-bold text-amber-300">Data needed:</span> <span className="text-white/60">{idea.dataNeeded}</span></div>
                   <div><span className="font-bold text-white/60">Feasibility:</span> <span className="text-white/60">{idea.feasibility}</span></div>
-                  <div className="rounded-lg bg-white/5 p-3"><span className="font-bold text-white">Next step:</span> <span className="text-violet-200">{idea.nextStep}</span></div>
+                  <div className="rounded-lg bg-amber-500/10 border border-amber-500/20 p-3"><span className="font-bold text-amber-200">Evidence (vs 37 live):</span> <span className="text-amber-100/80">{idea.evidence}</span></div>
+                  <div className="rounded-lg bg-white/5 p-3"><span className="font-bold text-white">Next step:</span> <span className="text-violet-200">{idea.nextStep}</span> {idea.targetSlug ? <span className="text-white/40">· target: {idea.targetSlug}</span> : null}</div>
                 </div>
               ) : null}
 
@@ -198,8 +212,8 @@ export default function IdeasPage() {
                   <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-white/40">No URL</span>
                 )}
                 <button onClick={() => copyPrompt(idea.prompt)} className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 text-[12px] font-semibold text-white hover:bg-white/10">Copy prompt</button>
-                <button onClick={() => doScaffold(idea)} disabled={scaffolding === idea.id} className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-violet-600 px-2 text-[12px] font-semibold text-white hover:bg-violet-500 disabled:opacity-50">
-                  {scaffolding === idea.id ? "\u2026" : "Scaffold"}
+                <button onClick={() => doScaffold(idea)} disabled={scaffolding === idea.id} className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-2 text-[12px] font-semibold disabled:opacity-50 ${idea.kind === "enhancement" ? "border border-amber-500/30 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20" : "bg-violet-600 text-white hover:bg-violet-500"}`}> 
+                  {scaffolding === idea.id ? "\u2026" : idea.kind === "enhancement" ? "Scaffold tab" : "Scaffold"}
                 </button>
               </div>
               <div className="mt-2 text-center text-[11px] text-white/30">{idea.slug}</div>
@@ -210,7 +224,7 @@ export default function IdeasPage() {
         {filtered.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
             <p className="text-sm text-white/60">No ideas match your filters.</p>
-            <button onClick={() => { setDomain("all"); setEffort("all" as unknown as Effort); setImpact("all" as unknown as Impact); setStatus("all" as unknown as IdeaStatus); setQ(""); }} className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10">Clear filters</button>
+            <button onClick={() => { setDomain("all"); setEffort("all" as unknown as Effort); setImpact("all" as unknown as Impact); setStatus("all" as unknown as IdeaStatus); setKind("all"); setQ(""); }} className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10">Clear filters</button>
           </div>
         ) : null}
 

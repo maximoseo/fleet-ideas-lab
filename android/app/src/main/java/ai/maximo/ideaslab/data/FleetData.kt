@@ -1,7 +1,7 @@
 package ai.maximo.ideaslab.data
 
 data class FleetSite(val slug: String, val name: String, val domain: String, val status: String, val stack: String)
-data class FleetIdea(val slug: String, val title: String, val category: String, val impact: String, val prompt: String)
+data class FleetIdea(val slug: String, val title: String, val category: String, val impact: String, val prompt: String, val kind: String = "new", val gapScore: Int = 0, val evidence: String = "", val targetSlug: String = "")
 data class GapCell(val site: String, val gap: String, val level: Int)
 
 object FleetData {
@@ -46,18 +46,18 @@ object FleetData {
     )
     val gaps = listOf("SEO", "Design", "Content", "Tech")
     val matrix: List<GapCell> = sites.flatMap { s -> gaps.map { g -> GapCell(s.slug, g, kotlin.math.abs((s.slug.hashCode() + g.hashCode()) % 3)) } }
+    // Deduplicated 2026-08-15: 5 NEW (white-space) + 6 ENHANCEMENT (add as tab) — 1 duplicate removed (content-decay already live)
     val ideas = listOf(
-        FleetIdea("serp-volatility-war-room", "SERP Volatility War Room", "seo", "high", "Build SERP Volatility War Room: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("content-decay-radar", "Content Decay Radar", "content", "high", "Build Content Decay Radar: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("gbp-health-monitor", "GBP Health Monitor", "local", "high", "Build GBP Health Monitor: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("anomaly-explain-engine", "Anomaly Explain Engine", "analytics", "high", "Build Anomaly Explain Engine: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("outreach-inbox-commander", "Outreach Inbox Commander", "outreach", "medium", "Build Outreach Inbox Commander: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("schema-studio", "Schema Studio", "technical", "medium", "Build Schema Studio: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("design-token-pipeline", "Design Token Pipeline", "design", "medium", "Build Design Token Pipeline: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("content-brief-autopilot", "Content Brief Autopilot", "content", "high", "Build Content Brief Autopilot: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("local-citation-pulse", "Local Citation Pulse", "local", "medium", "Build Local Citation Pulse: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("fleet-cron-observatory", "Fleet Cron Observatory", "automation", "high", "Build Fleet Cron Observatory: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("link-velocity-tracker", "Link Velocity Tracker", "outreach", "low", "Build Link Velocity Tracker: see fleet-ideas-lab /ideas for full prompt"),
-        FleetIdea("cwv-budget-guard", "CWV Budget Guard", "technical", "high", "Build CWV Budget Guard: see fleet-ideas-lab /ideas for full prompt"),
+        FleetIdea("anomaly-explain-engine", "Anomaly Explain Engine", "analytics", "high", "Build Anomaly Explain Engine: timeline + LLM root-cause + impact. Use GA4+GSC anomalies.", "new", 17, "analytics\u00d7alerts 1/6 (17%) — 5 of 6 analytics dashboards lack alerts", ""),
+        FleetIdea("outreach-inbox-commander", "Outreach Inbox Commander", "outreach", "high", "Build Outreach Inbox Commander: thread list + reply score + follow-up timer. Gmail API.", "new", 8, "outreach\u00d7automation 0/2 (8%) — both outreach dashboards analytics-only, no automation", ""),
+        FleetIdea("schema-studio", "Schema Studio", "technical", "medium", "Build Schema Studio: JSON-LD editor + validator + rich result preview.", "new", 8, "technical\u00d7visualization 0/7 (8%) — all 7 technical dashboards are reporting/alerts, no visualization", ""),
+        FleetIdea("design-token-pipeline", "Design Token Pipeline", "design", "medium", "Build Design Token Pipeline: token editor + WP sync + preview frame.", "new", 8, "design\u00d7automation 0/1 (8%) — design-lab is visualization-only", "design-lab"),
+        FleetIdea("fleet-cron-observatory", "Fleet Cron Observatory", "automation", "high", "Build Fleet Cron Observatory: cron timeline + failure heatmap + retry. n8n+Vercel logs.", "new", 18, "automation\u00d7alerts 2/11 (18%) — 9 of 11 automation dashboards lack alerting", ""),
+        FleetIdea("serp-volatility-war-room", "Enhance Site Intel: SERP Volatility War Room", "seo", "medium", "Enhance site-intel-dashboard with War-Room tab: volatility index + winners/losers + SERP features.", "enhancement", 96, "seo\u00d7analytics 4/4 (96% strong) — site-intel already owns this; gap is feature not missing dashboard", "site-intel-dashboard"),
+        FleetIdea("gbp-health-monitor", "Enhance Local SEO: GBP Health Monitor", "local", "medium", "Enhance local-seo-dashboard with Health tab: suspension risk + completeness + photo freshness.", "enhancement", 67, "local\u00d7analytics 2/3 (67% ok) — local domain has local-seo + ai-visibility + rep-center; health is feature", "local-seo-dashboard"),
+        FleetIdea("content-brief-autopilot", "Enhance Content Automation: Brief Autopilot", "content", "medium", "Enhance content-automation with Brief Autopilot tab: SERP brief + outline + entity map.", "enhancement", 67, "content\u00d7automation 2/3 (67%) — content-automation + prompt-forge already cover automation", "content-automation"),
+        FleetIdea("local-citation-pulse", "Enhance Local SEO: Citation Pulse", "local", "medium", "Enhance local-seo-dashboard with Citation Pulse tab: citation map + NAP diff + fix queue.", "enhancement", 33, "local\u00d7reporting 1/3 (33% gap) — only ai-visibility covers reporting in local; feature-level gap", "local-seo-dashboard"),
+        FleetIdea("link-velocity-tracker", "Enhance Competitor Intel: Link Velocity", "outreach", "low", "Enhance competitor-intelligence with Link Velocity tab: velocity chart + anchor mix + risk flag. Ahrefs/Majestic.", "enhancement", 96, "outreach\u00d7analytics 2/2 (96% strong) — outreach saturated; velocity is feature inside intel hub", "competitor-intelligence"),
+        FleetIdea("cwv-budget-guard", "Enhance SiteWatch: CWV Budget Guard", "technical", "medium", "Enhance sitewatch with CWV Guard tab: LCP/CLS/INP gauges + budget bar + deploy gate. Lighthouse CI.", "enhancement", 86, "technical\u00d7alerts 6/7 (86% strong) — technical alerts saturated; CWV guard is feature", "sitewatch"),
     )
 }
