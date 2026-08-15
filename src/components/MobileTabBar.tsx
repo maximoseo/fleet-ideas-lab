@@ -39,6 +39,9 @@ const TABS = [
   },
 ] as const;
 
+const MORE_FLEET = [
+  { href: "/ideas", label: "Notifications", hint: "Channels & test" },
+] as const;
 const MORE = [
   { href: "/audit", label: "Site Audit", hint: "Audit a client site" },
   { href: "/generate", label: "Design System", hint: "Tokens & CSS" },
@@ -46,6 +49,7 @@ const MORE = [
   { href: "/mockup", label: "Mockups", hint: "Full-page mockups" },
   { href: "/history", label: "History", hint: "Past analyses" },
   { href: "/prototypes/", label: "Prototypes", hint: "Client gallery", external: true },
+  // Fleet Ideas Lab extras — notifications + update are native routes exposed via deep links; keep web header fallback
 ];
 
 export default function MobileTabBar() {

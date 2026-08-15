@@ -44,14 +44,27 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
     var error by remember { mutableStateOf<String?>(null) }
     var turnstileToken by remember { mutableStateOf("") }
     var biometricAvailable by remember { mutableStateOf(false) }
+    var biometricEnabledStored by remember { mutableStateOf(false) }
+    var showBiometricPrompt by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         val mgr = BiometricManager.from(ctx)
         biometricAvailable = mgr.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
+        biometricEnabledStored = try { sessionStore.isBiometricEnabled() } catch(_: Exception) { false }
+        // Auto-prompt if session exists and biometric was enabled by user
+        val hasSession = try { sessionStore.getSession()?.isNotEmpty() == true } catch(_: Exception){ false }
+        if (biometricAvailable && biometricEnabledStored && hasSession) {
+            // small delay to let UI settle, then prompt
+            kotlinx.coroutines.delay(700)
+            showBiometricPrompt = true
+        }
     }
 
-    fun doBiometric() {
-        val activity = ctx as? FragmentActivity ?: return
+    // Effect to actually show prompt when flag set
+    LaunchedEffect(showBiometricPrompt) {
+        if (!showBiometricPrompt) return@LaunchedEffect
+        showBiometricPrompt = false
+        val activity = ctx as? FragmentActivity ?: return@LaunchedEffect
         val executor = ContextCompat.getMainExecutor(ctx)
         val prompt = BiometricPrompt(activity, executor, object : BiometricPrompt.AuthenticationCallback() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
@@ -60,32 +73,33 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
                     if (has) onSuccess() else error = "Session expired \u2014 please sign in again"
                 }
             }
-            override fun onAuthenticationError(code: Int, msg: CharSequence) { error = msg.toString() }
+            override fun onAuthenticationError(code: Int, msg: CharSequence) {
+                if (code != BiometricPrompt.ERROR_USER_CANCELED && code != BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                    error = msg.toString()
+                }
+            }
         })
-        prompt.authenticate(BiometricPrompt.PromptInfo.Builder().setTitle("Fleet Ideas Lab").setSubtitle("Biometric login").setNegativeButtonText("Cancel").build())
+        prompt.authenticate(BiometricPrompt.PromptInfo.Builder().setTitle("Ideas Lab").setSubtitle("Sign in with fingerprint").setNegativeButtonText("Cancel").build())
     }
+
+    fun doBiometric() { showBiometricPrompt = true }
 
     Column(
         Modifier.fillMaxSize().background(Color(0xFF0C0A14)).padding(horizontal = 24.dp).padding(top = 48.dp, bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(Modifier.height(24.dp))
-        // Professional logo — violet ring + geometric grid/bulb mark
         Box(Modifier.size(72.dp).clip(CircleShape).background(Color(0xFF7C3AED)), contentAlignment = Alignment.Center) {
             Canvas(Modifier.size(40.dp)) {
                 val s = size.minDimension
-                // 2x2 grid hinting fleet + bulb
                 val stroke = s * 0.07f
                 drawCircle(color = Color.White, style = Stroke(width = stroke))
-                // inner bulb filament path
                 val path = Path().apply {
-                    moveTo(s*0.5f, s*0.28f)
-                    lineTo(s*0.5f, s*0.62f)
+                    moveTo(s*0.5f, s*0.28f); lineTo(s*0.5f, s*0.62f)
                     moveTo(s*0.38f, s*0.42f); lineTo(s*0.62f, s*0.42f)
                     moveTo(s*0.38f, s*0.54f); lineTo(s*0.62f, s*0.54f)
                 }
                 drawPath(path, color = Color.White, style = Stroke(width = stroke*0.9f))
-                // base
                 drawRect(color = Color.White, topLeft = androidx.compose.ui.geometry.Offset(s*0.38f, s*0.62f), size = androidx.compose.ui.geometry.Size(s*0.24f, s*0.10f))
             }
         }
@@ -117,8 +131,6 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
         }
 
         Spacer(Modifier.height(16.dp))
-
-        // Invisible Turnstile — no user-visible fallback text
         TurnstileWebView(onToken = { turnstileToken = it })
 
         Button(
@@ -129,7 +141,13 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
                 scope.launch {
                     val res = api.login(username.trim(), password, turnstileToken)
                     busy = false
-                    if (res.ok) onSuccess() else error = res.error ?: "Sign in failed"
+                    if (res.ok) {
+                        // Offer to enable biometric for next time if available and not yet enabled
+                        if (biometricAvailable && !biometricEnabledStored) {
+                            try { sessionStore.setBiometric(true) } catch(_: Exception){}
+                        }
+                        onSuccess()
+                    } else error = res.error ?: "Sign in failed"
                 }
             },
             modifier = Modifier.fillMaxWidth().height(52.dp),
@@ -147,11 +165,18 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
                 modifier = Modifier.fillMaxWidth().height(48.dp),
                 shape = RoundedCornerShape(14.dp),
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFA78BFA))
-            ) { Text("Use biometrics", fontWeight = FontWeight.Medium) }
+            ) {
+                Text("\uD83D\uDD12  Sign in with fingerprint", fontWeight = FontWeight.Medium)
+            }
+            if (!biometricEnabledStored) {
+                Text("Fingerprint will be enabled after first sign-in", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7280), modifier = Modifier.padding(top = 6.dp))
+            }
         }
 
         Spacer(Modifier.weight(1f))
-        Text("MaximoSEO \u00b7 fleet-ideas-lab", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4B5563))
+        Text("Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4B5563), textAlign = TextAlign.Center)
+        Spacer(Modifier.height(4.dp))
+        Text("MaximoSEO \u00b7 Ideas Lab", style = MaterialTheme.typography.labelSmall, color = Color(0xFF4B5563))
     }
 }
 

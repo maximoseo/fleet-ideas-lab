@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import TrustLine from "@/components/TrustLine";
 import SiteHeader from "@/components/SiteHeader";
@@ -28,6 +28,9 @@ export default function IdeasPage() {
   const [scaffolding, setScaffolding] = useState<string | null>(null);
   const [scaffoldResult, setScaffoldResult] = useState<string | null>(null);
   const [shuffleSeed, setShuffleSeed] = useState(0);
+  const [reloading, setReloading] = useState(false);
+  const [pullY, setPullY] = useState(0);
+  const pullStart = useRef<number | null>(null);
 
   const filtered = useMemo(() => {
     const base = FLEET_IDEAS.filter((it) => {
@@ -71,8 +74,29 @@ export default function IdeasPage() {
     }
   }
 
+  const doReload = useCallback(() => {
+    setReloading(true);
+    setShuffleSeed((s) => s + 1);
+    setToast(`\u21bb Reloaded \u00b7 ${filtered.length} ideas`);
+    setTimeout(() => { setReloading(false); setToast(null); }, 1800);
+  }, [filtered.length]);
+
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (window.scrollY === 0) pullStart.current = e.touches[0].clientY;
+  }, []);
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (pullStart.current === null) return;
+    const dy = e.touches[0].clientY - pullStart.current;
+    if (dy > 0 && window.scrollY === 0) setPullY(Math.min(dy * 0.4, 72));
+  }, []);
+  const onTouchEnd = useCallback(() => {
+    if (pullY > 48) doReload();
+    pullStart.current = null;
+    setPullY(0);
+  }, [pullY, doReload]);
+
   return (
-    <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }}>
+    <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <SiteHeader subtitle="12 ideas • filters & scaffold" />
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
@@ -80,7 +104,7 @@ export default function IdeasPage() {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Ideas</h1>
             <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>12 dashboard concepts derived from gap radar. Filter by domain, effort, impact, status. Actions: Open dashboard, Copy prompt, Scaffold stub.</p>
           </div>
-          <div className="flex gap-2"><button onClick={() => setShuffleSeed((s) => s + 1)} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20">Find more ideas ↻</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create →</Link></div>
+          <div className="flex gap-2"><button onClick={doReload} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20">Find more ideas ↻</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create →</Link></div>
         </div>
 
         {/* Filters */}

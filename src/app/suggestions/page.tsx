@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import SiteHeader from "@/components/SiteHeader";
+import TrustLine from "@/components/TrustLine";
 import { pushHistory } from "@/lib/history";
 
 interface Suggestion {
@@ -42,6 +43,8 @@ export default function SuggestionsPage() {
   const [error, setError] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [siteTitle, setSiteTitle] = useState("");
+  const [pullY, setPullY] = useState(0);
+  const pullStart = useRef<number | null>(null);
 
   const analyze = useCallback(async () => {
     if (!url.trim()) { setError("Enter a URL first"); return; }
@@ -76,14 +79,29 @@ export default function SuggestionsPage() {
     }
   }, [url]);
 
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (window.scrollY === 0) pullStart.current = e.touches[0].clientY;
+  }, []);
+  const onTouchMove = useCallback((e: React.TouchEvent) => {
+    if (pullStart.current === null) return;
+    const dy = e.touches[0].clientY - pullStart.current;
+    if (dy > 0 && window.scrollY === 0) setPullY(Math.min(dy * 0.4, 72));
+  }, []);
+  const onTouchEnd = useCallback(() => {
+    if (pullY > 48 && step === "result") analyze();
+    pullStart.current = null;
+    setPullY(0);
+  }, [pullY, step, analyze]);
+
   const highImpact = suggestions.filter(s => s.impact === "high");
   const quickWins = suggestions.filter(s => s.effort === "easy");
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white">
+    <div className="min-h-screen bg-[#0c0a14] text-white" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <SiteHeader subtitle="AI design ideas" />
+      {pullY > 0 ? (<div className="flex justify-center py-2" style={{ opacity: pullY / 72 }}><span className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold ${pullY > 48 ? "border-violet-500/40 bg-violet-500/20 text-violet-200" : "border-white/10 bg-white/5 text-white/50"}`}><span className={pullY > 48 ? "animate-spin inline-block" : ""}>{pullY > 48 ? "\u21bb" : "\u2193"}</span>{pullY > 48 ? "Release to reload" : "Pull to reload"}</span></div>) : null}
 
-      <main className="mx-auto max-w-4xl px-6 py-8">
+      <main className="mx-auto max-w-4xl px-6 py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-8">
         {step === "input" && (
           <div className="mx-auto max-w-xl">
             <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>Get design suggestions</h2>
@@ -170,6 +188,7 @@ export default function SuggestionsPage() {
             )}
           </div>
         )}
+        <TrustLine />
       </main>
     </div>
   );

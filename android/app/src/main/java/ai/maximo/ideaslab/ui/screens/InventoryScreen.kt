@@ -19,7 +19,7 @@ import ai.maximo.ideaslab.data.FleetData
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 
 @Composable
-fun InventoryScreen() {
+fun InventoryScreen(onNotifications: () -> Unit = {}) {
     var shuffleSeed by remember { mutableStateOf(0) }
     val sites = remember(shuffleSeed) {
         if (shuffleSeed == 0) FleetData.sites else {
@@ -37,6 +37,9 @@ fun InventoryScreen() {
             }
             FilledTonalButton(onClick = { shuffleSeed++ }, modifier = Modifier.height(36.dp), contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)) {
                 Text("Find more \u21bb", style = MaterialTheme.typography.labelMedium)
+            }
+            IconButton(onClick = onNotifications, modifier = Modifier.size(36.dp)) {
+                Text("\uD83D\uDD14", style = MaterialTheme.typography.titleMedium)
             }
         }
         // Trust line compact
@@ -89,9 +92,9 @@ fun InventoryScreen() {
 }
 
 @Composable
-fun InventoryScreenWithUpdate(api: ai.maximo.ideaslab.data.ApiClient) {
+fun InventoryScreenWithUpdate(api: ai.maximo.ideaslab.data.ApiClient, onNotifications: () -> Unit = {}) {
     Column(Modifier.fillMaxSize()) {
         UpdateBanner()
-        InventoryScreen()
+        InventoryScreen(onNotifications = onNotifications)
     }
 }
