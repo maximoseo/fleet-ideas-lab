@@ -1,0 +1,770 @@
+[
+  {
+    "id": "swiss-minimal",
+    "name": "Minimalism & Swiss Style",
+    "category": "General",
+    "keywords": [
+      "Clean",
+      "simple",
+      "spacious",
+      "functional",
+      "white space",
+      "high contrast",
+      "geometric",
+      "sans-serif",
+      "grid-based",
+      "essential"
+    ],
+    "promptKeywords": "Design a minimalist landing page. Use: white space, geometric layouts, sans-serif fonts, high contrast, grid-based structure, essential elements only. Avoid shadows and gradients. Focus on clarity and functionality.",
+    "cssKeywords": "display: grid, gap: 2rem, font-family: sans-serif, color: #000 or #FFF, max-width: 1200px, clean borders, no box-shadow unless necessary",
+    "designSystemVariables": "--spacing: 2rem, --border-radius: 0px, --font-weight: 400-700, --shadow: none, --accent-color: single primary only",
+    "bestFor": "Enterprise apps, dashboards, documentation sites, SaaS platforms, professional tools",
+    "avoidFor": "Creative portfolios, entertainment, playful brands, artistic experiments",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": false,
+    "suitsPersonality": [
+      "professional",
+      "restrained",
+      "technical"
+    ],
+    "tokens": {
+      "Primary": "#0F172A",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#334155",
+      "Accent": "#0369A1",
+      "Background": "#F8FAFC",
+      "Foreground": "#020617",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#020617",
+      "Muted": "#E8ECF1",
+      "Muted Foreground": "#64748B",
+      "Border": "#E2E8F0",
+      "Ring": "#0F172A"
+    },
+    "fontPairing": {
+      "name": "Minimal Swiss",
+      "heading": "Inter",
+      "body": "Inter",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap",
+      "mood": [
+        "minimal",
+        "clean",
+        "swiss",
+        "functional",
+        "neutral",
+        "professional"
+      ]
+    }
+  },
+  {
+    "id": "swiss-modern-2",
+    "name": "Swiss Modernism 2.0",
+    "category": "General",
+    "keywords": [
+      "Grid system",
+      "Helvetica",
+      "modular",
+      "asymmetric",
+      "international style",
+      "rational",
+      "clean",
+      "mathematical spacing"
+    ],
+    "promptKeywords": "Design with Swiss Modernism 2.0. Use: strict grid system (12 columns), Helvetica/Inter fonts, mathematical spacing, asymmetric balance, high contrast, minimal decoration, clean hierarchy, single accent color.",
+    "cssKeywords": "display: grid, grid-template-columns: repeat(12, 1fr), gap: 1rem (8px base unit), font-family: Inter/Helvetica, font-weight: 400-700, color: #000/#FFF, single accent",
+    "designSystemVariables": "--grid-columns: 12, --grid-gap: 1rem, --base-unit: 8px, --font-primary: Inter, --color-text: #000000, --color-bg: #FFFFFF, --accent: single vibrant",
+    "bestFor": "Corporate sites, architecture, editorial, SaaS, museums, professional services, documentation",
+    "avoidFor": "Playful brands, children's sites, entertainment, gaming, emotional storytelling",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "professional",
+      "restrained"
+    ],
+    "tokens": {
+      "Primary": "#4F46E5",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#6366F1",
+      "Accent": "#EA580C",
+      "Background": "#EEF2FF",
+      "Foreground": "#312E81",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#312E81",
+      "Muted": "#EBEEF8",
+      "Muted Foreground": "#64748B",
+      "Border": "#C7D2FE",
+      "Ring": "#4F46E5"
+    },
+    "fontPairing": {
+      "name": "Modern Professional",
+      "heading": "Poppins",
+      "body": "Open Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap",
+      "mood": [
+        "modern",
+        "professional",
+        "clean",
+        "corporate",
+        "friendly",
+        "approachable"
+      ]
+    }
+  },
+  {
+    "id": "glass",
+    "name": "Glassmorphism",
+    "category": "General",
+    "keywords": [
+      "Frosted glass",
+      "transparent",
+      "blurred background",
+      "layered",
+      "vibrant background",
+      "light source",
+      "depth",
+      "multi-layer"
+    ],
+    "promptKeywords": "Design a glassmorphic interface with frosted glass effect. Use backdrop blur (10-20px), translucent overlays (rgba 10-30% opacity), vibrant background colors, subtle borders, light source reflection, layered depth. Perfect for modern overlays and cards.",
+    "cssKeywords": "backdrop-filter: blur(15px), background: rgba(255, 255, 255, 0.15), border: 1px solid rgba(255,255,255,0.2), -webkit-backdrop-filter: blur(15px), z-index layering for depth",
+    "designSystemVariables": "--blur-amount: 15px, --glass-opacity: 0.15, --border-color: rgba(255,255,255,0.2), --background: vibrant color, --text-color: light/dark based on BG",
+    "bestFor": "Modern SaaS, financial dashboards, high-end corporate, lifestyle apps, modal overlays, navigation",
+    "avoidFor": "Low-contrast backgrounds, critical accessibility, performance-limited, dark text on dark",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "technical",
+      "light-first"
+    ],
+    "tokens": {
+      "Primary": "#2563EB",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#3B82F6",
+      "Accent": "#EA580C",
+      "Background": "#F8FAFC",
+      "Foreground": "#1E293B",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#1E293B",
+      "Muted": "#E9EFF8",
+      "Muted Foreground": "#64748B",
+      "Border": "#E2E8F0",
+      "Ring": "#2563EB"
+    },
+    "fontPairing": {
+      "name": "Tech Startup",
+      "heading": "Space Grotesk",
+      "body": "DM Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap",
+      "mood": [
+        "tech",
+        "startup",
+        "modern",
+        "innovative",
+        "bold",
+        "futuristic"
+      ]
+    }
+  },
+  {
+    "id": "oled-dark",
+    "name": "Dark Mode (OLED)",
+    "category": "General",
+    "keywords": [
+      "Dark theme",
+      "low light",
+      "high contrast",
+      "deep black",
+      "midnight blue",
+      "eye-friendly",
+      "OLED",
+      "night mode",
+      "power efficient"
+    ],
+    "promptKeywords": "Create an OLED-optimized dark interface with deep black (#000000), dark grey (#121212), midnight blue accents. Use minimal glow effects, vibrant neon accents (green, blue, gold, purple), high contrast text. Optimize for eye comfort and OLED power saving.",
+    "cssKeywords": "background: #000000 or #121212, color: #FFFFFF or #E0E0E0, text-shadow: 0 0 10px neon-color (sparingly), filter: brightness(0.8) if needed, color-scheme: dark",
+    "designSystemVariables": "--bg-black: #000000, --bg-dark-grey: #121212, --text-primary: #FFFFFF, --accent-neon: neon colors, --glow-effect: minimal, --oled-optimized: true",
+    "bestFor": "Night-mode apps, coding platforms, entertainment, eye-strain prevention, OLED devices, low-light",
+    "avoidFor": "Print-first content, high-brightness outdoor, color-accuracy-critical",
+    "lightMode": false,
+    "darkMode": true,
+    "conversionFocused": false,
+    "suitsPersonality": [
+      "dark-first",
+      "technical"
+    ],
+    "tokens": {
+      "Primary": "#7C3AED",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#A78BFA",
+      "Accent": "#0891B2",
+      "Background": "#FAF5FF",
+      "Foreground": "#1E1B4B",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#1E1B4B",
+      "Muted": "#ECEEF9",
+      "Muted Foreground": "#64748B",
+      "Border": "#DDD6FE",
+      "Ring": "#7C3AED"
+    },
+    "fontPairing": {
+      "name": "Tech Startup",
+      "heading": "Space Grotesk",
+      "body": "DM Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap",
+      "mood": [
+        "tech",
+        "startup",
+        "modern",
+        "innovative",
+        "bold",
+        "futuristic"
+      ]
+    }
+  },
+  {
+    "id": "aurora",
+    "name": "Aurora UI",
+    "category": "General",
+    "keywords": [
+      "Vibrant gradients",
+      "smooth blend",
+      "Northern Lights effect",
+      "mesh gradient",
+      "luminous",
+      "atmospheric",
+      "abstract"
+    ],
+    "promptKeywords": "Create a vibrant gradient interface inspired by Northern Lights with mesh gradients, smooth color blends, flowing animations. Use complementary color pairs (blue-orange, purple-yellow), flowing background gradients, subtle continuous animations (8-12s loops), iridescent effects.",
+    "cssKeywords": "background: conic-gradient or radial-gradient with multiple stops, animation: @keyframes gradient (8-12s), background-size: 200% 200%, filter: saturate(1.2), blend-mode: screen or multiply",
+    "designSystemVariables": "--gradient-colors: complementary pairs, --animation-duration: 8-12s, --blend-mode: screen, --color-saturation: 1.2, --effect: iridescent, --loop-smooth: true",
+    "bestFor": "Modern SaaS, creative agencies, branding, music platforms, lifestyle, premium products, hero sections",
+    "avoidFor": "Data-heavy dashboards, critical accessibility, content-heavy where distraction issues",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "colourful",
+      "technical"
+    ],
+    "tokens": {
+      "Primary": "#6366F1",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#818CF8",
+      "Accent": "#059669",
+      "Background": "#F5F3FF",
+      "Foreground": "#1E1B4B",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#1E1B4B",
+      "Muted": "#EBEFF9",
+      "Muted Foreground": "#64748B",
+      "Border": "#E0E7FF",
+      "Ring": "#6366F1"
+    },
+    "fontPairing": {
+      "name": "Tech Startup",
+      "heading": "Space Grotesk",
+      "body": "DM Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap",
+      "mood": [
+        "tech",
+        "startup",
+        "modern",
+        "innovative",
+        "bold",
+        "futuristic"
+      ]
+    }
+  },
+  {
+    "id": "accessible",
+    "name": "Accessible & Ethical",
+    "category": "General",
+    "keywords": [
+      "High contrast",
+      "large text (16px+)",
+      "keyboard navigation",
+      "screen reader friendly",
+      "WCAG compliant",
+      "focus state",
+      "semantic"
+    ],
+    "promptKeywords": "Design with WCAG AAA compliance. Include: high contrast (7:1+), large text (16px+), keyboard navigation, screen reader compatibility, focus states visible (3-4px ring), semantic HTML, ARIA labels, skip links, reduced motion support (prefers-reduced-motion), 44x44px touch targets.",
+    "cssKeywords": "color-contrast: 7:1+, font-size: 16px+, outline: 3-4px on :focus-visible, aria-label, role attributes, @media (prefers-reduced-motion), touch-target: 44x44px, cursor: pointer",
+    "designSystemVariables": "--contrast-ratio: 7:1, --font-size-min: 16px, --focus-ring: 3-4px, --touch-target: 44x44px, --wcag-level: AAA, --keyboard-accessible: true, --sr-tested: true",
+    "bestFor": "Government, healthcare, education, inclusive products, large audience, legal compliance, public",
+    "avoidFor": "None - accessibility universal",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "professional",
+      "trust-led"
+    ],
+    "tokens": {
+      "Primary": "#0891B2",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#22D3EE",
+      "Accent": "#059669",
+      "Background": "#ECFEFF",
+      "Foreground": "#164E63",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#164E63",
+      "Muted": "#E8F1F6",
+      "Muted Foreground": "#64748B",
+      "Border": "#A5F3FC",
+      "Ring": "#0891B2"
+    },
+    "fontPairing": {
+      "name": "Modern Professional",
+      "heading": "Poppins",
+      "body": "Open Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap",
+      "mood": [
+        "modern",
+        "professional",
+        "clean",
+        "corporate",
+        "friendly",
+        "approachable"
+      ]
+    }
+  },
+  {
+    "id": "trust-authority",
+    "name": "Trust & Authority",
+    "category": "Landing Page",
+    "keywords": [
+      "Certificates/badges displayed",
+      "expert credentials",
+      "case studies with metrics",
+      "before/after comparisons",
+      "industry recognition",
+      "security badges"
+    ],
+    "promptKeywords": "Design a trust-focused landing page. Use: certification badges, security indicators, expert credentials, industry awards, case study metrics, compliance logos (GDPR, SOC2), guarantee badges, professional photography.",
+    "cssKeywords": "badge grid layout, shield icons, lock icons for security, certificate styling, metric cards with icons, professional color scheme (blue/grey), subtle shadows for depth",
+    "designSystemVariables": "--badge-height: 48px, --trust-color: #1E40AF, --security-green: #059669, --card-shadow: 0 4px 6px rgba(0,0,0,0.1), --metric-highlight: #F59E0B",
+    "bestFor": "Healthcare/medical landing pages, financial services, enterprise software, premium/luxury products, legal services",
+    "avoidFor": "Casual products, entertainment, viral/social-first products",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "professional",
+      "trust-led",
+      "commercial"
+    ],
+    "tokens": {
+      "Primary": "#0F172A",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#334155",
+      "Accent": "#0369A1",
+      "Background": "#F8FAFC",
+      "Foreground": "#020617",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#020617",
+      "Muted": "#E8ECF1",
+      "Muted Foreground": "#64748B",
+      "Border": "#E2E8F0",
+      "Ring": "#0F172A"
+    },
+    "fontPairing": {
+      "name": "Corporate Trust",
+      "heading": "Lexend",
+      "body": "Source Sans 3",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Source+Sans+3:wght@300;400;500;600;700&display=swap",
+      "mood": [
+        "corporate",
+        "trustworthy",
+        "accessible",
+        "readable",
+        "professional",
+        "clean"
+      ]
+    }
+  },
+  {
+    "id": "conversion",
+    "name": "Conversion-Optimized",
+    "category": "Landing Page",
+    "keywords": [
+      "Form-focused",
+      "minimalist design",
+      "single CTA focus",
+      "high contrast",
+      "urgency elements",
+      "trust signals",
+      "social proof",
+      "clear value"
+    ],
+    "promptKeywords": "Design a conversion-optimized landing page. Use: single primary CTA, minimal distractions, trust badges, urgency elements (limited time), social proof (testimonials), clear value proposition, form above fold, progress indicators.",
+    "cssKeywords": "form with focus states, input:focus ring, button: primary color high contrast, position: sticky for CTA, max-width: 600px for form, loading spinner, success/error states",
+    "designSystemVariables": "--cta-color: high contrast primary, --form-max-width: 600px, --input-height: 48px, --focus-ring: 3px solid accent, --success-color: #22C55E, --error-color: #EF4444",
+    "bestFor": "E-commerce product pages, free trial signups, lead generation, SaaS pricing pages, limited-time offers",
+    "avoidFor": "Complex feature explanations, multi-product showcases, technical documentation",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "commercial",
+      "retail"
+    ],
+    "tokens": {
+      "Primary": "#059669",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#10B981",
+      "Accent": "#EA580C",
+      "Background": "#ECFDF5",
+      "Foreground": "#064E3B",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#064E3B",
+      "Muted": "#E8F1F3",
+      "Muted Foreground": "#64748B",
+      "Border": "#A7F3D0",
+      "Ring": "#059669"
+    },
+    "fontPairing": {
+      "name": "Friendly SaaS",
+      "heading": "Plus Jakarta Sans",
+      "body": "Plus Jakarta Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap",
+      "mood": [
+        "friendly",
+        "modern",
+        "saas",
+        "clean",
+        "approachable",
+        "professional"
+      ]
+    }
+  },
+  {
+    "id": "bento",
+    "name": "Bento Box Grid",
+    "category": "General",
+    "keywords": [
+      "Modular cards",
+      "asymmetric grid",
+      "varied sizes",
+      "Apple-style",
+      "dashboard tiles",
+      "negative space",
+      "clean hierarchy",
+      "cards"
+    ],
+    "promptKeywords": "Design a Bento Box grid layout. Use: modular cards with varied sizes (1x1, 2x1, 2x2), Apple-style aesthetic, rounded corners (16-24px), soft shadows, clean hierarchy, asymmetric grid, neutral backgrounds (#F5F5F7), hover effects.",
+    "cssKeywords": "display: grid, grid-template-columns: repeat(4, 1fr), grid-auto-rows: 200px, gap: 16px, border-radius: 24px, background: #FFFFFF, box-shadow: 0 4px 6px rgba(0,0,0,0.05)",
+    "designSystemVariables": "--grid-gap: 16px, --card-radius: 24px, --card-bg: #FFFFFF, --page-bg: #F5F5F7, --shadow: 0 4px 6px rgba(0,0,0,0.05), --hover-scale: 1.02",
+    "bestFor": "Dashboards, product pages, portfolios, Apple-style marketing, feature showcases, SaaS",
+    "avoidFor": "Dense data tables, text-heavy content, real-time monitoring",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "technical",
+      "visual"
+    ],
+    "tokens": {
+      "Primary": "#0D9488",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#14B8A6",
+      "Accent": "#EA580C",
+      "Background": "#F0FDFA",
+      "Foreground": "#134E4A",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#134E4A",
+      "Muted": "#E8F1F4",
+      "Muted Foreground": "#64748B",
+      "Border": "#99F6E4",
+      "Ring": "#0D9488"
+    },
+    "fontPairing": {
+      "name": "Tech Startup",
+      "heading": "Space Grotesk",
+      "body": "DM Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap",
+      "mood": [
+        "tech",
+        "startup",
+        "modern",
+        "innovative",
+        "bold",
+        "futuristic"
+      ]
+    }
+  },
+  {
+    "id": "editorial",
+    "name": "Editorial Grid / Magazine",
+    "category": "General",
+    "keywords": [
+      "Magazine layout",
+      "asymmetric grid",
+      "editorial typography",
+      "pull quotes",
+      "drop caps",
+      "column layout",
+      "print-inspired"
+    ],
+    "promptKeywords": "Design an editorial magazine layout. Use: asymmetric grid, pull quotes, drop caps, multi-column text, large imagery, bylines, section dividers, print-inspired typography, article hierarchy, white space balance.",
+    "cssKeywords": "display: grid with named areas, column-count for text, ::first-letter for drop caps, blockquote styling, figure/figcaption, gap variations, font: serif for body, variable widths",
+    "designSystemVariables": "--grid-cols: asymmetric, --body-font: Georgia/Merriweather, --heading-font: bold sans, --drop-cap-size: 4em, --pull-quote-size: 1.5em, --column-gap: 2rem",
+    "bestFor": "News sites, blogs, magazines, editorial content, long-form articles, journalism, publishing",
+    "avoidFor": "Dashboards, apps, e-commerce catalogs, real-time data, short-form content",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "creative",
+      "visual"
+    ],
+    "tokens": {
+      "Primary": "#18181B",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#3F3F46",
+      "Accent": "#2563EB",
+      "Background": "#FAFAFA",
+      "Foreground": "#09090B",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#09090B",
+      "Muted": "#E8ECF0",
+      "Muted Foreground": "#64748B",
+      "Border": "#E4E4E7",
+      "Ring": "#18181B"
+    },
+    "fontPairing": {
+      "name": "Editorial Classic",
+      "heading": "Cormorant Garamond",
+      "body": "Libre Baskerville",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Libre+Baskerville:wght@400;700&display=swap",
+      "mood": [
+        "editorial",
+        "classic",
+        "literary",
+        "traditional",
+        "refined",
+        "bookish"
+      ]
+    }
+  },
+  {
+    "id": "storytelling",
+    "name": "Storytelling-Driven",
+    "category": "Landing Page",
+    "keywords": [
+      "Narrative flow",
+      "visual story progression",
+      "section transitions",
+      "consistent character/brand voice",
+      "emotional messaging",
+      "journey visualization"
+    ],
+    "promptKeywords": "Design a storytelling landing page. Use: narrative flow sections, scroll-triggered reveals, chapter-like structure, emotional imagery, brand journey visualization, founder story, mission statement, timeline progression.",
+    "cssKeywords": "scroll-snap sections, Intersection Observer for reveals, parallax backgrounds, section transitions, timeline CSS, narrative typography (varied sizes), image-text alternating",
+    "designSystemVariables": "--section-min-height: 100vh, --reveal-duration: 600ms, --narrative-font: serif, --chapter-spacing: 8rem, --timeline-color: accent, --parallax-speed: 0.5",
+    "bestFor": "Brand/startup stories, mission-driven products, premium/lifestyle brands, documentary-style products, educational",
+    "avoidFor": "Technical/complex products (unless narrative-driven), traditional enterprise software",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "creative",
+      "visual"
+    ],
+    "tokens": {
+      "Primary": "#EC4899",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#F472B6",
+      "Accent": "#0891B2",
+      "Background": "#FDF2F8",
+      "Foreground": "#831843",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#831843",
+      "Muted": "#F1EEF5",
+      "Muted Foreground": "#64748B",
+      "Border": "#FBCFE8",
+      "Ring": "#EC4899"
+    },
+    "fontPairing": {
+      "name": "Magazine Style",
+      "heading": "Libre Bodoni",
+      "body": "Public Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Libre+Bodoni:wght@400;500;600;700&family=Public+Sans:wght@300;400;500;600;700&display=swap",
+      "mood": [
+        "magazine",
+        "editorial",
+        "publishing",
+        "refined",
+        "journalism",
+        "print"
+      ]
+    }
+  },
+  {
+    "id": "neubrutalism",
+    "name": "Neubrutalism",
+    "category": "General",
+    "keywords": [
+      "Bold borders",
+      "black outlines",
+      "primary colors",
+      "thick shadows",
+      "no gradients",
+      "flat colors",
+      "45° shadows",
+      "playful",
+      "Gen Z"
+    ],
+    "promptKeywords": "Design a neubrutalist interface. Use: high contrast, hard black borders (3px+), bright pop colors, no blur, sharp or slightly rounded corners, bold typography, hard shadows (offset 4px 4px), raw aesthetic but functional.",
+    "cssKeywords": "border: 3px solid black, box-shadow: 5px 5px 0px black, colors: #FFDB58 #FF6B6B #4ECDC4, font-weight: 700, no gradients",
+    "designSystemVariables": "--border-width: 3px, --shadow-offset: 4px, --shadow-color: #000, --colors: high saturation, --font: bold sans",
+    "bestFor": "Gen Z brands, startups, creative agencies, Figma-style apps, Notion-style interfaces, tech blogs",
+    "avoidFor": "Luxury brands, finance, healthcare, conservative industries (too playful)",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "creative",
+      "colourful"
+    ],
+    "tokens": {
+      "Primary": "#EC4899",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#F472B6",
+      "Accent": "#0891B2",
+      "Background": "#FDF2F8",
+      "Foreground": "#831843",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#831843",
+      "Muted": "#F1EEF5",
+      "Muted Foreground": "#64748B",
+      "Border": "#FBCFE8",
+      "Ring": "#EC4899"
+    },
+    "fontPairing": {
+      "name": "Neubrutalist Bold",
+      "heading": "Lexend Mega",
+      "body": "Public Sans",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@100..900&family=Public+Sans:wght@100..900&display=swap",
+      "mood": [
+        "bold",
+        "neubrutalist",
+        "loud",
+        "strong",
+        "geometric",
+        "quirky"
+      ]
+    }
+  },
+  {
+    "id": "organic",
+    "name": "Organic Biophilic",
+    "category": "General",
+    "keywords": [
+      "Nature",
+      "organic shapes",
+      "green",
+      "sustainable",
+      "rounded",
+      "flowing",
+      "wellness",
+      "earthy",
+      "natural textures"
+    ],
+    "promptKeywords": "Design a biophilic organic interface. Use: nature-inspired colors (greens, browns), organic curved shapes, rounded corners (16-24px), natural textures (wood, stone), flowing SVG elements, wellness aesthetic, earthy palette.",
+    "cssKeywords": "border-radius: 16-24px (varied), background: earth tones, SVG organic shapes (blob), box-shadow: natural soft, color: #228B22 #8B4513 #87CEEB, texture overlays (subtle)",
+    "designSystemVariables": "--forest-green: #228B22, --earth-brown: #8B4513, --sky-blue: #87CEEB, --cream-bg: #F5F5DC, --organic-radius: 24px, --shadow-soft: 0 8px 32px rgba(0,0,0,0.08)",
+    "bestFor": "Wellness apps, sustainability brands, eco products, health apps, meditation, organic food brands",
+    "avoidFor": "Tech-focused products, gaming, industrial, urban brands",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "visual",
+      "restrained"
+    ],
+    "tokens": {
+      "Primary": "#EC4899",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#F9A8D4",
+      "Accent": "#8B5CF6",
+      "Background": "#FDF2F8",
+      "Foreground": "#831843",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#831843",
+      "Muted": "#F1EEF5",
+      "Muted Foreground": "#64748B",
+      "Border": "#FBCFE8",
+      "Ring": "#EC4899"
+    },
+    "fontPairing": {
+      "name": "Wellness Calm",
+      "heading": "Lora",
+      "body": "Raleway",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Lora:wght@400;500;600;700&family=Raleway:wght@300;400;500;600;700&display=swap",
+      "mood": [
+        "calm",
+        "wellness",
+        "health",
+        "relaxing",
+        "natural",
+        "organic"
+      ]
+    }
+  },
+  {
+    "id": "exaggerated-min",
+    "name": "Exaggerated Minimalism",
+    "category": "General",
+    "keywords": [
+      "Bold minimalism",
+      "oversized typography",
+      "high contrast",
+      "negative space",
+      "loud minimal",
+      "statement design"
+    ],
+    "promptKeywords": "Design with exaggerated minimalism. Use: oversized typography (clamp 3rem-12rem), extreme negative space, black/white primary, single accent color only, bold statements, minimal elements, dramatic contrast.",
+    "cssKeywords": "font-size: clamp(3rem, 10vw, 12rem), font-weight: 900, letter-spacing: -0.05em, color: #000 or #FFF, padding: 8rem+, single accent, no decorations",
+    "designSystemVariables": "--type-giant: clamp(3rem, 10vw, 12rem), --type-weight: 900, --spacing-huge: 8rem, --color-primary: #000000, --color-bg: #FFFFFF, --accent: single color only",
+    "bestFor": "Fashion, architecture, portfolios, agency landing pages, luxury brands, editorial",
+    "avoidFor": "E-commerce catalogs, dashboards, forms, data-heavy, elderly users, complex apps",
+    "lightMode": true,
+    "darkMode": true,
+    "conversionFocused": true,
+    "suitsPersonality": [
+      "restrained",
+      "creative"
+    ],
+    "tokens": {
+      "Primary": "#1C1917",
+      "On Primary": "#FFFFFF",
+      "Secondary": "#44403C",
+      "Accent": "#A16207",
+      "Background": "#FAFAF9",
+      "Foreground": "#0C0A09",
+      "Card": "#FFFFFF",
+      "Card Foreground": "#0C0A09",
+      "Muted": "#E8ECF0",
+      "Muted Foreground": "#64748B",
+      "Border": "#D6D3D1",
+      "Ring": "#1C1917"
+    },
+    "fontPairing": {
+      "name": "Luxury Minimalist",
+      "heading": "Bodoni Moda",
+      "body": "Jost",
+      "googleFontsUrl": "https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&family=Jost:wght@300;400;500;600;700&display=swap",
+      "mood": [
+        "luxury",
+        "minimalist",
+        "high-end",
+        "sophisticated",
+        "refined",
+        "premium"
+      ]
+    }
+  }
+]

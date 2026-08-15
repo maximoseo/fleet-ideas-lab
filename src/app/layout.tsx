@@ -1,0 +1,30 @@
+import type { Metadata } from "next";
+import { Heebo, Rubik, JetBrains_Mono } from "next/font/google";
+import MobileTabBar from "@/components/MobileTabBar";
+import "./globals.css";
+
+const heebo = Heebo({ subsets: ["hebrew"], variable: "--font-heebo" });
+const rubik = Rubik({ subsets: ["hebrew"], variable: "--font-rubik" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
+
+export const metadata: Metadata = {
+  title: "Design Lab — MaximoSEO",
+  description: "Analyze any website, generate design systems, detect AI slop, and inject premium designs into WordPress. Style Arena, Mockup Generator, Slop Detector, and more.",
+  keywords: ["design", "AI", "slop detector", "design system", "WordPress", "UI/UX"],
+  openGraph: {
+    title: "Design Lab — MaximoSEO",
+    description: "Analyze any website and generate premium design improvements.",
+    type: "website",
+  },
+};
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="en" dir="ltr" suppressHydrationWarning>
+      <body className={`${heebo.variable} ${rubik.variable} ${mono.variable} font-sans antialiased`}>
+        {children}
+        <MobileTabBar />
+      </body>
+    </html>
+  );
+}

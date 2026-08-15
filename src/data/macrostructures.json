@@ -1,0 +1,149 @@
+[
+  {
+    "id": "01-bento-grid",
+    "no": 1,
+    "name": "Bento Grid",
+    "description": "Modular blocks of varying sizes laid out as an irregular grid. Each block is a feature, a quote, an image, a stat. Visual rhythm comes from size variation, not card uniformity.",
+    "topTen": true
+  },
+  {
+    "id": "02-long-document",
+    "no": 2,
+    "name": "Long Document",
+    "description": "Reads like a memo, a letter, or a journal entry. No marketing structure. Continuous prose with inline section heads. The page is *literature* about the product.",
+    "topTen": true
+  },
+  {
+    "id": "03-marquee-hero",
+    "no": 3,
+    "name": "Marquee Hero",
+    "description": "The hero IS the page above the fold. A single bold statement or visual fills the viewport. No subhead, no CTA in fold. Below the fold the page becomes something else (a list, a grid, prose).",
+    "topTen": true
+  },
+  {
+    "id": "04-stat-led",
+    "no": 4,
+    "name": "Stat-Led",
+    "description": "The hero is a giant number — a metric, a count, a percentage. Everything that follows supports or qualifies it. Data is the narrative.",
+    "topTen": true
+  },
+  {
+    "id": "05-workbench",
+    "no": 5,
+    "name": "Workbench",
+    "description": "Product screenshots in frames are the primary content. The page is a guided tour of the app in use. Less marketing copy, more \"here's what you do with it.\"",
+    "topTen": true
+  },
+  {
+    "id": "06-conversational-faq",
+    "no": 6,
+    "name": "Conversational FAQ",
+    "description": "Bold questions, brief answers. The page reads like an honest interview with the product. Often each Q/A is a collapsible accordion.",
+    "topTen": true
+  },
+  {
+    "id": "07-manifesto",
+    "no": 7,
+    "name": "Manifesto",
+    "description": "Polemical large type. Declaration energy. The page tells the reader what to believe before it tells them what to buy. Often political-poster aesthetic.",
+    "topTen": true
+  },
+  {
+    "id": "08-photographic",
+    "no": 8,
+    "name": "Photographic",
+    "description": "A single huge image dominates each fold. Text is small annotation, not headline. The design says *look* before it says *read*.",
+    "topTen": true
+  },
+  {
+    "id": "09-quote-led",
+    "no": 9,
+    "name": "Quote-Led",
+    "description": "The hero is a pull-quote with attribution. The headline is borrowed credibility, not the brand's voice. The page leads with social proof.",
+    "topTen": true
+  },
+  {
+    "id": "10-specimen",
+    "no": 10,
+    "name": "Specimen",
+    "description": "Numbered left-margin labels, huge serif display, asymmetric column spans, hairline rules, typographic-only CTA, generous whitespace. Editorial / type-foundry energy.",
+    "topTen": true
+  },
+  {
+    "id": "11-catalogue",
+    "no": 11,
+    "name": "Catalogue",
+    "description": "Uniform grid of variations of the same thing — typefaces, colour palettes, product SKUs. The page is a visual index of inventory.",
+    "topTen": false
+  },
+  {
+    "id": "12-letter",
+    "no": 12,
+    "name": "Letter",
+    "description": "First-person, written, intimate. Opens with a greeting (\"Dear friend,\"). No buttons in the fold. Reads as a personal note from the founder.",
+    "topTen": false
+  },
+  {
+    "id": "13-index-first",
+    "no": 13,
+    "name": "Index-First",
+    "description": "The page IS a list of links. No hero image, no narrative flow. Pure navigation as design.",
+    "topTen": false
+  },
+  {
+    "id": "14-narrative-workflow",
+    "no": 14,
+    "name": "Narrative Workflow",
+    "description": "Numbered stages tell the story of how the user uses the product over time. Each section is a phase (1.0 → 2.0 → 3.0 → 4.0). The page is a process timeline.",
+    "topTen": false
+  },
+  {
+    "id": "15-split-studio",
+    "no": 15,
+    "name": "Split Studio",
+    "description": "Diptych. Every major content block divides the screen — text on one side, proof on the other. The pairing alternates direction down the page.",
+    "topTen": false
+  },
+  {
+    "id": "16-feature-stack",
+    "no": 16,
+    "name": "Feature Stack",
+    "description": "Sticky left pane (label / description) + scroll-synced right pane (screenshots cycling through related details). Cinematic pacing.",
+    "topTen": false
+  },
+  {
+    "id": "17-type-specimen",
+    "no": 17,
+    "name": "Type Specimen",
+    "description": "The typeface IS the design. Foundry homepage or design-system marketing where a custom typeface is the brand's proof.",
+    "topTen": false
+  },
+  {
+    "id": "18-portfolio-grid",
+    "no": 18,
+    "name": "Portfolio Grid",
+    "description": "Filterable cards of projects. Studio or designer homepages where the work is the product.",
+    "topTen": false
+  },
+  {
+    "id": "19-map-diagram",
+    "no": 19,
+    "name": "Map / Diagram",
+    "description": "A single large spatial diagram organises the page — flowchart, floor plan, network graph, system map. Information is laid out *spatially*, not linearly.",
+    "topTen": false
+  },
+  {
+    "id": "20-ecosystem-index",
+    "no": 20,
+    "name": "Ecosystem Index",
+    "description": "Multiple discovery surfaces — featured / latest / by category / by people. The platform's value is emergence and browsing, not declaration.",
+    "topTen": false
+  },
+  {
+    "id": "21-component-playground",
+    "no": 21,
+    "name": "Component Playground",
+    "description": "Interactive code-and-preview blocks are the page's primary content. Each block previews a thing and shows how to copy-paste it.",
+    "topTen": false
+  }
+]
