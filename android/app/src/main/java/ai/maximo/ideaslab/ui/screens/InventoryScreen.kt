@@ -48,3 +48,11 @@ fun InventoryScreen() {
         }
     }
 }
+
+@Composable
+fun InventoryScreenWithUpdate(api: ai.maximo.ideaslab.data.ApiClient) {
+    androidx.compose.foundation.layout.Column {
+        UpdateBanner()
+        InventoryScreen()
+    }
+}

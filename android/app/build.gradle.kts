@@ -13,8 +13,8 @@ android {
         applicationId = "ai.maximo.ideaslab"
         minSdk = 24
         targetSdk = 36
-        versionCode = 2
-        versionName = "1.0.1"
+        versionCode = 3
+        versionName = "1.0.2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -76,6 +76,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil:2.7.0")
+// In-app update + notifications
+implementation("androidx.work:work-runtime-ktx:2.9.1")
+implementation("androidx.core:core-ktx:1.12.0")
 
     // Room
     implementation("androidx.room:room-runtime:2.6.1")

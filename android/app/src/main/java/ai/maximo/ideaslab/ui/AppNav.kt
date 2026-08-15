@@ -39,10 +39,11 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
     ) { padding ->
         NavHost(navController = navController, startDestination = startDestination, modifier = Modifier.padding(padding)) {
             composable("login") { LoginScreen(api, sessionStore) { navController.navigate("inventory"){ popUpTo("login"){inclusive=true} } } }
-            composable("inventory") { InventoryScreen() }
+            composable("inventory") { InventoryScreenWithUpdate(api) }
             composable("ideas") { IdeasScreen(api) }
             composable("gaps") { GapsScreen() }
             composable("create") { CreateScreen(api) }
+            composable("update") { UpdateScreen() }
         }
     }
 }
