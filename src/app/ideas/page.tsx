@@ -30,6 +30,7 @@ export default function IdeasPage() {
   const [shuffleSeed, setShuffleSeed] = useState(0);
   const [reloading, setReloading] = useState(false);
   const [pullY, setPullY] = useState(0);
+  const [expanded, setExpanded] = useState<string | null>(null);
   const pullStart = useRef<number | null>(null);
 
   const filtered = useMemo(() => {
@@ -38,7 +39,7 @@ export default function IdeasPage() {
       if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
       if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
       if (status !== ("all" as unknown as IdeaStatus) && it.status !== status) return false;
-      if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow}`.toLowerCase().includes(q.toLowerCase())) return false;
+      if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow} ${it.problem} ${it.solution}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
     if (shuffleSeed === 0) return base;
@@ -64,10 +65,10 @@ export default function IdeasPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
-      setScaffoldResult(`✓ Scaffolded ${data.slug} at ${data.dir}`);
+      setScaffoldResult(`\u2713 Scaffolded ${data.slug} at ${data.dir}`);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed";
-      setScaffoldResult(`✗ ${msg}`);
+      setScaffoldResult(`\u2717 ${msg}`);
     } finally {
       setScaffolding(null);
       setTimeout(() => setScaffoldResult(null), 4000);
@@ -97,14 +98,23 @@ export default function IdeasPage() {
 
   return (
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-      <SiteHeader subtitle="12 ideas • filters & scaffold" />
+      <SiteHeader subtitle="12 ideas \u00b7 professional briefs + scaffold" />
+      {pullY > 0 ? (
+        <div className="flex justify-center py-2" style={{ height: 36, opacity: pullY / 72 }}>
+          <span className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold ${pullY > 48 ? "border-violet-500/40 bg-violet-500/20 text-violet-200" : "border-white/10 bg-white/5 text-white/50"}`}>
+            <span className={pullY > 48 || reloading ? "animate-spin inline-block" : ""}>{pullY > 48 ? "\u21bb" : "\u2193"}</span>
+            {pullY > 48 ? "Release to reload" : "Pull to reload"}
+          </span>
+        </div>
+      ) : null}
+      {reloading ? <div className="h-0.5 w-full overflow-hidden bg-white/10"><div className="h-full w-1/3 animate-[shimmer_1s_ease-in-out_infinite] bg-violet-500" /></div> : null}
       <main className="mx-auto max-w-7xl px-4 sm:px-6 py-6 sm:py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Ideas</h1>
-            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>12 dashboard concepts derived from gap radar. Filter by domain, effort, impact, status. Actions: Open dashboard, Copy prompt, Scaffold stub.</p>
+            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>12 professional dashboard briefs — each with Problem, Solution, Benefit, Data needed, Feasibility, and Next step. Filter by domain, effort, impact, status. Tap a card to expand the full brief. Actions: Open dashboard, Copy prompt, Scaffold stub.</p>
           </div>
-          <div className="flex gap-2"><button onClick={doReload} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20">Find more ideas ↻</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create →</Link></div>
+          <div className="flex gap-2"><button onClick={doReload} disabled={reloading} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20 disabled:opacity-50">{reloading ? "\u21bb Reloading\u2026" : "Find more ideas \u21bb"}</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create \u2192</Link></div>
         </div>
 
         {/* Filters */}
@@ -133,7 +143,7 @@ export default function IdeasPage() {
               ))}
             </div>
             <div className="ml-auto flex items-center gap-2 w-full sm:w-auto">
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas…" className="w-full sm:w-64 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-violet-500 focus:outline-none" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas, problem, solution\u2026" className="w-full sm:w-64 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-violet-500 focus:outline-none" />
               <span className="hidden sm:inline text-xs text-white/40">{filtered.length} / {FLEET_IDEAS.length}</span>
             </div>
           </div>
@@ -157,21 +167,39 @@ export default function IdeasPage() {
               <p className="mt-1.5 rounded-xl border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[12px] leading-5 text-amber-100/90">
                 <span className="font-bold">Why now:</span> {idea.whyNow}
               </p>
-              <p className="mt-2 text-[13px] leading-5" style={{ color: VIOLET.textSecondary }}>{idea.description}</p>
+              <p className="mt-2 text-[13px] leading-5 line-clamp-2" style={{ color: VIOLET.textSecondary }}>{idea.description}</p>
               <div className="mt-3 flex flex-wrap gap-1.5">
-                {idea.widgets.map((w) => (
+                {idea.widgets.slice(0, 4).map((w) => (
                   <span key={w} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/60">{w}</span>
                 ))}
               </div>
+
+              {/* Professional brief toggle */}
+              <button onClick={() => setExpanded(expanded === idea.id ? null : idea.id)} className="mt-3 flex w-full items-center justify-between rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-left hover:bg-white/[0.06]">
+                <span className="text-[12px] font-semibold text-white">{expanded === idea.id ? "Hide professional brief \u25b2" : "Professional brief \u25bc"}</span>
+                <span className="text-[11px] text-white/40">Problem \u00b7 Solution \u00b7 Benefit \u00b7 Data \u00b7 Feasibility</span>
+              </button>
+
+              {expanded === idea.id ? (
+                <div className="mt-3 space-y-3 rounded-xl border border-violet-500/20 bg-violet-500/[0.06] p-4 text-[12px] leading-5">
+                  <div><span className="font-bold text-red-300">Problem:</span> <span className="text-white/70">{idea.problem}</span></div>
+                  <div><span className="font-bold text-violet-300">Solution:</span> <span className="text-white/70">{idea.solution}</span></div>
+                  <div><span className="font-bold text-emerald-300">Benefit:</span> <span className="text-white/70">{idea.benefit}</span></div>
+                  <div><span className="font-bold text-amber-300">Data needed:</span> <span className="text-white/60">{idea.dataNeeded}</span></div>
+                  <div><span className="font-bold text-white/60">Feasibility:</span> <span className="text-white/60">{idea.feasibility}</span></div>
+                  <div className="rounded-lg bg-white/5 p-3"><span className="font-bold text-white">Next step:</span> <span className="text-violet-200">{idea.nextStep}</span></div>
+                </div>
+              ) : null}
+
               <div className="mt-4 grid grid-cols-3 gap-2">
                 {idea.dashboardUrl ? (
-                  <a href={idea.dashboardUrl} target="_blank" rel="noopener" className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[#0f0b1a] hover:bg-white/90 text-center leading-tight px-2">Open ↗</a>
+                  <a href={idea.dashboardUrl} target="_blank" rel="noopener" className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[#0f0b1a] hover:bg-white/90 text-center leading-tight px-2">Open \u2197</a>
                 ) : (
                   <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-white/40">No URL</span>
                 )}
                 <button onClick={() => copyPrompt(idea.prompt)} className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 text-[12px] font-semibold text-white hover:bg-white/10">Copy prompt</button>
                 <button onClick={() => doScaffold(idea)} disabled={scaffolding === idea.id} className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-violet-600 px-2 text-[12px] font-semibold text-white hover:bg-violet-500 disabled:opacity-50">
-                  {scaffolding === idea.id ? "…" : "Scaffold"}
+                  {scaffolding === idea.id ? "\u2026" : "Scaffold"}
                 </button>
               </div>
               <div className="mt-2 text-center text-[11px] text-white/30">{idea.slug}</div>

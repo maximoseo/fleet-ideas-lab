@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.FleetData
@@ -35,6 +36,7 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
     var busySlug by remember { mutableStateOf<String?>(null) }
     var shuffleSeed by remember { mutableStateOf(0) }
     var refreshing by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf<String?>(null) }
 
     val ideas = remember(shuffleSeed) {
         val n = FleetData.ideas.size
@@ -56,17 +58,37 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
 
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
 
+    // Rich briefs mirrored from web fleet.ts
+    val briefs = remember {
+        mapOf(
+            "serp-volatility-war-room" to Triple("SERP spikes leave clients blind — no Winners/Losers or SERP feature view.", "War Room: Volatility Index + Winners/Losers + SERP feature share + Alert feed", "Ops triage in minutes — client comms with evidence"),
+            "content-decay-radar" to Triple("30% of blog traffic decays after 6mo — discovered too late.", "Decay Score + 90-day trend + Refresh Queue + one-click Brief", "Recover 10-30% decaying traffic systematically"),
+            "gbp-health-monitor" to Triple("Suspensions up 40% YoY — one stale field can kill revenue.", "Risk + Completeness + Photo Freshness + Review Velocity, daily", "Prevent suspensions, boost local pack eligibility"),
+            "anomaly-explain-engine" to Triple("Alerts without explanation are noise — ignored.", "Timeline + LLM Root Cause + Impact Estimate + Suggested Action", "Alerts become decisions, MTTR drops"),
+            "outreach-inbox-commander" to Triple("~20% replies lost in Gmail noise.", "Thread List + Reply Score + Follow-up Timer + Template Inject", "Recover replies, halve busywork"),
+            "schema-studio" to Triple("Schema errors silently kill rich results — invisible CTR loss.", "JSON-LD Editor + Validator + Rich Result Preview + Fix Diff", "Recover eligibility + CTR with safety net"),
+            "design-token-pipeline" to Triple("Tokens are manual — no WP pipeline.", "Token Editor + WP Sync + Preview Frame + Version History", "Ship design-system to WP in one click"),
+            "content-brief-autopilot" to Triple("Briefs are the #1 bottleneck.", "SERP Brief + Outline + Entity Map + Competitor Gap", "10x brief throughput, entity-rich"),
+            "local-citation-pulse" to Triple("1 in 5 local packs derailed by NAP across 40+ dirs.", "Citation Map + NAP Diff + Fix Queue + Authority Score", "Systematic fix, measurable in weeks"),
+            "fleet-cron-observatory" to Triple("50+ crons — silent failures cost hours weekly.", "Timeline + Failure Heatmap + Run Logs + Retry", "Zero silent failures"),
+            "link-velocity-tracker" to Triple("Competitor velocity is a leading indicator — invisible until late.", "Velocity Chart + New/Lost + Anchor Mix + Risk Flag", "Spot acceleration early"),
+            "cwv-budget-guard" to Triple("CWV regressions ship silently.", "Gauges + Budget Bar + Regression Diff + Deploy Gate", "Block regressions before users see them"),
+        )
+    }
+
     Box(Modifier.fillMaxSize().pullRefresh(pullState)) {
         Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(top = 16.dp, bottom = 0.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
-                    Text("Fleet Ideas", style = MaterialTheme.typography.titleMedium)
-                    Text("${ideas.size} cards \u00b7 Pull to reload", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
+                    Text("Fleet Ideas", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text("${ideas.size} professional briefs \u00b7 Pull to reload", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
                 }
-                FilledTonalButton(onClick = { doReload() }, enabled = !refreshing, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
-                    Text(if (refreshing) "\u21bb Reloading\u2026" else "\u21bb Reload")
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    FilledTonalButton(onClick = { doReload() }, enabled = !refreshing, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
+                        Text(if (refreshing) "\u21bb Reloading\u2026" else "\u21bb Reload")
+                    }
+                    IconButton(onClick = onNotifications, modifier = Modifier.size(36.dp)) { Text("\uD83D\uDD14") }
                 }
-                IconButton(onClick = onNotifications, modifier = Modifier.size(36.dp)) { Text("\uD83D\uDD14") }
             }
             Spacer(Modifier.height(6.dp))
             Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.Center) {
@@ -80,6 +102,8 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                 contentPadding = PaddingValues(bottom = 88.dp + 16.dp, top = 4.dp)
             ) {
                 items(ideas) { idea ->
+                    val brief = briefs[idea.slug]
+                    val isOpen = expanded == idea.slug
                     Column(Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFF1A1428)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(16.dp)).padding(12.dp)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text(idea.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFFF0ECF7), modifier = Modifier.weight(1f))
@@ -90,7 +114,21 @@ fun IdeasScreen(api: ApiClient, onNotifications: () -> Unit = {}) {
                         Spacer(Modifier.height(4.dp))
                         Text("${idea.category} \u00b7 ${idea.slug}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA89BC2))
                         Spacer(Modifier.height(6.dp))
-                        Text(idea.prompt, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA89BC2), maxLines = 3)
+                        Text(idea.prompt, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA89BC2), maxLines = if (isOpen) Int.MAX_VALUE else 3)
+                        // Brief toggle
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(onClick = { expanded = if (isOpen) null else idea.slug }, modifier = Modifier.fillMaxWidth()) {
+                            Text(if (isOpen) "Hide brief \u25b2" else "Professional brief \u25bc")
+                        }
+                        if (isOpen && brief != null) {
+                            Spacer(Modifier.height(8.dp))
+                            Column(Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF231C33)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(12.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                Text("Problem: ${brief.first}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFF87171))
+                                Text("Solution: ${brief.second}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFA78BFA))
+                                Text("Benefit: ${brief.third}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF86EFAC))
+                                Text("Next: Scaffold → wire data (vault TBD) → ship", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+                            }
+                        }
                         Spacer(Modifier.height(10.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                             OutlinedButton(onClick = {

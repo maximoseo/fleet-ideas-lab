@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
-import { FLEET_PROJECTS, FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, type FleetDomain } from "@/lib/fleet";
+import { FLEET_PROJECTS, FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, type FleetDomain } from "@/lib/fleet";
 import TrustLine from "@/components/TrustLine";
 
 const VIOLET = STYLES.violet;
@@ -74,6 +74,7 @@ function MiniGapRadar() {
 
 export default function InventoryPage() {
   const [domain, setDomain] = useState<FleetDomain | "all">("all");
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("all");
   const [q, setQ] = useState("");
 
@@ -127,6 +128,17 @@ export default function InventoryPage() {
           </div>
         </div>
 
+        {/* Status legend — what beta actually means */}
+        <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex flex-wrap gap-2 text-[11px]">
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/15 px-3 py-1.5 text-emerald-300"><span className="h-2 w-2 rounded-full bg-emerald-400" /> Live — deploy ≤3d · alias OK · healthy</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/15 px-3 py-1.5 text-blue-300"><span className="h-2 w-2 rounded-full bg-blue-400" /> Beta — deploy 4–7d · still reachable · degraded</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/15 px-3 py-1.5 text-amber-300"><span className="h-2 w-2 rounded-full bg-amber-400" /> Build — &gt;7d · needs attention · stale</span>
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/10 px-3 py-1.5 text-white/60"><span className="h-2 w-2 rounded-full bg-white/30" /> Concept — not yet live</span>
+          </div>
+          <p className="mt-2 text-[11px] leading-4 text-white/35">Tap any status pill to see <span className="text-white/60">why</span> — date + health + alias. Beta is not a bug: it means &#34;deployed but a few days without a fresh deploy&#34; — still fully usable.</p>
+        </div>
+
         {/* Filters */}
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <div className="flex items-center gap-1.5 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1">
@@ -167,7 +179,7 @@ export default function InventoryPage() {
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: DOMAIN_COLOR[p.domain] }} />
                     <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: DOMAIN_COLOR[p.domain] }}>{DOMAIN_LABEL[p.domain]}</span>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${p.status === "live" ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/20" : p.status === "beta" ? "bg-blue-500/15 text-blue-300 border border-blue-500/20" : p.status === "build" ? "bg-amber-500/15 text-amber-300 border border-amber-500/20" : "bg-white/10 text-white/60 border border-white/10"}`}>{p.status}</span>
+                    <button onClick={() => setExpanded(expanded === p.slug ? null : p.slug)} title={statusExplainer(p.status as any, p.lastDeploy.slice(0,10))} className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${p.status === "live" ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/20" : p.status === "beta" ? "bg-blue-500/15 text-blue-300 border-blue-500/20" : p.status === "build" ? "bg-amber-500/15 text-amber-300 border border-amber-500/20" : "bg-white/10 text-white/60 border-white/10"}`}>{statusLabel(p.status as any)} ▾</button>
                   </div>
                   <span className="text-[11px] text-white/35">{formatDate(p.lastDeploy)}</span>
                 </div>
@@ -189,6 +201,16 @@ export default function InventoryPage() {
                   <a href={p.url} target="_blank" rel="noopener" className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-full bg-white text-[13px] font-semibold text-[#0f0b1a] hover:bg-white/90">Open ↗</a>
                   <Link href={`/gaps`} className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Gaps</Link>
                 </div>
+                {expanded === p.slug ? (
+                  <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-[11px] leading-4 text-white/60">
+                    <div className="font-semibold text-white/80">Why {statusLabel(p.status as any)}?</div>
+                    <div className="mt-1">{statusExplainer(p.status as any, p.lastDeploy.slice(0,10))} · alias <span className="font-mono text-white/70">{p.url.replace("https://","")}</span></div>
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {p.capabilities.map((c) => <span key={c} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60">{c}</span>)}
+                    </div>
+                    <div className="mt-2 text-white/35">Source: Vercel · health {p.health} · lastDeploy {p.lastDeploy.slice(0,10)}</div>
+                  </div>
+                ) : null}
               </div>
             );
           })}

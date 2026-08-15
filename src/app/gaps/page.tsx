@@ -5,23 +5,14 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import TrustLine from "@/components/TrustLine";
 import { STYLES } from "@/lib/styles";
-import { DOMAIN_LABEL } from "@/lib/fleet";
+import { DOMAIN_LABEL, GAP_SCORES, gapProjects, FLEET_INVENTORY, type FleetDomain, type Capability } from "@/lib/fleet";
 
 const VIOLET = STYLES.violet;
 
-const DOMAINS = ["seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"] as const;
-const CAPS = ["Monitor", "Analyze", "Create", "Optimize", "Automate", "Report"] as const;
-
-const SCORES: Record<string, Record<string, number>> = {
-  seo: { Monitor: 88, Analyze: 82, Create: 35, Optimize: 58, Automate: 62, Report: 75 },
-  content: { Monitor: 42, Analyze: 68, Create: 85, Optimize: 72, Automate: 48, Report: 55 },
-  local: { Monitor: 78, Analyze: 62, Create: 38, Optimize: 52, Automate: 55, Report: 68 },
-  analytics: { Monitor: 72, Analyze: 88, Create: 22, Optimize: 45, Automate: 40, Report: 90 },
-  automation: { Monitor: 65, Analyze: 55, Create: 50, Optimize: 48, Automate: 92, Report: 38 },
-  design: { Monitor: 35, Analyze: 78, Create: 88, Optimize: 70, Automate: 42, Report: 45 },
-  outreach: { Monitor: 58, Analyze: 52, Create: 48, Optimize: 35, Automate: 62, Report: 50 },
-  technical: { Monitor: 80, Analyze: 75, Create: 32, Optimize: 68, Automate: 58, Report: 62 },
-};
+// Gaps uses the same 8 FleetDomain + 5 Capability axes as the inventory derives
+const DOMAINS: FleetDomain[] = ["seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"];
+const CAPS: Capability[] = ["analytics", "alerts", "automation", "reporting", "visualization"];
+const CAP_LABEL: Record<string, string> = { analytics: "Analytics", alerts: "Alerts", automation: "Automate", reporting: "Report", visualization: "Visualize" };
 
 function level(s: number) {
   if (s >= 70) return { label: "strong", cls: "bg-emerald-500 text-white", dot: "bg-emerald-400" };
@@ -32,16 +23,17 @@ function level(s: number) {
 
 export default function GapsPage() {
   const [highlight, setHighlight] = useState<"all" | "white-space" | "gap">("all");
+  const [cell, setCell] = useState<{ d: FleetDomain; c: Capability } | null>(null);
 
   const whites = useMemo(() => {
     const all: Array<{ d: string; c: string; s: number }> = [];
-    for (const d of DOMAINS) for (const c of CAPS) all.push({ d, c, s: SCORES[d][c] });
+    for (const d of DOMAINS) for (const c of CAPS) all.push({ d, c, s: GAP_SCORES[d][c] });
     return all.filter((x) => x.s < 30).sort((a, b) => a.s - b.s);
   }, []);
 
   const gaps = useMemo(() => {
     const all: Array<{ d: string; c: string; s: number }> = [];
-    for (const d of DOMAINS) for (const c of CAPS) all.push({ d, c, s: SCORES[d][c] });
+    for (const d of DOMAINS) for (const c of CAPS) all.push({ d, c, s: GAP_SCORES[d][c] });
     return all.filter((x) => x.s < 50).sort((a, b) => a.s - b.s);
   }, []);
 
@@ -54,7 +46,7 @@ export default function GapsPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Gap Radar</h1>
-            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>Heatmap of fleet coverage. Bright violet = white-space opportunity. Scores are deterministic from inventory × capabilities. Data sources TBD (vault) — no invented metrics.</p>
+            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>Derived heatmap: each cell = % of 37 dashboards in that domain that expose the capability. White-space means “no one does this yet” — opportunity. Tap any cell for why the score + which dashboards cover it (or none — see linked idea). Data sources TBD (vault) — no invented metrics.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setHighlight("all")} className={`min-h-[36px] rounded-full px-4 text-[13px] font-semibold ${highlight === "all" ? "bg-violet-600 text-white" : "border border-white/15 bg-white/5 text-white hover:bg-white/10"}`}>All cells</button>
@@ -86,14 +78,14 @@ export default function GapsPage() {
                 <>
                   <div key={`lab-${d}`} className="flex items-center justify-end pr-3 text-[12px] font-bold text-white/80">{DOMAIN_LABEL[d]}</div>
                   {CAPS.map((c) => {
-                    const s = SCORES[d][c];
+                    const s = GAP_SCORES[d][c];
                     const lv = level(s);
                     const dim = visible && !visible.some((v) => v.d === d && v.c === c) ? "opacity-25" : "";
                     return (
-                      <div key={`${d}-${c}`} className={`flex h-12 flex-col items-center justify-center rounded-xl text-center transition ${lv.cls} ${dim}`} title={`${d} × ${c}: ${s} (${lv.label})`}>
+                      <button key={`${d}-${c}`} onClick={() => setCell({ d: d as FleetDomain, c: c as Capability })} className={`flex h-12 w-full flex-col items-center justify-center rounded-xl text-center transition ${lv.cls} ${dim} hover:brightness-110`} title={`${d} × ${c}: ${s} (${lv.label}) — tap for details`}>
                         <span className="text-[13px] font-black">{s}</span>
                         <span className="text-[9px] uppercase tracking-widest opacity-75">{lv.label}</span>
-                      </div>
+                      </button>
                     );
                   })}
                 </>
@@ -109,19 +101,52 @@ export default function GapsPage() {
               <div className="text-sm font-bold text-white">{DOMAIN_LABEL[d]}</div>
               <div className="mt-3 grid grid-cols-3 gap-2 sm:grid-cols-6">
                 {CAPS.map((c) => {
-                  const s = SCORES[d][c];
+                  const s = GAP_SCORES[d][c];
                   const lv = level(s);
                   return (
-                    <div key={c} className={`rounded-xl p-2 text-center ${lv.cls}`}>
-                      <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">{c}</div>
+                    <button key={c} onClick={() => setCell({ d: d as FleetDomain, c: c as Capability })} className={`rounded-xl p-2 text-center w-full ${lv.cls} hover:brightness-110`}>
+                      <div className="text-[10px] font-bold uppercase tracking-widest opacity-70">{CAP_LABEL[c as string] || c}</div>
                       <div className="text-sm font-black">{s}</div>
-                    </div>
+                    </button>
                   );
                 })}
               </div>
             </div>
           ))}
         </div>
+
+        {/* Cell drawer */}
+        {cell ? (() => {
+          const s = GAP_SCORES[cell.d][cell.c];
+          const lv = level(s);
+          const projects = gapProjects(cell.d, cell.c);
+          const total = FLEET_INVENTORY.filter((p) => (p.domains.includes(cell.d as any) || p.domains.some((x) => ( { geo: "local", whm: "technical", reporting: "analytics", "client-ops": "automation", competitor: "outreach" } as any)[x] === cell.d)) || (cell.d as string) === (p as any).domain).length || FLEET_INVENTORY.filter((pp) => true).length;
+          // Simpler: count via GAP_SCORES derived already — show projects that cover this pair
+          return (
+            <div className="mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/10 p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-violet-300">{DOMAIN_LABEL[cell.d]} × {CAP_LABEL[cell.c]}</div>
+                  <div className="mt-1 text-sm font-semibold text-white">Score {s} · <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${lv.cls}`}>{lv.label}</span></div>
+                  <p className="mt-2 max-w-2xl text-[12px] leading-5 text-white/60">Why {s}? <span className="text-white/80">{projects.length === 0 ? "No dashboard currently covers this exact domain×capability — white-space opportunity." : `${projects.length} of ~37 cover this pair (${Math.round((s))}% coverage).`}</span> Method: count of verified inventory entries whose primary domain = {DOMAIN_LABEL[cell.d]} and capabilities include {CAP_LABEL[cell.c]}. No invented metrics — vault sources flagged TBD.</p>
+                </div>
+                <button onClick={() => setCell(null)} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white hover:bg-white/10">Close ✕</button>
+              </div>
+              {projects.length > 0 ? (
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {projects.slice(0, 8).map((p) => (
+                    <a key={p.slug} href={p.url} target="_blank" rel="noopener" className="rounded-full border border-white/15 bg-white px-3 py-1.5 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">{p.name} ↗</a>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 flex gap-2">
+                  <Link href="/ideas" className="inline-flex min-h-[36px] items-center rounded-full bg-white px-4 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">See ideas for this gap →</Link>
+                  <Link href="/" className="inline-flex min-h-[36px] items-center rounded-full border border-white/15 bg-white/5 px-4 text-xs font-semibold text-white hover:bg-white/10">View matching dashboards</Link>
+                </div>
+              )}
+            </div>
+          );
+        })() : null}
 
         {/* White-space highlights */}
         <div className="mt-6 rounded-2xl border border-white/10 bg-gradient-to-br from-violet-500/10 to-transparent p-5">
