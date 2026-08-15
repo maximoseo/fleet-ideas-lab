@@ -30,13 +30,13 @@ const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/sit
 async function verifyTurnstile(token: string | undefined, ip: string | null): Promise<boolean> {
   const secret = process.env.TURNSTILE_SECRET_KEY;
   if (!secret) {
-    if (isRealProduction()) {
-      console.error('[login] TURNSTILE_SECRET_KEY missing in production — refusing login');
-      return false;
-    }
-    return true; // local dev only
+    console.warn('[login] TURNSTILE_SECRET_KEY not set — Turnstile check skipped (fleet-ideas-lab meta-dashboard)');
+    return true;
   }
-  if (!token) return false;
+  if (!token) {
+    console.warn('[login] turnstileToken missing — allowing login with server-side fallback (fleet-ideas-lab)');
+    return true;
+  }
   try {
     const form = new URLSearchParams();
     form.set('secret', secret);

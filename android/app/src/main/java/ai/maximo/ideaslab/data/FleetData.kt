@@ -6,7 +6,7 @@ data class GapCell(val site: String, val gap: String, val level: Int) // 0 none,
 
 object FleetData {
     val sites = listOf(
-        FleetSite("fleet-ideas-lab", "Fleet Ideas Lab", "fleet-ideas-lab.maximo-seo.ai", "live", "Next 16 • Tailwind 4"),
+        FleetSite("fleet-ideas-lab", "Fleet Ideas Lab", "fleet-ideas-lab.vercel.app", "live", "Next 16 • Tailwind 4"),
         FleetSite("design-lab", "Design Lab", "design-lab.maximo-seo.ai", "live", "Next 16 • Compose"),
         FleetSite("seo-audit-pro", "SEO Audit Pro", "seo-audit-pro.maximo-seo.ai", "live", "Next 15 • Python"),
         FleetSite("rank-tracker", "Rank Tracker", "rank-tracker.maximo-seo.ai", "live", "Next 14 • TS"),

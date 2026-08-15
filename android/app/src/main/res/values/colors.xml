@@ -1,6 +1,4 @@
 <resources>
     <color name="bg">#0C0A14</color>
-    <color name="fleet_violet">#7C3AED</color>
-    <color name="fleet_violet_light">#A78BFA</color>
-    <color name="fleet_surface">#1A1428</color>
+    <color name="violet">#7C3AED</color>
 </resources>
