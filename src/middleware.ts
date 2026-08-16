@@ -34,9 +34,23 @@ function isPublic(pathname: string): boolean {
   return PUBLIC_PREFIX.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
+/**
+ * Vercel cron calls carry `Authorization: Bearer <CRON_SECRET>` and no session
+ * cookie. The routes re-verify the secret themselves (defence in depth); the
+ * middleware only needs to not swallow the call with a 401 first.
+ */
+const CRON_PATHS = new Set(['/api/fleet/probe', '/api/fleet/sync']);
+
+function cronAuthorized(req: NextRequest): boolean {
+  const secret = process.env.CRON_SECRET;
+  if (!secret) return false;
+  return CRON_PATHS.has(req.nextUrl.pathname) && req.headers.get('authorization') === `Bearer ${secret}`;
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (isPublic(pathname)) return NextResponse.next();
+  if (cronAuthorized(req)) return NextResponse.next();
 
   const token = req.cookies.get(COOKIE_NAME)?.value;
   const user = verifySessionToken(token);
