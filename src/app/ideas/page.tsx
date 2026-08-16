@@ -6,7 +6,7 @@ import TrustLine from "@/components/TrustLine";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
 import { FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus, type FleetIdea } from "@/lib/fleet";
-import { buildAgentPrompt } from "@/lib/agentPrompt";
+import { buildAgentPrompt, buildImprovePrompt } from "@/lib/agentPrompt";
 
 const VIOLET = STYLES.violet;
 
@@ -58,19 +58,39 @@ export default function IdeasPage() {
     return [...base.slice(k), ...base.slice(0, k)];
   }, [domain, effort, impact, status, kind, q, shuffleSeed, favOnly, favs]);
 
+  const [briefMode, setBriefMode] = useState<"auto" | "build" | "improve">("auto");
+  function resolveMode(idea: FleetIdea): "build" | "improve" {
+    if (briefMode === "build") return "build";
+    if (briefMode === "improve") return "improve";
+    return idea.kind === "enhancement" ? "improve" : "build";
+  }
   async function copyPrompt(idea: FleetIdea) {
-    const full = buildAgentPrompt(idea);
+    const mode = resolveMode(idea);
+    const full = mode === "improve" ? buildImprovePrompt(idea) : buildAgentPrompt(idea);
     await navigator.clipboard.writeText(full);
-    setToast("Full agent brief copied (" + idea.slug + ") — also logged to History");
+    setToast((mode === "improve" ? "IMPROVE" : "BUILD") + " brief copied (" + idea.slug + ") — also logged to History");
     setTimeout(() => setToast(null), 2600);
-    // Provenance: best-effort log copy event to fleet history (for P0 traceability)
     try {
       await fetch("/api/fleet/history", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ kind: "copy", slug: idea.slug, ideaId: idea.id, title: idea.title, targetSlug: idea.targetSlug, gapScore: idea.gapScore }),
+        body: JSON.stringify({ kind: "copy", slug: idea.slug, ideaId: idea.id, title: idea.title, targetSlug: idea.targetSlug, gapScore: idea.gapScore, meta: { mode } }),
       });
     } catch {}
+  }
+  async function copyBuildPrompt(idea: FleetIdea) {
+    const full = buildAgentPrompt(idea);
+    await navigator.clipboard.writeText(full);
+    setToast("BUILD brief copied (" + idea.slug + ") — also logged to History");
+    setTimeout(() => setToast(null), 2600);
+    try { await fetch("/api/fleet/history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "copy", slug: idea.slug, ideaId: idea.id, title: idea.title, targetSlug: idea.targetSlug, gapScore: idea.gapScore, meta: { mode: "build" } }) }); } catch {}
+  }
+  async function copyImprovePromptOnly(idea: FleetIdea) {
+    const full = buildImprovePrompt(idea);
+    await navigator.clipboard.writeText(full);
+    setToast("IMPROVE brief copied (" + idea.slug + " → " + (idea.targetSlug || idea.slug) + ") — also logged to History");
+    setTimeout(() => setToast(null), 2600);
+    try { await fetch("/api/fleet/history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "copy", slug: idea.slug, ideaId: idea.id, title: idea.title, targetSlug: idea.targetSlug, gapScore: idea.gapScore, meta: { mode: "improve" } }) }); } catch {}
   }
 
   async function doScaffold(idea: FleetIdea) {
@@ -140,6 +160,13 @@ export default function IdeasPage() {
         </div>
 
         {/* Filters */}
+        <div className="flex flex-wrap items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 p-1 w-fit">
+            <span className="px-2 text-[11px] font-bold text-violet-200">Brief mode:</span>
+            {(["auto", "build", "improve"] as const).map((m) => (
+              <button key={m} onClick={() => setBriefMode(m)} className={`min-h-[28px] rounded-full px-3 text-[11px] font-bold capitalize ${briefMode === m ? "bg-violet-600 text-white" : "text-violet-200/60 hover:text-white"}`}>{m === "auto" ? "Auto (NEW→BUILD, Enhance→IMPROVE)" : m}</button>
+            ))}
+            <span className="px-2 text-[10px] text-violet-200/40">BUILD: new dashboard · IMPROVE: optimize existing</span>
+          </div>
         <div className="mt-5 space-y-3">
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setFavOnly((v) => !v)} className={`min-h-[32px] rounded-full px-3 text-[12px] font-bold transition border ${favOnly ? "bg-amber-500 text-black border-amber-500" : "bg-white/[0.04] text-white/60 border-white/10 hover:text-white"}`}>\u2605 {favs.size}{favOnly ? " \u00b7 Favorites" : ""}</button>
@@ -236,16 +263,20 @@ export default function IdeasPage() {
                 </div>
               ) : null}
 
-              <div className="mt-4 grid grid-cols-3 gap-2">
+              <div className="mt-4 grid grid-cols-2 gap-2">
                 {idea.dashboardUrl ? (
                   <a href={idea.dashboardUrl} target="_blank" rel="noopener" className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[#0f0b1a] hover:bg-white/90 text-center leading-tight px-2">Open \u2197</a>
                 ) : (
                   <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-white/40">No URL</span>
                 )}
-                <button onClick={() => copyPrompt(idea)} title="Copy full agent brief (Markdown) — Web Next.js + Android Kotlin + data + widgets + acceptance" className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 text-[12px] font-semibold text-white hover:bg-white/10">Copy brief</button>
                 <button onClick={() => setConfirmIdea(idea)} disabled={scaffolding === idea.id} title={idea.kind === "enhancement" ? "Scaffold as feature tab inside " + (idea.targetSlug || "") + " at /root/projects/" + idea.slug + " (or /tmp on Vercel)" : "Create new dashboard at /root/projects/" + idea.slug + " (or /tmp on Vercel)"} className={`inline-flex min-h-[40px] items-center justify-center rounded-full px-2 text-[12px] font-semibold disabled:opacity-50 ${idea.kind === "enhancement" ? "border border-amber-500/30 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20" : "bg-violet-600 text-white hover:bg-violet-500"}`}> 
                   {scaffolding === idea.id ? "\u2026" : idea.kind === "enhancement" ? "Scaffold tab \u2192 " + (idea.targetSlug || "") : "Create dashboard"}
                 </button>
+              </div>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                <button onClick={() => copyPrompt(idea)} title={resolveMode(idea) === "improve" ? "Copy IMPROVE brief (Markdown) — optimize existing " + (idea.targetSlug || idea.slug) : "Copy BUILD brief (Markdown) — new dashboard " + idea.slug} className={`inline-flex min-h-[36px] items-center justify-center rounded-full border px-2 text-[11px] font-bold ${resolveMode(idea)==="improve" ? "border-amber-500/30 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20" : "border-violet-500/30 bg-violet-600 text-white hover:bg-violet-500"}`}>{resolveMode(idea)==="improve" ? "Copy IMPROVE" : "Copy BUILD"} · Auto</button>
+                <button onClick={() => copyBuildPrompt(idea)} title="Copy BUILD brief — brand-new dashboard/APK spec" className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 text-[11px] font-semibold text-white/70 hover:bg-white/10 hover:text-white">Copy BUILD</button>
+                <button onClick={() => copyImprovePromptOnly(idea)} title={`Copy IMPROVE brief — optimize/extend existing ${idea.targetSlug || idea.slug}`} className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 px-2 text-[11px] font-semibold text-amber-200 hover:bg-amber-500/15">Copy IMPROVE</button>
               </div>
               <div className="mt-2 text-center text-[11px] text-white/30">{idea.slug}</div>
             </div>

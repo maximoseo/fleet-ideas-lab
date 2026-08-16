@@ -5,6 +5,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
 import { FLEET_PROJECTS, FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, GAP_SCORES, gapLevel, type FleetDomain, type Capability } from "@/lib/fleet";
+import { buildImprovePromptForProject } from "@/lib/agentPrompt";
 import TrustLine from "@/components/TrustLine";
 
 const VIOLET = STYLES.violet;
@@ -70,6 +71,8 @@ function MiniGapRadar() {
 export default function InventoryPage() {
   const [domain, setDomain] = useState<FleetDomain | "all">("all");
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [improveSlug, setImproveSlug] = useState<string | null>(null);
+  const [invToast, setInvToast] = useState<string | null>(null);
   const [status, setStatus] = useState<string>("all");
   const [q, setQ] = useState("");
 
@@ -203,7 +206,12 @@ export default function InventoryPage() {
                 </div>
                 <div className="mt-4 flex gap-2">
                   <a href={p.url} target="_blank" rel="noopener" className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-full bg-white text-[13px] font-semibold text-[#0f0b1a] hover:bg-white/90">Open ↗</a>
-                  <Link href={`/gaps`} className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Gaps</Link>
+                  <Link href={`/gaps`} className="inline-flex min-h-[32px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-3 text-[12px] font-semibold text-white hover:bg-white/10">Gaps</Link>
+                  <button onClick={async () => { const brief = buildImprovePromptForProject(p as unknown as never); await navigator.clipboard.writeText(brief); setInvToast("IMPROVE brief copied (" + p.slug + ")"); setTimeout(() => setInvToast(null), 2600); try { await fetch("/api/fleet/history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "copy", slug: p.slug + "-improve", title: "Improve " + p.name, targetSlug: p.slug, gapScore: p.health, meta: { mode: "improve", source: "inventory-card" } }) }); } catch {} }} className="inline-flex min-h-[32px] items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 px-3 text-[11px] font-bold text-amber-200 hover:bg-amber-500/15">Copy IMPROVE</button>
+                </div>
+                <div className="mt-2 flex gap-2">
+                  <button onClick={() => setImproveSlug(p.slug)} className="inline-flex min-h-[28px] items-center rounded-full border border-violet-500/20 bg-violet-500/10 px-3 text-[11px] font-semibold text-violet-200 hover:bg-violet-500/15">Preview IMPROVE brief</button>
+                  <a href={`/gaps#${p.domain}`} className="inline-flex min-h-[28px] items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-[11px] text-white/50 hover:text-white">Improve \u2197 tab idea</a>
                 </div>
                 {expanded === p.slug ? (
                   <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-[11px] leading-4 text-white/60">
@@ -262,6 +270,23 @@ export default function InventoryPage() {
           ))}
         </div>
         </div>
+        {invToast ? <div className="fixed bottom-20 lg:bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0f0b1a] shadow-xl">{invToast}</div> : null}
+        {improveSlug ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setImproveSlug(null)}>
+            <div className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/15 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              {(() => { const pr = FLEET_PROJECTS.find((x) => x.slug === improveSlug); if (!pr) return null; const brief = buildImprovePromptForProject(pr as unknown as never); return (<>
+                <div className="inline-flex rounded-full bg-amber-500 px-3 py-1 text-[11px] font-bold text-black">IMPROVE \u2192 {pr.slug}</div>
+                <h3 className="mt-3 text-lg font-bold text-white">Improve {pr.name}</h3>
+                <p className="mt-1 text-sm text-white/60">{pr.url} \u00b7 {pr.domain} \u00b7 {pr.status} \u00b7 health {pr.health}</p>
+                <pre className="mt-4 max-h-[48vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-white/[0.04] p-4 text-[11px] leading-4 text-white/80">{brief.slice(0, 8000)}</pre>
+                <div className="mt-4 flex gap-3">
+                  <button onClick={() => setImproveSlug(null)} className="flex-1 rounded-full border border-white/15 bg-white/5 py-3 text-sm font-semibold text-white hover:bg-white/10">Close</button>
+                  <button onClick={async () => { await navigator.clipboard.writeText(brief); setInvToast("IMPROVE brief copied (" + pr.slug + ")"); setTimeout(() => setInvToast(null), 2600); setImproveSlug(null); try { await fetch("/api/fleet/history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "copy", slug: pr.slug + "-improve", title: "Improve " + pr.name, targetSlug: pr.slug, gapScore: pr.health, meta: { mode: "improve", source: "inventory-preview" } }) }); } catch {} }} className="flex-1 rounded-full bg-amber-500 py-3 text-sm font-semibold text-black hover:bg-amber-600">Copy IMPROVE</button>
+                </div>
+              </>); })()}
+            </div>
+          </div>
+        ) : null}
         <TrustLine />
         <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.02] p-4">
           <details>

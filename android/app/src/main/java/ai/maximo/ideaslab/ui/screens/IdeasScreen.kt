@@ -27,6 +27,7 @@ import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.FleetData
 import ai.maximo.ideaslab.data.FleetFavoritesStore
 import ai.maximo.ideaslab.data.buildAgentPrompt
+import ai.maximo.ideaslab.data.buildImprovePrompt
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -41,6 +42,8 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onN
     var refreshing by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf<String?>(null) }
     var showOnlyFavorites by remember { mutableStateOf(false) }
+    var briefMode by remember { mutableStateOf("auto") } // auto | build | improve
+    fun resolveMode(idea: ai.maximo.ideaslab.data.FleetIdea): String = when (briefMode) { "build" -> "build"; "improve" -> "improve"; else -> if (idea.kind == "enhancement") "improve" else "build" }
 
     val favSet by favoritesStore?.favoritesFlow()?.collectAsState(initial = emptySet()) ?: remember { mutableStateOf(emptySet<String>()) }
     val store = favoritesStore
@@ -93,6 +96,19 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onN
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     FilterChip(selected = showOnlyFavorites, onClick = { showOnlyFavorites = !showOnlyFavorites }, label = { Text("\u2605 ${favSet.size}") }, leadingIcon = { Text(if (showOnlyFavorites) "\u2605" else "\u2606") })
+                }
+            }
+            Spacer(Modifier.height(6.dp))
+            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(999.dp)).background(Color(0xFF231C33)).border(1.dp, Color(0xFF7C3AED).copy(0.3f), RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text("Brief mode:", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))
+                for (m in listOf("auto","build","improve")) {
+                    val sel = briefMode == m
+                    val label = when(m){"auto"->"Auto"; "build"->"BUILD"; else->"IMPROVE"}
+                    FilterChip(selected = sel, onClick = { briefMode = m }, label = { Text(label, style = MaterialTheme.typography.labelSmall) })
+                }
+            }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     FilledTonalButton(onClick = { doReload() }, enabled = !refreshing, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
                         Text(if (refreshing) "\u21bb Reloading\u2026" else "\u21bb Reload")
                     }
@@ -198,13 +214,27 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onN
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                             OutlinedButton(onClick = {
-                                val full = buildAgentPrompt(idea)
+                                val m = resolveMode(idea)
+                                val full = if (m == "improve") buildImprovePrompt(idea) else buildAgentPrompt(idea)
                                 clipboard.setText(AnnotatedString(full))
-                                Toast.makeText(ctx, "Full agent brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
-                            }, modifier = Modifier.weight(1f)) { Text("Copy brief") }
+                                Toast.makeText(ctx, (if (m=="improve") "IMPROVE" else "BUILD") + " brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
+                            }, modifier = Modifier.weight(1f)) { Text(if (resolveMode(idea)=="improve") "Copy IMPROVE" else "Copy BUILD") }
                             Button(onClick = { showConfirm = true }, modifier = Modifier.weight(1f), enabled = busySlug != idea.slug,
                                 colors = ButtonDefaults.buttonColors(containerColor = if (idea.kind == "new") Color(0xFF7C3AED) else Color(0xFFF59E0B))
                             ) { Text(if(busySlug==idea.slug) "\u2026" else if (idea.kind == "new") "Create dashboard" else "Scaffold tab") }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                            OutlinedButton(onClick = {
+                                val full = buildAgentPrompt(idea)
+                                clipboard.setText(AnnotatedString(full))
+                                Toast.makeText(ctx, "BUILD brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
+                            }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) { Text("Copy BUILD", style = MaterialTheme.typography.labelSmall) }
+                            OutlinedButton(onClick = {
+                                val full = buildImprovePrompt(idea)
+                                clipboard.setText(AnnotatedString(full))
+                                Toast.makeText(ctx, "IMPROVE brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
+                            }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) { Text("Copy IMPROVE", style = MaterialTheme.typography.labelSmall) }
                         }
                     }
                 }
