@@ -218,7 +218,7 @@ export default function InventoryPage() {
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button onClick={() => setImproveSlug(p.slug)} className="inline-flex min-h-[28px] items-center rounded-full border border-violet-500/20 bg-violet-500/10 px-3 text-[11px] font-semibold text-violet-200 hover:bg-violet-500/15">Preview IMPROVE brief</button>
-                  <a href={`/gaps#${p.domain}`} className="inline-flex min-h-[28px] items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-[11px] text-white/50 hover:text-white">Improve \u2197 tab idea</a>
+                  <a href={`/gaps#${p.domain}`} className="inline-flex min-h-[28px] items-center rounded-full border border-white/10 bg-white/[0.03] px-3 text-[11px] text-white/50 hover:text-white">Improve ↗ tab idea</a>
                 </div>
                 {expanded === p.slug ? (
                   <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-[11px] leading-4 text-white/60">
@@ -282,9 +282,9 @@ export default function InventoryPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setImproveSlug(null)}>
             <div className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/15 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               {(() => { const pr = FLEET_PROJECTS.find((x) => x.slug === improveSlug); if (!pr) return null; const brief = buildImprovePromptForProject(pr as unknown as never); return (<>
-                <div className="inline-flex rounded-full bg-amber-500 px-3 py-1 text-[11px] font-bold text-black">IMPROVE \u2192 {pr.slug}</div>
+                <div className="inline-flex rounded-full bg-amber-500 px-3 py-1 text-[11px] font-bold text-black">IMPROVE → {pr.slug}</div>
                 <h3 className="mt-3 text-lg font-bold text-white">Improve {pr.name}</h3>
-                <p className="mt-1 text-sm text-white/60">{pr.url} \u00b7 {pr.domain} \u00b7 {pr.status} \u00b7 health {pr.health}</p>
+                <p className="mt-1 text-sm text-white/60">{pr.url} · {pr.domain} · {pr.status} · health {pr.health}</p>
                 <pre className="mt-4 max-h-[48vh] overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-white/[0.04] p-4 text-[11px] leading-4 text-white/80">{brief.slice(0, 8000)}</pre>
                 <div className="mt-4 flex gap-3">
                   <button onClick={() => setImproveSlug(null)} className="flex-1 rounded-full border border-white/15 bg-white/5 py-3 text-sm font-semibold text-white hover:bg-white/10">Close</button>

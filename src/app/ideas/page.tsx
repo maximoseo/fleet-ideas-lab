@@ -204,7 +204,7 @@ export default function IdeasPage() {
 
   return (
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-      <SiteHeader subtitle="11+ ideas \u00b7 professional briefs + scaffold \u00b7 Reload brings New IDs" />
+      <SiteHeader subtitle="11+ ideas · professional briefs + scaffold · Reload brings New IDs" />
       {pullY > 0 ? (
         <div className="flex justify-center py-2" style={{ height: 36, opacity: pullY / 72 }}>
           <span className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold ${pullY > 48 ? "border-violet-500/40 bg-violet-500/20 text-violet-200" : "border-white/10 bg-white/5 text-white/50"}`}>
