@@ -20,7 +20,7 @@ import ai.maximo.ideaslab.data.FleetSeenStore
 import ai.maximo.ideaslab.data.SessionStore
 import ai.maximo.ideaslab.data.UpdateCheckWorker
 import ai.maximo.ideaslab.ui.AppNav
-import ai.maximo.ideaslab.ui.theme.FleetIdeasLabTheme
+import ai.maximo.ideaslab.ui.theme.FilTheme
 
 /** Routes a deep link is allowed to open. Anything else is ignored. */
 private val DEEP_LINK_ROUTES = setOf("update", "ideas", "schema-studio")
@@ -46,7 +46,7 @@ class MainActivity : FragmentActivity() {
             ?.takeIf { it.scheme == "fleetideaslab" }
             ?.host
         setContent {
-            FleetIdeasLabTheme {
+            FilTheme {
                 val nav = rememberNavController()
                 var start by remember { mutableStateOf<String?>(null) }
                 LaunchedEffect(Unit) {
