@@ -37,6 +37,8 @@ async function sb<T>(path: string, opts: SbOptions = {}): Promise<T | null> {
     headers,
     body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
     cache: "no-store",
+    // A stalled PostgREST connection must never hold the function open.
+    signal: AbortSignal.timeout(10_000),
   });
   if (!res.ok) {
     const text = (await res.text()).slice(0, 300);

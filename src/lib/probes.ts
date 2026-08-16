@@ -134,6 +134,7 @@ export async function runFleetProbes(
 
   const results = await mapPool(targets, 6, async (t) => ({ target: t, probe: await probeUrl(t.url) }));
 
+  let recordFailures = 0;
   for (const { target, probe } of results) {
     if (!canPersist) {
       // Local-only verdict: single-run view, no transition claims.
@@ -163,9 +164,11 @@ export async function runFleetProbes(
       }
     } catch (err) {
       console.warn("[probes] record failed for", target.slug, (err as Error).message);
+      recordFailures += 1;
       states[target.slug] = probe.ok ? "healthy" : "degraded";
     }
   }
 
-  return { probed: results.length, transitions, states, persisted: canPersist };
+  // persisted only when EVERY record landed — a partial write is reported as such.
+  return { probed: results.length, transitions, states, persisted: canPersist && recordFailures === 0 };
 }

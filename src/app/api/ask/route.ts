@@ -59,8 +59,8 @@ export async function POST(req: NextRequest) {
   const question = String(body.question || "").trim().slice(0, 1000);
   if (!question) return NextResponse.json({ error: "question required" }, { status: 400 });
 
-  const health = (await getHealthRows()) ?? {};
-  const context = buildFleetContext(health as Record<string, { state: string; last_status: number | null; last_latency_ms: number | null }>);
+  const health = await getHealthRows().catch(() => null);
+  const context = buildFleetContext((health ?? {}) as Record<string, { state: string; last_status: number | null; last_latency_ms: number | null }>);
 
   const message = [
     "You are the analyst inside Fleet Ideas Lab, an internal ops dashboard for a fleet of ~38 Vercel dashboards.",
@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
   ].join("\n");
 
   try {
+    const grounded = { dashboards: FLEET_INVENTORY.length, liveHealth: Object.keys(health ?? {}).length };
     const res = await fetch(V0_CHATS_ENDPOINT, {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -87,15 +88,17 @@ export async function POST(req: NextRequest) {
       signal: AbortSignal.timeout(45000),
     });
     if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      return NextResponse.json({ error: `Ask-AI provider error (${res.status}): ${text.slice(0, 200)}` }, { status: 502 });
+      // Provider detail stays in logs; clients get a fixed, non-leaky message.
+      console.warn("[ask] provider error:", res.status, (await res.text().catch(() => "")).slice(0, 200));
+      return NextResponse.json({ error: `Ask-AI provider error (${res.status})` }, { status: 502 });
     }
     const chat = (await res.json()) as { messages?: { role?: string; content?: string }[]; text?: string };
     const assistant = (chat.messages || []).filter((m) => m.role === "assistant");
     const answer = assistant.reverse().find((m) => m.content)?.content || chat.text || "";
     if (!answer) return NextResponse.json({ error: "Ask-AI returned an empty answer" }, { status: 502 });
-    return NextResponse.json({ answer, model: ASK_MODEL, grounded: { dashboards: FLEET_INVENTORY.length, liveHealth: Object.keys(health).length } });
+    return NextResponse.json({ answer, model: ASK_MODEL, grounded });
   } catch (err) {
-    return NextResponse.json({ error: `Ask-AI failed: ${(err as Error).message}` }, { status: 502 });
+    console.warn("[ask] failed:", (err as Error).message);
+    return NextResponse.json({ error: "Ask-AI failed — provider unreachable or timed out" }, { status: 502 });
   }
 }

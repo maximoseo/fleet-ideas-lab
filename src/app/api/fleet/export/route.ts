@@ -14,15 +14,19 @@ export async function GET() {
   } catch {
     return unauthorized();
   }
-  const health = await getHealthRows();
+  const health = await getHealthRows().catch(() => null);
   let events: unknown[] = [];
   let alerts: unknown[] = [];
   if (supabaseEnabled()) {
     try {
       events = await sbSelect("fil_idea_events", "select=*&order=created_at.desc&limit=200");
+    } catch (err) {
+      console.warn("[export] events read failed:", (err as Error).message);
+    }
+    try {
       alerts = await sbSelect("fil_alerts", "select=*&order=sent_at.desc&limit=200");
     } catch (err) {
-      console.warn("[export] read failed:", (err as Error).message);
+      console.warn("[export] alerts read failed:", (err as Error).message);
     }
   }
   return NextResponse.json({

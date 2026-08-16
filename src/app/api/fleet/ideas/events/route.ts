@@ -20,6 +20,7 @@ export async function GET() {
     );
     return NextResponse.json({ events, persisted: true });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 502 });
+    console.warn("[idea-events] read failed:", (err as Error).message);
+    return NextResponse.json({ error: "Event store unavailable" }, { status: 502 });
   }
 }

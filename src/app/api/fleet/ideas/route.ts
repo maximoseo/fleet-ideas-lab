@@ -42,19 +42,25 @@ export async function GET() {
   if (supabaseEnabled()) {
     try {
       const curated = [...FLEET_IDEAS, ...FLEET_GENERATED_POOL];
-      // Seed-missing-only: ignore-duplicates so an operator's status change is
-      // never clobbered by the static map on the next read.
-      await sbInsertIgnore(
-        "fil_ideas",
-        curated.map((i) => ({
-          slug: i.slug,
-          title: i.title,
-          status: STATUS_MAP[i.status] ?? "backlog",
-          priority: i.priority,
-          effort: i.effort,
-          payload: { domain: i.domain, kind: i.kind },
-        })),
-      );
+      // Seed ONLY the missing slugs (read first) — a read endpoint must not
+      // rewrite ~30 rows on every call, and an operator's status change is
+      // never clobbered by the static map.
+      const existing = await sbSelect<{ slug: string }>("fil_ideas", "select=slug");
+      const have = new Set(existing.map((r) => r.slug));
+      const missing = curated.filter((i) => !have.has(i.slug));
+      if (missing.length) {
+        await sbInsertIgnore(
+          "fil_ideas",
+          missing.map((i) => ({
+            slug: i.slug,
+            title: i.title,
+            status: STATUS_MAP[i.status] ?? "backlog",
+            priority: i.priority,
+            effort: i.effort,
+            payload: { domain: i.domain, kind: i.kind },
+          })),
+        );
+      }
       // Read back authoritative statuses after seeding.
       const rows = await sbSelect<IdeaRow>("fil_ideas", "select=slug,title,status,priority,effort");
       statuses = Object.fromEntries(rows.map((r) => [r.slug, r.status]));

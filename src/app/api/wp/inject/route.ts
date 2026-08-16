@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { checkHonesty } from "@/lib/honesty";
 import { recordInjection, markInjectionsRemoved } from "@/lib/injection-registry";
@@ -193,8 +193,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Could not create draft: ${draftRes.status} ${err.slice(0, 200)}` }, { status: draftRes.status });
       }
       const draft = await draftRes.json();
-      // Registry (fire-and-forget — never blocks the WP result)
-      void recordInjection({
+      // Registry after the response — never blocks the WP result
+      after(() => recordInjection({
         site_url: base.origin,
         page_id: draft.id,
         page_slug: pageSlug,
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
         mode: "draft",
         style_name: styleName || null,
         status: "draft",
-      });
+      }));
       return NextResponse.json({
         ok: true,
         mode: "draft",
@@ -261,8 +261,8 @@ export async function POST(req: NextRequest) {
     }
     const updated = await updateRes.json();
 
-    // Registry (fire-and-forget — never blocks the WP result)
-    void recordInjection({
+    // Registry after the response — never blocks the WP result
+    after(() => recordInjection({
       site_url: base.origin,
       page_id: pageId,
       page_slug: pageSlug,
@@ -270,7 +270,7 @@ export async function POST(req: NextRequest) {
       mode: "inject",
       style_name: styleName || null,
       status: "live",
-    });
+    }));
 
     return NextResponse.json({
       ok: true,
@@ -334,8 +334,8 @@ export async function DELETE(req: NextRequest) {
     });
     if (!updateRes.ok) return NextResponse.json({ error: "Could not update page" }, { status: updateRes.status });
 
-    // Registry (fire-and-forget)
-    void markInjectionsRemoved(base.origin, pageId);
+    // Registry after the response
+    after(() => markInjectionsRemoved(base.origin, pageId));
 
     return NextResponse.json({ ok: true, removed: true, message: "Design Lab styles removed. Page restored to its original styling." });
   } catch (err) {

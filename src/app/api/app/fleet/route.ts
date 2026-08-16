@@ -11,6 +11,12 @@ export const maxDuration = 30;
  * Public in the middleware sense (no session cookie on a phone), but guarded
  * by a dedicated APP_TOKEN bearer — revocable without touching the operator
  * password, and never the same credential as the dashboard login.
+ *
+ * Accepted risk (documented): the token ships inside the APK's BuildConfig,
+ * so anyone who unzips the APK can read it. Mitigations: the feed is
+ * READ-ONLY inventory/health data (no write, no secrets, no client data),
+ * the token is one header-check away from instant rotation, and abuse shows
+ * up as anonymous read traffic on non-sensitive data.
  */
 export async function GET(req: NextRequest) {
   const expected = process.env.APP_TOKEN;
@@ -20,7 +26,7 @@ export async function GET(req: NextRequest) {
   if (req.headers.get("authorization") !== `Bearer ${expected}`) {
     return NextResponse.json({ error: "Invalid app token" }, { status: 401 });
   }
-  const health = await getHealthRows();
+  const health = await getHealthRows().catch(() => null);
   const inventory = FLEET_INVENTORY.map((p) => ({
     slug: p.slug,
     name: p.name,

@@ -24,7 +24,8 @@ export async function GET() {
     );
     return NextResponse.json({ favorites: rows.map((r) => r.idea_slug), persisted: true });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 502 });
+    console.warn("[favorites] read failed:", (err as Error).message);
+    return NextResponse.json({ error: "Favorites store unavailable" }, { status: 502 });
   }
 }
 
@@ -46,7 +47,8 @@ export async function POST(req: NextRequest) {
     if ((err as Error).message.includes("409") || (err as Error).message.includes("duplicate")) {
       return NextResponse.json({ ok: true, duplicate: true });
     }
-    return NextResponse.json({ error: (err as Error).message }, { status: 502 });
+    console.warn("[favorites] write failed:", (err as Error).message);
+    return NextResponse.json({ error: "Favorites store unavailable" }, { status: 502 });
   }
 }
 
@@ -63,6 +65,7 @@ export async function DELETE(req: NextRequest) {
     await sbDelete("fil_favorites", `idea_slug=eq.${encodeURIComponent(slug)}`);
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 502 });
+    console.warn("[favorites] delete failed:", (err as Error).message);
+    return NextResponse.json({ error: "Favorites store unavailable" }, { status: 502 });
   }
 }

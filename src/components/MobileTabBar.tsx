@@ -50,6 +50,7 @@ const TABS: ReadonlyArray<{ href: string; key: I18nKey; icon: (a: boolean) => Re
 
 const MORE: ReadonlyArray<{ href: string; key: I18nKey; hint: string; external?: boolean }> = [
   { href: "/changelog", key: "nav.changelog", hint: "Pipeline transitions" },
+  { href: "/experiments", key: "nav.experiments", hint: "WP injection registry" },
   { href: "/audit", key: "nav.audit", hint: "Audit a client site" },
   { href: "/generate", key: "nav.generate", hint: "Tokens & CSS" },
   { href: "/redesign", key: "nav.redesign", hint: "Redesign a live site" },

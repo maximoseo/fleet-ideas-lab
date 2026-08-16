@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -8,10 +10,10 @@ plugins {
 // Secrets/signing live in android/local.properties (gitignored) — never in git.
 // Required keys: APP_TOKEN, KEYSTORE_PATH, KEYSTORE_PASS, KEY_ALIAS, KEY_PASS
 // (each falls back to the same-named environment variable for CI).
-val localProps = java.util.Properties().apply {
-    val f = rootProject.file("local.properties")
-    if (f.exists()) f.inputStream().use { load(it) }
-}
+val localProps = Properties()
+val localPropsFile = rootProject.file("local.properties")
+if (localPropsFile.exists()) localPropsFile.inputStream().use { localProps.load(it) }
+
 fun localProp(key: String): String =
     (localProps.getProperty(key) ?: System.getenv(key) ?: "").trim()
 fun String.gradleEscaped(): String = replace("\\", "\\\\").replace("\"", "\\\"")

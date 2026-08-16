@@ -40,8 +40,14 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({}));
   const url = String(body.url || "").slice(0, 500);
   if (!url) return NextResponse.json({ error: "url required" }, { status: 400 });
+  // Cap the stored payload — a runaway client must not bloat the table.
+  const payload = body.payload ?? { title: body.title, score: body.score, platform: body.platform };
+  const serialized = JSON.stringify(payload ?? {});
+  if (serialized.length > 50_000) {
+    return NextResponse.json({ error: "payload too large (50KB max)" }, { status: 413 });
+  }
   try {
-    await sbInsert("fil_analyses", { url, payload: body.payload ?? body });
+    await sbInsert("fil_analyses", { url, payload: JSON.parse(serialized) });
     return NextResponse.json({ ok: true, supabase: true });
   } catch (err) {
     console.warn("[history] write failed:", (err as Error).message);

@@ -90,10 +90,14 @@ export default function DashboardDetailPage() {
     setError(null);
     setNotFound(false);
     try {
-      const [invRes, probeRes] = await Promise.all([
+      // Inventory is the critical read; probe-history failure degrades to
+      // "history unavailable" instead of blanking the whole page.
+      const [invResult, probeResult] = await Promise.allSettled([
         fetch("/api/fleet/inventory"),
         fetch(`/api/fleet/probe-history?slug=${encodeURIComponent(slug)}`),
       ]);
+      if (invResult.status === "rejected") throw invResult.reason;
+      const invRes = invResult.value;
       if (!invRes.ok) throw new Error("inventory HTTP " + invRes.status);
       const inv = (await invRes.json()) as { inventory?: InventoryItem[]; liveHealth?: boolean };
       const found = (inv.inventory || []).find((p) => p.slug === slug) || null;
@@ -104,12 +108,13 @@ export default function DashboardDetailPage() {
         setItem(found);
       }
       setLiveHealth(inv.liveHealth === true);
-      if (probeRes.ok) {
-        const ph = (await probeRes.json()) as { probes?: ProbeRow[]; persisted?: boolean };
+      if (probeResult.status === "fulfilled" && probeResult.value.ok) {
+        const ph = (await probeResult.value.json()) as { probes?: ProbeRow[]; persisted?: boolean };
         setProbes((ph.probes || []).slice(0, 50));
         setProbesPersisted(ph.persisted !== false);
       } else {
         setProbes([]);
+        setProbesPersisted(false);
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to load dashboard");
@@ -141,8 +146,12 @@ export default function DashboardDetailPage() {
     const project = FLEET_PROJECTS.find((p) => p.slug === slug);
     if (!project) return;
     const brief = buildImprovePromptForProject(project as unknown as never);
-    await navigator.clipboard.writeText(brief);
-    setToast("IMPROVE brief copied (" + slug + ")");
+    try {
+      await navigator.clipboard.writeText(brief);
+      setToast("IMPROVE brief copied (" + slug + ")");
+    } catch {
+      setToast("✗ Copy failed — clipboard unavailable (select the text manually)");
+    }
     setTimeout(() => setToast(null), 2600);
     try {
       await fetch("/api/fleet/history", {
