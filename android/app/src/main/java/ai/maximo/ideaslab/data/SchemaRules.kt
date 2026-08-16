@@ -15,6 +15,9 @@ import org.json.JSONObject
  */
 object SchemaRules {
 
+    /** "At least one of these must be present" — Google documents several types this way. */
+    data class AnyOfRule(val paths: List<Pair<String, String>>, val note: String)
+
     data class TypeRule(
         val type: String,
         val label: String,
@@ -22,14 +25,19 @@ object SchemaRules {
         val required: List<Pair<String, String>>,
         val recommended: List<Pair<String, String>>,
         val aliases: List<String> = emptyList(),
+        val anyOf: List<AnyOfRule> = emptyList(),
+        /** A caveat about the rich result itself, not the markup. */
+        val advisory: String? = null,
     )
 
     val TYPES: List<TypeRule> = listOf(
         TypeRule(
             "Article", "Article",
             "https://developers.google.com/search/docs/appearance/structured-data/article",
-            required = listOf("headline" to "Title of the article."),
+            // Google's Article page documents no required properties — all are recommended.
+            required = emptyList(),
             recommended = listOf(
+                "headline" to "Title of the article. The strongest single signal, though not required.",
                 "image" to "Article image.",
                 "datePublished" to "ISO 8601 first-publication date.",
                 "dateModified" to "ISO 8601 last-update date.",
@@ -56,11 +64,22 @@ object SchemaRules {
                 "mainEntity[].acceptedAnswer.text" to "The full answer text.",
             ),
             recommended = emptyList(),
+            advisory = "Since August 2023 Google shows FAQ rich results only for well-known authoritative government and health sites. Valid FAQPage markup elsewhere is still understood, but it will not produce an FAQ rich result.",
         ),
         TypeRule(
             "Product", "Product",
             "https://developers.google.com/search/docs/appearance/structured-data/product-snippet",
             required = listOf("name" to "Product name."),
+            anyOf = listOf(
+                AnyOfRule(
+                    listOf(
+                        "offers" to "Price and availability.",
+                        "review" to "An individual review.",
+                        "aggregateRating" to "Averaged rating across reviews.",
+                    ),
+                    "Google needs at least one of offers, review or aggregateRating for a product snippet.",
+                )
+            ),
             recommended = listOf(
                 "image" to "Product image URL.",
                 "offers.price" to "Price as a number, no currency symbol.",
@@ -317,6 +336,24 @@ object SchemaRules {
                 }
 
                 for ((path, note) in it.required) checkProp(path, note, Severity.ERROR)
+
+                for (group in it.anyOf) {
+                    val satisfied = group.paths.any { (path, _) ->
+                        val values = resolve(node, path)
+                        values.isNotEmpty() && !values.all(::isBlank)
+                    }
+                    if (!satisfied) {
+                        findings.add(
+                            Finding(
+                                Severity.ERROR,
+                                group.paths.joinToString(" | ") { pair -> pair.first },
+                                "None of these is present. ${group.note}",
+                                "",
+                            )
+                        )
+                    }
+                }
+
                 for ((path, note) in it.recommended) checkProp(path, note, Severity.WARNING)
             }
 
@@ -341,6 +378,23 @@ object SchemaRules {
         return Result(true, "Valid JSON-LD. ${reports.size} $nodeWord found.", reports)
     }
 
+    /**
+     * Shape AND calendar. The pattern alone accepts 2026-13-45, which is not a date —
+     * a validator that passes an impossible date is worse than no validator.
+     */
+    private fun isRealDate(text: String): Boolean {
+        if (!ISO_DATE.matches(text)) return false
+        val parts = text.take(10).split("-")
+        if (parts.size != 3) return false
+        val year = parts[0].toIntOrNull() ?: return false
+        val month = parts[1].toIntOrNull() ?: return false
+        val day = parts[2].toIntOrNull() ?: return false
+        if (month !in 1..12) return false
+        val leap = (year % 4 == 0 && year % 100 != 0) || year % 400 == 0
+        val lengths = intArrayOf(31, if (leap) 29 else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+        return day in 1..lengths[month - 1]
+    }
+
     private val DATE_PROPS = setOf("datepublished", "datemodified", "dateposted", "validthrough", "startdate", "enddate", "uploaddate")
 
     private fun checkShape(path: String, values: List<Any?>, findings: MutableList<Finding>) {
@@ -349,7 +403,7 @@ object SchemaRules {
         for (value in values) {
             val text = (value as? String)?.trim() ?: continue
             if (text.isEmpty()) continue
-            if (!ISO_DATE.matches(text)) {
+            if (!isRealDate(text)) {
                 findings.add(
                     Finding(
                         Severity.ERROR, path,

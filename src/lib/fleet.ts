@@ -225,7 +225,8 @@ export const FLEET_GENERATED_POOL: FleetIdea[] = [
 ];
 
 // Gap matrix — DERIVED from FLEET_INVENTORY, not a mock
-// Score = coverage % of 37 dashboards that actually expose domain×capability
+// Score = coverage % of the dashboards IN THAT DOMAIN that expose the capability —
+// not a percentage of the whole fleet. See computeGapScores below.
 // Domains: 8 FleetDomain, Capabilities: 5 (analytics/alerts/automation/reporting/visualization)
 // No invented vault data — sources flagged TBD where not yet wired.
 function computeGapScores(): Record<string, Record<string, number>> {

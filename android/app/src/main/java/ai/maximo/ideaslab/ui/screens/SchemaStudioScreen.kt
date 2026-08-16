@@ -205,6 +205,9 @@ fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
                             }
                         }
                     }
+                    node.rule?.advisory?.let { advisory ->
+                        item { StatusCard(title = "About this rich result", body = advisory, tone = Warm) }
+                    }
                     if (node.findings.isEmpty()) {
                         item {
                             StatusCard(
