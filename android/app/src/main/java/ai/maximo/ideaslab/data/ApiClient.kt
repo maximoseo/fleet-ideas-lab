@@ -26,6 +26,9 @@ class ApiClient(private val sessionStore: SessionStore) {
             val body = JSONObject().apply {
                 put("username", username); put("password", password)
                 if (turnstileToken.isNotEmpty()) put("turnstileToken", turnstileToken)
+                // First-party app channel: the server skips Turnstile for the
+                // revocable app token (password + rate-limit still enforced).
+                put("appToken", BuildConfig.APP_TOKEN)
             }.toString().toRequestBody("application/json".toMediaType())
             val req = Request.Builder().url("$base/api/auth/login").post(body).build()
             val res = client.newCall(req).execute()
