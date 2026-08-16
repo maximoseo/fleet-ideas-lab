@@ -1,0 +1,91 @@
+# yaml-language-server: $schema=https://storage.googleapis.com/coderabbit_public_assets/schema.v2.json
+#
+# Maximo SEO fleet review rules — the standard copy. Same file in every repo.
+#
+# The point of this file is signal. A reviewer that comments on every rename gets muted
+# within a week, and a muted reviewer catches nothing at all.
+#
+# Replaces the earlier 245-byte fleet default. Everything that one asked for is here, plus
+# path filters, per-path priorities and a tone rule. Its `app/api/**` entry was dropped and
+# generalised: not every repo is Next.js, and the `{server,api}` entry below covers all of
+# them. Validated with `coderabbit config validate .coderabbit.yaml` before rollout.
+
+language: en-US
+
+# Hard limit: 250 characters. The schema rejects anything longer.
+tone_instructions: >-
+  Be direct. Lead with the defect, name the file and line, give the fix in one sentence. No
+  praise, no restating the diff. Flag a missing test only for logic changes, never for
+  formatting.
+
+early_access: false
+
+reviews:
+  # `assertive` turns on style, naming and minor-improvement comments — the exact opposite of
+  # the tone rule above. `chill` is the defect-first profile: bugs, security and essential
+  # fixes, no nitpicks. CodeRabbit caught that contradiction in an earlier draft of this file.
+  profile: chill
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  review_status: true
+  collapse_walkthrough: true
+
+  # Draft PRs are work in progress by definition; reviewing them is noise.
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - main
+      - master
+
+  # Lockfiles are excluded deliberately, and a reviewer flagged the supply-chain gap that
+  # creates. `package.json` is *not* excluded — a new dependency and its version range appear
+  # there, which is the line worth a comment. A 10,000-line lockfile diff is not, and where a
+  # repo has a dependency-audit step in CI, that is the tool for the job.
+  path_filters:
+    - "!**/dist/**"
+    - "!**/build/**"
+    - "!**/node_modules/**"
+    - "!**/*.min.js"
+    - "!**/*.lock"
+    - "!**/package-lock.json"
+    - "!**/*.svg"
+    - "!**/*.png"
+    - "!**/*.jpg"
+
+  path_instructions:
+    - path: "**/*.{ts,tsx,js,jsx}"
+      instructions: >-
+        Prioritise, in this order: a defect that produces a wrong result for a real input;
+        an auth, session, secret or user-input handling mistake; an unhandled failure path
+        that leaves the UI claiming success. Treat any hardcoded credential, token or
+        password as critical, and any promise whose rejection nothing handles. Style opinions
+        are not worth a comment.
+    - path: "**/{server,api,app/api,pages/api}/**"
+      instructions: >-
+        Check that every endpoint validates its input, that errors do not leak internals to
+        the client, and that a failure in one data provider cannot take down a response that
+        other providers could still fill. Flag any secret read from a literal rather than the
+        environment.
+    - path: "**/*.{py,php}"
+      instructions: >-
+        Same priorities as the JavaScript rule: wrong results first, then auth, secrets and
+        unvalidated input. Flag a query built by string concatenation, and any exception path
+        that swallows an error and continues as if it succeeded.
+    # `.spec.` as well as `.test.`: an e2e suite named `smoke.spec.ts` would otherwise be
+    # reviewed as ordinary source with no test guidance at all.
+    - path: "**/*.{test,spec}.{ts,tsx,js,jsx}"
+      instructions: >-
+        Flag a test that would pass even if the behaviour it names were removed. A test
+        asserting only that a function was called proves nothing.
+    - path: "**/*.{md,mdx}"
+      instructions: >-
+        Documentation only. Comment solely when an instruction is factually wrong or a
+        command would fail as written.
+
+  auto_title_instructions: >-
+    Describe what changed and why in one line, imperative mood, no ticket prefixes.
+
+chat:
+  auto_reply: true

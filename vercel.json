@@ -1,3 +1,7 @@
 {
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "crons": [
+    { "path": "/api/fleet/probe", "schedule": "*/15 * * * *" },
+    { "path": "/api/fleet/sync", "schedule": "0 5 * * *" }
+  ]
 }

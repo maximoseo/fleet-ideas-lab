@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    env:
+      # Smoke-run secrets: throwaway values for the CI boot only, never real ones.
+      DASHBOARD_AUTH_SECRET: ci-smoke-secret-0123456789abcdef0123456789
+      DASHBOARD_AUTH_USERNAME: ci
+      DASHBOARD_AUTH_PASSWORD: ci-smoke-password-not-real
+      NODE_ENV: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      # Lint is non-blocking for now: 21 pre-existing errors (react-hooks
+      # set-state-in-effect, no-explicit-any, unescaped entities) across the
+      # legacy pages. Tracked debt — clean up, then remove continue-on-error.
+      - run: npm run lint
+        continue-on-error: true
+      - run: npm run build
+      - name: Boot production server
+        run: |
+          nohup npm start -- -p 3100 > /tmp/fil-server.log 2>&1 &
+          for i in $(seq 1 30); do
+            if curl -sf -o /dev/null http://127.0.0.1:3100/login; then echo up; break; fi
+            sleep 2
+          done
+      - name: Auth-matrix smoke
+        run: node scripts/smoke-auth-matrix.mjs http://127.0.0.1:3100

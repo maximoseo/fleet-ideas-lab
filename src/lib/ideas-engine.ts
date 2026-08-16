@@ -154,7 +154,7 @@ function priorityFor(idx:number): Priority { if(idx<3) return "P0"; if(idx<6) re
 export function generateIdeas(gaps: GapMatrix|null, inventory: FleetProject[]): DashboardIdea[] {
   const existing = new Set(inventory.map((pr)=>pr.slug));
   const available = IDEA_POOL.filter((i)=> !existing.has(i.slug));
-  let ranked = [...available];
+  const ranked = [...available];
   if (gaps && gaps.weakest.length) {
     const weak = new Set(gaps.weakest.map((c)=> c.domain));
     ranked.sort((a,b)=>{
