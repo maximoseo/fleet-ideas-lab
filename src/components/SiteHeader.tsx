@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import CommandPalette from "@/components/CommandPalette";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const NAV = [
   { href: "/", label: "Inventory", hint: "Fleet overview" },
@@ -34,7 +35,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-[#0d0d14]/95 backdrop-blur">
+    <header className="fil-chrome sticky top-0 z-50 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <Link href="/" className="flex shrink-0 items-center gap-2.5">
           <span
@@ -84,6 +85,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
         </nav>
 
         <div className="hidden lg:flex items-center gap-2">
+          <ThemeToggle />
           <button onClick={() => setPaletteOpen(true)} className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] font-medium text-white/70 hover:bg-white/10" aria-label="Command palette">
             ⌘K <span className="hidden xl:inline text-white/40">Jump</span>
           </button>
@@ -96,6 +98,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
         </div>
 
         <button onClick={() => setPaletteOpen(true)} className="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60" aria-label="Search">⌘</button>
+        <span className="lg:hidden"><ThemeToggle /></span>
         {/* mobile quick nav */}
         <nav className="flex items-center gap-1 lg:hidden" aria-label="Mobile primary">
           {NAV.map((item) => {

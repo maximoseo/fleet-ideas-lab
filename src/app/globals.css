@@ -1,10 +1,38 @@
 @import "tailwindcss";
 
+/* ── Theme tokens ──────────────────────────────────────────────
+   Dark is the default (no data-theme attribute). Light overrides
+   live under :root[data-theme="light"]. The before-paint script in
+   layout.tsx sets document.documentElement.dataset.theme from
+   localStorage "fil-theme" or prefers-color-scheme. */
 :root {
-  --background: #0c0a14;
-  --foreground: #f0ecf7;
+  --bg: #0c0a13;
+  --panel: #151120;
+  --text: #efebfa;
+  --muted: #8c82ab;
+  --line: #2b2340;
+  --accent: #a78bfa;
+  --good: #8b7fe8;
+  --warn: #e8b14c;
+  --bad: #f2637e;
+  --background: var(--bg);
+  --foreground: var(--text);
   --font-sans: var(--font-heebo), system-ui, sans-serif;
   --font-mono: var(--font-mono), monospace;
+  color-scheme: dark;
+}
+
+:root[data-theme="light"] {
+  --bg: #f5f3fa;
+  --panel: #ffffff;
+  --text: #191428;
+  --muted: #6a6088;
+  --line: #e3dcf2;
+  --accent: #6d4fd8;
+  --good: #6d5fd0;
+  --warn: #a8730c;
+  --bad: #c9314f;
+  color-scheme: light;
 }
 
 body {
@@ -14,6 +42,70 @@ body {
   /* ambient brand wash, top-left — one radial, nothing else */
   background-image: radial-gradient(900px 420px at 15% -10%, rgba(124, 58, 237, 0.14), transparent 70%);
   background-repeat: no-repeat;
+}
+
+:root[data-theme="light"] body {
+  background-image: radial-gradient(900px 420px at 15% -10%, rgba(109, 79, 216, 0.08), transparent 70%);
+}
+
+/* Shared chrome (header / tab bar / sheets) — token-driven so both themes work */
+.fil-chrome {
+  background-color: color-mix(in srgb, var(--panel) 94%, transparent);
+  border-color: var(--line);
+}
+.fil-panel {
+  background-color: var(--panel);
+  border-color: var(--line);
+  color: var(--text);
+}
+
+/* ── Gradual light-theme mapping ───────────────────────────────
+   Pages still carry VIOLET token hexes as inline styles and
+   white/* Tailwind utilities. Until those are migrated to tokens,
+   map the known values in light mode. Never color alone — labels
+   and structure already pair with color elsewhere. */
+:root[data-theme="light"] [style*="#0f0b1a"],
+:root[data-theme="light"] [style*="#0c0a14"] {
+  background: var(--bg) !important;
+  background-image: none !important;
+}
+:root[data-theme="light"] [style*="#1a1428"],
+:root[data-theme="light"] [style*="#231c33"] {
+  background: var(--panel) !important;
+  background-image: none !important;
+  border-color: var(--line) !important;
+}
+:root[data-theme="light"] [style*="#3d3355"] {
+  border-color: var(--line) !important;
+}
+:root[data-theme="light"] [style*="#f0ecf7"] {
+  color: var(--text) !important;
+}
+:root[data-theme="light"] [style*="#a89bc2"],
+:root[data-theme="light"] [style*="#6b5f82"] {
+  color: var(--muted) !important;
+}
+
+/* Tailwind white/* utilities → light equivalents. Elements on
+   saturated accent fills (violet/emerald/red buttons) keep white text. */
+:root[data-theme="light"] [class*="text-white"]:not([class*="bg-violet"]):not([class*="bg-emerald"]):not([class*="bg-red-5"]):not([class*="bg-amber-500 "]) {
+  color: var(--text) !important;
+}
+:root[data-theme="light"] [class*="text-white/"]:not([class*="bg-violet"]):not([class*="bg-emerald"]):not([class*="bg-red-5"]) {
+  color: var(--muted) !important;
+}
+:root[data-theme="light"] [class*="bg-white/"] {
+  background-color: rgba(25, 20, 40, 0.05) !important;
+}
+:root[data-theme="light"] [class*="border-white/"] {
+  border-color: var(--line) !important;
+}
+:root[data-theme="light"] [class*="bg-black/20"] {
+  background-color: rgba(25, 20, 40, 0.05) !important;
+}
+:root[data-theme="light"] [class*="placeholder:text-white"]::placeholder {
+  color: var(--muted) !important;
+  opacity: 0.7;
 }
 
 /* Room for the mobile bottom tab bar (58px + safe area) */
@@ -50,27 +142,30 @@ html {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(167, 139, 250, 0.3);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(167, 139, 250, 0.5);
+  background: color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 /* Selection */
 ::selection {
-  background: rgba(124, 58, 237, 0.3);
-  color: #f0ecf7;
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
+  color: var(--text);
 }
 
 /* Focus visible */
 :focus-visible {
-  outline: 2px solid #a78bfa;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;

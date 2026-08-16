@@ -74,7 +74,7 @@ export default function MobileTabBar() {
       {moreOpen ? (
         <div className="fixed inset-0 z-[70] lg:hidden" role="dialog" aria-modal="true" aria-label="More pages">
           <button aria-label="Close" className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMoreOpen(false)} />
-          <div className="absolute inset-x-0 bottom-0 rounded-t-2xl border-t border-white/10 bg-[#14121f] px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3 shadow-2xl">
+          <div className="fil-panel absolute inset-x-0 bottom-0 rounded-t-2xl border-t px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3 shadow-2xl">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
             <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">More</p>
             <div className="grid grid-cols-1 gap-1">
@@ -89,7 +89,7 @@ export default function MobileTabBar() {
           </div>
         </div>
       ) : null}
-      <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-white/10 bg-[#0d0c16]/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden" aria-label="Primary mobile">
+      <nav className="fil-chrome fixed inset-x-0 bottom-0 z-[60] border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden" aria-label="Primary mobile">
         <div className="grid grid-cols-6">
           {TABS.map((t) => {
             const active = isActive(t.href);
