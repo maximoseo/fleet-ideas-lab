@@ -77,8 +77,19 @@ export async function POST(req: Request) {
     }
 
     // Bot protection: reject unverified submissions before any auth work.
+    //
+    // First-party Android app channel: the app presents its revocable
+    // APP_TOKEN instead of a Turnstile token (a WebView-hosted widget is
+    // unreliable on-device — hostname/timeout edge cases the operator hits as
+    // "Success! but login fails"). This does NOT weaken the web flow, and it
+    // does not bypass the password: an attacker still needs BOTH the leaked
+    // app token AND the real password. Rate limiting applies unchanged.
+    const appToken = String(body.appToken || '');
+    const isTrustedApp =
+      Boolean(process.env.APP_TOKEN) && appToken.length > 0 && appToken === process.env.APP_TOKEN;
+
     const ip = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for');
-    const challengeOk = await verifyTurnstile(turnstileToken, ip);
+    const challengeOk = isTrustedApp ? true : await verifyTurnstile(turnstileToken, ip);
     if (!challengeOk) {
       return noStore(
         NextResponse.json(
