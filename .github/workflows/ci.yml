@@ -13,10 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # Smoke-run secrets: throwaway values for the CI boot only, never real ones.
+      # NOTE: NODE_ENV stays UNSET here — setting it to production makes
+      # `npm ci` skip devDependencies and typecheck dies on missing @types/node.
       DASHBOARD_AUTH_SECRET: ci-smoke-secret-0123456789abcdef0123456789
       DASHBOARD_AUTH_USERNAME: ci
       DASHBOARD_AUTH_PASSWORD: ci-smoke-password-not-real
-      NODE_ENV: production
     steps:
       - uses: actions/checkout@v4
         with:
