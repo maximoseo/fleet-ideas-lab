@@ -16,18 +16,18 @@ export const runtime = 'nodejs';
 
 const COOKIE_NAME = 'dl_session';
 
+/**
+ * The public surface lives in ONE shared file (src/lib/publicRoutes.json) that
+ * both this middleware and the CI auth-matrix smoke import — adding a public
+ * route is an explicit, test-covered decision, never an accident.
+ */
+import publicRoutes from '@/lib/publicRoutes.json';
+
 /** Exact paths reachable without a session. */
-const PUBLIC_EXACT = new Set([
-  '/api/app/version',
-  '/api/app/download',
-  '/login',
-  '/api/auth/login',
-  '/api/auth/logout',
-  '/api/auth/me', // returns 401 itself when signed out; the login page polls it
-]);
+const PUBLIC_EXACT = new Set<string>(publicRoutes.exact);
 
 /** Path prefixes reachable without a session. */
-const PUBLIC_PREFIX = ['/share', '/prototypes'];
+const PUBLIC_PREFIX: string[] = publicRoutes.prefix;
 
 function isPublic(pathname: string): boolean {
   if (PUBLIC_EXACT.has(pathname)) return true;

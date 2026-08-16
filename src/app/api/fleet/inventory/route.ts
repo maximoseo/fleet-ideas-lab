@@ -20,7 +20,7 @@ export async function GET() {
   }
   const health = await getHealthRows();
   const inventory = FLEET_INVENTORY.map((p) => {
-    const live = health[p.slug];
+    const live = health?.[p.slug];
     return {
       ...p,
       live: live
@@ -37,6 +37,6 @@ export async function GET() {
   return NextResponse.json({
     inventory,
     count: inventory.length,
-    liveHealth: supabaseEnabled() && Object.keys(health).length > 0,
+    liveHealth: health !== null && Object.keys(health).length > 0,
   });
 }

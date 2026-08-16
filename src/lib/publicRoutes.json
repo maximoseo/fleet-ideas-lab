@@ -1,0 +1,12 @@
+{
+  "comment": "Single source of truth for the unauthenticated surface. Imported by src/middleware.ts AND scripts/smoke-auth-matrix.mjs — a route added here is public by explicit decision, and CI asserts everything else 401s.",
+  "exact": [
+    "/api/app/version",
+    "/api/app/download",
+    "/login",
+    "/api/auth/login",
+    "/api/auth/logout",
+    "/api/auth/me"
+  ],
+  "prefix": ["/share", "/prototypes"]
+}

@@ -39,7 +39,7 @@ async function handle(req: NextRequest) {
     url: p.url as string,
   }));
 
-  const { probed, transitions, states } = await runFleetProbes(targets);
+  const { probed, transitions, states, persisted } = await runFleetProbes(targets);
 
   // Alerting
   let alertSent = false;
@@ -85,7 +85,7 @@ async function handle(req: NextRequest) {
     down: Object.values(states).filter((s) => s === "down").length,
     degraded: Object.values(states).filter((s) => s === "degraded").length,
     alertSent,
-    persisted: supabaseEnabled(),
+    persisted,
     at: new Date().toISOString(),
   });
 }

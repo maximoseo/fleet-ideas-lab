@@ -68,6 +68,10 @@ export async function sbPatch(table: string, query: string, patch: unknown): Pro
   await sb(`${table}?${query}`, { method: "PATCH", body: patch, prefer: "return=minimal" });
 }
 
+export async function sbRpc<T>(fn: string, args: Record<string, unknown>): Promise<T | null> {
+  return sb<T>(`rpc/${fn}`, { method: "POST", body: args });
+}
+
 export async function sbDelete(table: string, query: string): Promise<void> {
   await sb(`${table}?${query}`, { method: "DELETE" });
 }
