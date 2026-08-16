@@ -1,13 +1,10 @@
 package ai.maximo.ideaslab.ui.screens
 
 import android.widget.Toast
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
@@ -16,12 +13,9 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import ai.maximo.ideaslab.data.ApiClient
@@ -30,12 +24,21 @@ import ai.maximo.ideaslab.data.FleetFavoritesStore
 import ai.maximo.ideaslab.data.FleetSeenStore
 import ai.maximo.ideaslab.data.buildAgentPrompt
 import ai.maximo.ideaslab.data.buildImprovePrompt
+import ai.maximo.ideaslab.ui.components.EmptyState
+import ai.maximo.ideaslab.ui.components.FilCard
+import ai.maximo.ideaslab.ui.components.FilInset
+import ai.maximo.ideaslab.ui.components.FilScreenHeader
+import ai.maximo.ideaslab.ui.components.FilTag
+import ai.maximo.ideaslab.ui.theme.FilDimens
+import ai.maximo.ideaslab.ui.theme.FilTheme
+import ai.maximo.ideaslab.ui.theme.FilType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, seenStore: FleetSeenStore? = null, onNotifications: () -> Unit = {}) {
+    val p = FilTheme.palette
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
@@ -77,7 +80,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
             val candidates = allPool.filter { it.slug !in seenIds }
             if (candidates.isEmpty()) {
                 shuffleSeed++
-                Toast.makeText(ctx, "No more new ideas \u2014 reshuffled ${ideas.size} shown", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, "No more new ideas — reshuffled ${ideas.size} shown", Toast.LENGTH_SHORT).show()
             } else {
                 val take = minOf(3, candidates.size)
                 var seed = (shuffleSeed + 1) * 9301 + 49297
@@ -87,7 +90,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                 seenIds = seenIds + picked.map { it.slug }.toSet()
                 seenStore?.addSeen(picked.map { it.slug }.toSet())
                 shuffleSeed++
-                Toast.makeText(ctx, "New ideas: " + picked.joinToString(", ") { it.slug } + " \u00b7 now ${(ideas.size + take)} shown (reshuffled)", Toast.LENGTH_SHORT).show()
+                Toast.makeText(ctx, "New ideas: " + picked.joinToString(", ") { it.slug } + " · now ${(ideas.size + take)} shown (reshuffled)", Toast.LENGTH_SHORT).show()
             }
             refreshing = false
         }
@@ -115,7 +118,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
             shuffleSeed++
             loadingMore = false
             if (candidates.size <= take) endOfFeed = true
-            Toast.makeText(ctx, "Loaded " + picked.joinToString(", ") { it.slug } + " \u00b7 " + (ideas.size + take) + " shown", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "Loaded " + picked.joinToString(", ") { it.slug } + " · " + (ideas.size + take) + " shown", Toast.LENGTH_SHORT).show()
         }
     }
     val shouldLoadMore by remember { derivedStateOf { val last = listState.layoutInfo.visibleItemsInfo.lastOrNull(); last != null && last.index >= visiblePool.size - 3 } }
@@ -124,118 +127,140 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
 
     val briefs = remember {
         mapOf(
-            "serp-volatility-war-room" to Triple("Site Intel exists but lacks war-room view.", "Enhance site-intel with War-Room tab \u2014 not a new dashboard", "Validated: seo\u00d7analytics 96% strong \u2014 enhancement, not white-space"),
-            "gbp-health-monitor" to Triple("Local SEO exists \u2014 lacks GBP health tab.", "Enhance local-seo with Health tab \u2014 not new dashboard", "Validated: local\u00d7analytics 67% ok \u2014 feature gap"),
-            "anomaly-explain-engine" to Triple("Alerts without explanation are noise \u2014 ignored.", "Timeline + LLM Root Cause + Impact Estimate + Suggested Action", "Alerts become decisions, MTTR drops"),
+            "serp-volatility-war-room" to Triple("Site Intel exists but lacks war-room view.", "Enhance site-intel with War-Room tab — not a new dashboard", "Validated: seo×analytics 96% strong — enhancement, not white-space"),
+            "gbp-health-monitor" to Triple("Local SEO exists — lacks GBP health tab.", "Enhance local-seo with Health tab — not new dashboard", "Validated: local×analytics 67% ok — feature gap"),
+            "anomaly-explain-engine" to Triple("Alerts without explanation are noise — ignored.", "Timeline + LLM Root Cause + Impact Estimate + Suggested Action", "Alerts become decisions, MTTR drops"),
             "outreach-inbox-commander" to Triple("~20% replies lost in Gmail noise.", "Thread List + Reply Score + Follow-up Timer + Template Inject", "Recover replies, halve busywork"),
-            "schema-studio" to Triple("Schema errors silently kill rich results \u2014 invisible CTR loss.", "JSON-LD Editor + Validator + Rich Result Preview + Fix Diff", "Recover eligibility + CTR with safety net"),
-            "design-token-pipeline" to Triple("Tokens are manual \u2014 no WP pipeline.", "Token Editor + WP Sync + Preview Frame + Version History", "Ship design-system to WP in one click"),
-            "content-brief-autopilot" to Triple("Content Automation exists \u2014 lacks brief autopilot.", "Enhance content-automation with Brief tab \u2014 not new", "Validated: content\u00d7automation 67% ok"),
-            "local-citation-pulse" to Triple("Local SEO lacks citation diffing \u2014 NAP across 40+ dirs.", "Enhance local-seo with Citation Pulse tab", "Validated: local\u00d7reporting 33% gap \u2014 feature-level"),
-            "fleet-cron-observatory" to Triple("50+ crons \u2014 silent failures cost hours weekly.", "Timeline + Failure Heatmap + Run Logs + Retry", "Zero silent failures"),
-            "link-velocity-tracker" to Triple("Competitor Intel exists \u2014 lacks velocity view.", "Enhance competitor-intel with Link Velocity tab", "Validated: outreach\u00d7analytics 96% strong \u2014 enhancement"),
-            "cwv-budget-guard" to Triple("SiteWatch monitors uptime \u2014 lacks CWV budget gate.", "Enhance sitewatch with CWV Guard tab", "Validated: technical\u00d7alerts 86% strong \u2014 feature"),
+            "schema-studio" to Triple("Schema errors silently kill rich results — invisible CTR loss.", "JSON-LD Editor + Validator + Rich Result Preview + Fix Diff", "Recover eligibility + CTR with safety net"),
+            "design-token-pipeline" to Triple("Tokens are manual — no WP pipeline.", "Token Editor + WP Sync + Preview Frame + Version History", "Ship design-system to WP in one click"),
+            "content-brief-autopilot" to Triple("Content Automation exists — lacks brief autopilot.", "Enhance content-automation with Brief tab — not new", "Validated: content×automation 67% ok"),
+            "local-citation-pulse" to Triple("Local SEO lacks citation diffing — NAP across 40+ dirs.", "Enhance local-seo with Citation Pulse tab", "Validated: local×reporting 33% gap — feature-level"),
+            "fleet-cron-observatory" to Triple("50+ crons — silent failures cost hours weekly.", "Timeline + Failure Heatmap + Run Logs + Retry", "Zero silent failures"),
+            "link-velocity-tracker" to Triple("Competitor Intel exists — lacks velocity view.", "Enhance competitor-intel with Link Velocity tab", "Validated: outreach×analytics 96% strong — enhancement"),
+            "cwv-budget-guard" to Triple("SiteWatch monitors uptime — lacks CWV budget gate.", "Enhance sitewatch with CWV Guard tab", "Validated: technical×alerts 86% strong — feature"),
         )
     }
 
     Box(Modifier.fillMaxSize().statusBarsPadding().pullRefresh(pullState)) {
-        Column(Modifier.fillMaxSize().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 0.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) {
-                    Text("Fleet Ideas Lab", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text("${ideas.size} shown \u00b7 5 new + 6 enhance \u00b7 Pull to reload" + if (showOnlyFavorites) " \u00b7 \u2605 favorites" else "", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    FilterChip(selected = showOnlyFavorites, onClick = { showOnlyFavorites = !showOnlyFavorites }, label = { Text("\u2605 ${favSet.size}") }, leadingIcon = { Text(if (showOnlyFavorites) "\u2605" else "\u2606") })
-                }
-            }
-            Spacer(Modifier.height(6.dp))
-            Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(999.dp)).background(Color(0xFF231C33)).border(1.dp, Color(0xFF7C3AED).copy(0.3f), RoundedCornerShape(999.dp)).padding(horizontal = 8.dp, vertical = 4.dp), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Brief mode:", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))
-                for (m in listOf("auto","build","improve")) {
-                    val sel = briefMode == m
-                    val label = when(m){"auto"->"Auto"; "build"->"BUILD"; else->"IMPROVE"}
-                    FilterChip(selected = sel, onClick = { briefMode = m }, label = { Text(label, style = MaterialTheme.typography.labelSmall) })
-                }
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    FilledTonalButton(onClick = { doReload() }, enabled = !refreshing, contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp)) {
-                        Text(if (refreshing) "\u21bb Reloading\u2026" else "\u21bb Reload")
+        Column(Modifier.fillMaxSize().padding(horizontal = FilDimens.screen)) {
+            FilScreenHeader(
+                title = "Ideas",
+                subtitle = "${ideas.size} shown · 5 new + 6 enhance · pull to reload" + if (showOnlyFavorites) " · ★ favorites" else "",
+                actions = {
+                    FilterChip(
+                        selected = showOnlyFavorites,
+                        onClick = { showOnlyFavorites = !showOnlyFavorites },
+                        label = { Text("★ ${favSet.size}", style = FilType.chip) },
+                        modifier = Modifier.heightIn(min = 36.dp),
+                    )
+                    IconButton(onClick = onNotifications, modifier = Modifier.size(FilDimens.touch)) {
+                        Text("🔔", style = MaterialTheme.typography.titleMedium)
                     }
-                    IconButton(onClick = onNotifications, modifier = Modifier.size(36.dp)) { Text("\uD83D\uDD14") }
+                },
+            )
+            FilInset(padding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("BRIEF MODE", style = FilType.sectionLabel, color = p.muted2)
+                    Spacer(Modifier.weight(1f))
+                    for (m in listOf("auto", "build", "improve")) {
+                        val label = when (m) { "auto" -> "Auto"; "build" -> "BUILD"; else -> "IMPROVE" }
+                        FilterChip(
+                            selected = briefMode == m,
+                            onClick = { briefMode = m },
+                            label = { Text(label, style = FilType.label) },
+                            modifier = Modifier.heightIn(min = 32.dp),
+                        )
+                    }
                 }
             }
-            Spacer(Modifier.height(6.dp))
-            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.Center) {
-                Box(Modifier.size(6.dp).clip(RoundedCornerShape(999.dp)).background(Color(0xFFF38020)))
-                Spacer(Modifier.width(6.dp))
-                Text("Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+            Spacer(Modifier.height(4.dp))
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                FilledTonalButton(
+                    onClick = { doReload() },
+                    enabled = !refreshing,
+                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                ) { Text(if (refreshing) "↻ Reloading…" else "↻ Reload", style = FilType.chip) }
             }
             if (ideas.isEmpty() && showOnlyFavorites) {
-                Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF1A1428)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(16.dp)).padding(24.dp), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("\u2606 No favorites yet", style = MaterialTheme.typography.titleSmall, color = Color(0xFFF0ECF7))
-                        Spacer(Modifier.height(4.dp))
-                        Text("Tap \u2661 on any idea to save it \u2014 persists after restart", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9CA3AF))
-                        Spacer(Modifier.height(12.dp))
-                        OutlinedButton(onClick = { showOnlyFavorites = false }) { Text("Show all \u00b7 ${visiblePool.size}") }
-                    }
+                EmptyState(
+                    title = "No favorites yet",
+                    body = "Tap ♡ on any idea to save it — persists after restart.",
+                    glyph = "☆",
+                ) {
+                    OutlinedButton(onClick = { showOnlyFavorites = false }) { Text("Show all · ${visiblePool.size}") }
                 }
             }
             LazyColumn(
                 state = listState,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap),
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 88.dp + 16.dp, top = 4.dp)
+                contentPadding = PaddingValues(bottom = 88.dp + 16.dp, top = 4.dp),
             ) {
                 items(ideas) { idea ->
                     val brief = briefs[idea.slug]
                     val isOpen = expanded == idea.slug
                     val isFav = idea.slug in favSet
-                    Column(Modifier.clip(RoundedCornerShape(16.dp)).background(Color(0xFF1A1428)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(16.dp)).padding(12.dp)) {
+                    FilCard {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text(idea.title, style = MaterialTheme.typography.titleSmall, color = Color(0xFFF0ECF7), modifier = Modifier.weight(1f).padding(end = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
-                            Column(horizontalAlignment = Alignment.End) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    FilledTonalButton(onClick = {
-                                        if (store != null) scope.launch {
-                                            store.toggleFavorite(idea.slug)
-                                            val nowFav = store.isFavorite(idea.slug)
-                                            Toast.makeText(ctx, if (nowFav) "Saved \u2605 ${idea.slug}" else "Removed ${idea.slug}", Toast.LENGTH_SHORT).show()
-                                        }
-                                    }, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp), colors = ButtonDefaults.filledTonalButtonColors(containerColor = if (isFav) Color(0xFFF59E0B).copy(alpha=0.25f) else Color.White.copy(alpha=0.06f)), modifier = Modifier.height(28.dp)) {
-                                        Text(if (isFav) "\u2665" else "\u2661", style = MaterialTheme.typography.labelSmall, color = if (isFav) Color(0xFFF59E0B) else Color(0xFF9CA3AF))
+                            Text(
+                                idea.title,
+                                style = FilType.cardTitle,
+                                color = p.text,
+                                modifier = Modifier.weight(1f).padding(end = 8.dp),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            FilledTonalButton(
+                                onClick = {
+                                    if (store != null) scope.launch {
+                                        store.toggleFavorite(idea.slug)
+                                        val nowFav = store.isFavorite(idea.slug)
+                                        Toast.makeText(ctx, if (nowFav) "Saved ★ ${idea.slug}" else "Removed ${idea.slug}", Toast.LENGTH_SHORT).show()
                                     }
-                                    Box(Modifier.clip(RoundedCornerShape(999.dp)).background(when(idea.impact){ "high"->Color(0xFF7C3AED); "med"->Color(0xFF2563EB); else->Color(0xFF6B7280) }.copy(alpha=0.2f)).padding(horizontal=8.dp, vertical=2.dp)) {
-                                        Text(idea.impact, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))
-                                    }
-                                }
-                                Spacer(Modifier.height(2.dp))
-                                val kindBg = if (idea.kind == "new") Color(0xFF10B981) else Color(0xFFF59E0B)
-                                Box(Modifier.clip(RoundedCornerShape(999.dp)).background(kindBg.copy(alpha=0.2f)).padding(horizontal=6.dp, vertical=1.dp)) {
-                                    Text(if (idea.kind == "new") "NEW" else "ENHANCE", style = MaterialTheme.typography.labelSmall, color = kindBg, fontWeight = FontWeight.Bold)
-                                }
-                                if ("Research 2026-08-16" in idea.evidence) {
-                                    Box(Modifier.clip(RoundedCornerShape(999.dp)).background(Color(0xFF0EA5E9).copy(alpha=0.15f)).padding(horizontal=6.dp, vertical=1.dp)) { Text("Fresh from web \u00b7 2026-08-16", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7DD3FC)) }
-                                }
+                                },
+                                contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
+                                colors = ButtonDefaults.filledTonalButtonColors(
+                                    containerColor = if (isFav) p.accent.copy(alpha = 0.25f) else p.panel3,
+                                ),
+                                modifier = Modifier.heightIn(min = 32.dp),
+                            ) {
+                                Text(if (isFav) "★" else "☆", style = FilType.chip, color = if (isFav) p.accent else p.muted)
+                            }
+                        }
+                        Spacer(Modifier.height(6.dp))
+                        // Identity chips: priority (impact), kind, gap score in mono.
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            FilTag(
+                                text = idea.impact.uppercase(),
+                                color = when (idea.impact) { "high" -> p.accent; "medium" -> p.healthy; else -> p.muted },
+                            )
+                            FilTag(
+                                text = when (idea.kind) { "new" -> "NEW"; "enhancement" -> "ENHANCE"; "shipped" -> "SHIPPED"; else -> idea.kind.uppercase() },
+                                color = when (idea.kind) { "new" -> p.accentDeep; "shipped" -> p.healthy; else -> p.muted },
+                            )
+                            FilTag(text = "gap ${idea.gapScore}%", mono = true)
+                            if ("Research 2026-08-16" in idea.evidence) {
+                                FilTag(text = "fresh · 2026-08-16", color = p.accent)
                             }
                         }
                         Spacer(Modifier.height(4.dp))
-                        Text("${idea.category} \u00b7 ${idea.slug}", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA89BC2), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text("${idea.category} · ${idea.slug}", style = FilType.label, color = p.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.height(6.dp))
-                        Text(idea.prompt, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA89BC2), maxLines = if (isOpen) Int.MAX_VALUE else 3, overflow = TextOverflow.Ellipsis)
+                        Text(idea.prompt, style = FilType.bodySmall, color = p.muted, maxLines = if (isOpen) Int.MAX_VALUE else 3, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.height(8.dp))
-                        OutlinedButton(onClick = { expanded = if (isOpen) null else idea.slug }, modifier = Modifier.fillMaxWidth()) {
-                            Text(if (isOpen) "Hide brief \u25b2" else "Professional brief \u25bc")
+                        OutlinedButton(onClick = { expanded = if (isOpen) null else idea.slug }, modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp)) {
+                            Text(if (isOpen) "Hide brief ▲" else "Professional brief ▼", style = FilType.chip)
                         }
                         if (isOpen && brief != null) {
                             Spacer(Modifier.height(8.dp))
-                            Column(Modifier.clip(RoundedCornerShape(12.dp)).background(Color(0xFF231C33)).border(1.dp, Color(0xFF3D3355), RoundedCornerShape(12.dp)).padding(10.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text("Problem: ${brief.first}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFF87171))
-                                Text("Solution: ${brief.second}", style = MaterialTheme.typography.bodySmall, color = Color(0xFFA78BFA))
-                                Text("Benefit: ${brief.third}", style = MaterialTheme.typography.bodySmall, color = Color(0xFF86EFAC))
-                                Text("Next: Scaffold \u2192 wire data (vault TBD) \u2192 ship", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+                            FilInset(padding = PaddingValues(10.dp)) {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Text("Problem: ${brief.first}", style = FilType.bodySmall, color = p.bad)
+                                    Text("Solution: ${brief.second}", style = FilType.bodySmall, color = p.accent)
+                                    Text("Benefit: ${brief.third}", style = FilType.bodySmall, color = p.healthy)
+                                    Text("Next: Scaffold → wire data (vault TBD) → ship", style = FilType.label, color = p.muted)
+                                    Text("Gap ${idea.gapScore}% · ${idea.evidence.take(120)}", style = FilType.dataSmall, color = p.muted2)
+                                }
                             }
                         }
                         Spacer(Modifier.height(10.dp))
@@ -246,9 +271,9 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 title = { Text(if (idea.kind == "new") "Create new dashboard: " + idea.slug + "?" else "Add tab to " + idea.targetSlug + "?") },
                                 text = {
                                     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                                        Text(if (idea.kind == "new") "This will scaffold a new Next.js project at /root/projects/" + idea.slug + " (or /tmp/" + idea.slug + " on Vercel \u2014 ephemeral). No inventory entry until Vercel alias is live." else "This will scaffold at /root/projects/" + idea.slug + " as a feature branch for " + idea.targetSlug + " \u2014 merge as tab inside " + idea.targetSlug + ", not a standalone project.", style = MaterialTheme.typography.bodySmall)
-                                        Text("Widgets: " + idea.prompt.take(120) + "\u2026", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
-                                        Text("Gap " + idea.gapScore + "% \u00b7 " + idea.evidence.take(100), style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+                                        Text(if (idea.kind == "new") "This will scaffold a new Next.js project at /root/projects/" + idea.slug + " (or /tmp/" + idea.slug + " on Vercel — ephemeral). No inventory entry until Vercel alias is live." else "This will scaffold at /root/projects/" + idea.slug + " as a feature branch for " + idea.targetSlug + " — merge as tab inside " + idea.targetSlug + ", not a standalone project.", style = MaterialTheme.typography.bodySmall)
+                                        Text("Widgets: " + idea.prompt.take(120) + "…", style = FilType.label, color = p.muted)
+                                        Text("Gap " + idea.gapScore + "% · " + idea.evidence.take(100), style = FilType.dataSmall, color = p.muted2)
                                     }
                                 },
                                 confirmButton = {
@@ -260,11 +285,11 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                             busySlug = null
                                             Toast.makeText(ctx, if(res.ok) res.message else (res.error ?: "Failed"), Toast.LENGTH_LONG).show()
                                         }
-                                    }, colors = ButtonDefaults.buttonColors(containerColor = if (idea.kind == "new") Color(0xFF10B981) else Color(0xFFF59E0B))) {
+                                    }) {
                                         Text(if (idea.kind == "new") "Create dashboard" else "Scaffold tab")
                                     }
                                 },
-                                dismissButton = { TextButton(onClick = { showConfirm = false }) { Text("Cancel") } }
+                                dismissButton = { TextButton(onClick = { showConfirm = false }) { Text("Cancel") } },
                             )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
@@ -273,37 +298,31 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 val full = if (m == "improve") buildImprovePrompt(idea) else buildAgentPrompt(idea)
                                 clipboard.setText(AnnotatedString(full))
                                 Toast.makeText(ctx, (if (m=="improve") "IMPROVE" else "BUILD") + " brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
-                            }, modifier = Modifier.weight(1f)) { Text(if (resolveMode(idea)=="improve") "Copy IMPROVE" else "Copy BUILD") }
-                            Button(onClick = { showConfirm = true }, modifier = Modifier.weight(1f), enabled = busySlug != idea.slug,
-                                colors = ButtonDefaults.buttonColors(containerColor = if (idea.kind == "new") Color(0xFF7C3AED) else Color(0xFFF59E0B))
-                            ) { Text(if(busySlug==idea.slug) "\u2026" else if (idea.kind == "new") "Create dashboard" else "Scaffold tab") }
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-                            OutlinedButton(onClick = {
-                                val full = buildAgentPrompt(idea)
-                                clipboard.setText(AnnotatedString(full))
-                                Toast.makeText(ctx, "BUILD brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
-                            }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) { Text("Copy BUILD", style = MaterialTheme.typography.labelSmall) }
-                            OutlinedButton(onClick = {
-                                val full = buildImprovePrompt(idea)
-                                clipboard.setText(AnnotatedString(full))
-                                Toast.makeText(ctx, "IMPROVE brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
-                            }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) { Text("Copy IMPROVE", style = MaterialTheme.typography.labelSmall) }
+                            }, modifier = Modifier.weight(1f).heightIn(min = 44.dp)) {
+                                Text(if (resolveMode(idea)=="improve") "Copy IMPROVE" else "Copy BUILD", style = FilType.chip)
+                            }
+                            Button(
+                                onClick = { showConfirm = true },
+                                modifier = Modifier.weight(1f).heightIn(min = 44.dp),
+                                enabled = busySlug != idea.slug,
+                                colors = ButtonDefaults.buttonColors(containerColor = p.accentDeep, contentColor = p.onAccent),
+                            ) {
+                                Text(if (busySlug==idea.slug) "…" else if (idea.kind == "new") "Create dashboard" else "Scaffold tab", style = FilType.chip)
+                            }
                         }
                     }
                 }
                 item {
                     Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                         when {
-                            loadingMore -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp); Text("Loading more ideas\u2026", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA)) }
-                            endOfFeed && ideas.isNotEmpty() -> Text("You\u2019ve seen all ideas \u2014 pull to reshuffle", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7280))
+                            loadingMore -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp); Text("Loading more ideas…", style = FilType.label, color = p.accent) }
+                            endOfFeed && ideas.isNotEmpty() -> Text("You've seen all ideas — pull to reshuffle", style = FilType.label, color = p.muted2)
                             else -> Spacer(Modifier.height(4.dp))
                         }
                     }
                 }
             }
         }
-        PullRefreshIndicator(refreshing = refreshing, state = pullState, modifier = Modifier.align(Alignment.TopCenter), backgroundColor = Color.White, contentColor = Color(0xFF7C3AED))
+        PullRefreshIndicator(refreshing = refreshing, state = pullState, modifier = Modifier.align(Alignment.TopCenter), backgroundColor = p.panel, contentColor = p.accent)
     }
 }

@@ -27,20 +27,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import ai.maximo.ideaslab.data.SchemaRules
+import ai.maximo.ideaslab.ui.theme.FilTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 private const val WEB_URL = "https://schema-studio.maximo-seo.ai"
 
-/** Operator Console rule: cool = fine, warm = a problem. Violet is the healthy hue, never green. */
-private val Violet = Color(0xFF7C3AED)
-private val VioletSoft = Color(0xFFA78BFA)
-private val Warm = Color(0xFFFBBF24)
-private val Bad = Color(0xFFF87171)
+/** Operator Console rule: cool = fine, warm = a problem. Violet is the healthy hue, never green.
+ *  Band colors come from the Fil palette — no local hex. */
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
+    val p = FilTheme.palette
+    val warm = p.warn
+    val bad = p.bad
+    val violet = p.healthy
+    val violetSoft = p.accent
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
@@ -151,13 +154,13 @@ fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
                     }
                 }
             } else if (!current.syntaxOk) {
-                item { StatusCard(title = "JSON does not parse", body = current.syntaxMessage, tone = Bad) }
+                item { StatusCard(title = "JSON does not parse", body = current.syntaxMessage, tone = bad) }
             } else {
                 item {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        CountTile("Required missing", current.errorCount, Bad, Modifier.weight(1f))
-                        CountTile("Recommended", current.warningCount, Warm, Modifier.weight(1f))
-                        CountTile("Nodes passing", current.nodes.size - current.uncheckedCount, VioletSoft, Modifier.weight(1f))
+                        CountTile("Required missing", current.errorCount, bad, Modifier.weight(1f))
+                        CountTile("Recommended", current.warningCount, warm, Modifier.weight(1f))
+                        CountTile("Nodes passing", current.nodes.size - current.uncheckedCount, violetSoft, Modifier.weight(1f))
                     }
                 }
                 item {
@@ -169,20 +172,20 @@ fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
                     val tone: Color
                     when {
                         current.errorCount > 0 -> {
-                            tone = Bad
+                            tone = bad
                             title = "${current.errorCount} required " +
                                 (if (current.errorCount == 1) "property is" else "properties are") + " missing"
                             body = "Rich results are not awarded while a documented required property is absent."
                         }
                         unchecked > 0 -> {
-                            tone = Warm
+                            tone = warm
                             title = "$unchecked " +
                                 (if (unchecked == 1) "node uses a type" else "nodes use types") +
                                 " this screen does not cover"
                             body = "Nothing required is missing from the types that were checked, but eligibility for the rest is unknown — not confirmed. Open the web app for the full type list."
                         }
                         else -> {
-                            tone = Violet
+                            tone = violet
                             title = "No required property is missing"
                             body = "This markup carries everything Google documents as required for the detected types. Eligibility is not a guarantee — Google decides whether to show a rich result."
                         }
@@ -198,7 +201,7 @@ fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
                                 fontFamily = FontFamily.Monospace,
                                 fontWeight = FontWeight.Bold,
                                 style = MaterialTheme.typography.bodySmall,
-                                color = VioletSoft,
+                                color = violetSoft,
                             )
                             node.rule?.let {
                                 Text(it.label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f))
@@ -206,14 +209,14 @@ fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
                         }
                     }
                     node.rule?.advisory?.let { advisory ->
-                        item { StatusCard(title = "About this rich result", body = advisory, tone = Warm) }
+                        item { StatusCard(title = "About this rich result", body = advisory, tone = warm) }
                     }
                     if (node.findings.isEmpty()) {
                         item {
                             StatusCard(
                                 title = "Every documented property is present",
                                 body = node.rule?.docs ?: "",
-                                tone = Violet,
+                                tone = violet,
                             )
                         }
                     } else {
@@ -274,7 +277,8 @@ private fun StatusCard(title: String, body: String, tone: Color) {
 @Composable
 private fun FindingCard(finding: SchemaRules.Finding) {
     val isError = finding.severity == SchemaRules.Severity.ERROR
-    val tone = if (isError) Bad else Warm
+    val p = FilTheme.palette
+    val tone = if (isError) p.bad else p.warn
     Column(
         Modifier
             .fillMaxWidth()
