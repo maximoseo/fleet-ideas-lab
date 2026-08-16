@@ -28,6 +28,9 @@ function header(idea: FleetIdea): string[] {
 // BUILD — brand-new dashboard / APK
 // ══════════════════════════════════════════════════════════════════
 export function buildAgentPrompt(idea: FleetIdea): string {
+  // A shipped idea already has a dashboard. Telling an agent to scaffold it again is
+  // how a live project gets rebuilt from scratch by mistake.
+  if (idea.status === "shipped") return buildImprovePrompt(idea);
   const isNew = idea.kind === "new";
   const target = idea.targetSlug ? "`" + idea.targetSlug + "`" : "\u2014";
   const dir = isNew
@@ -61,7 +64,7 @@ export function buildAgentPrompt(idea: FleetIdea): string {
   lines.push("- **Web:** Next.js 16.2 + Tailwind 4 + App Router (`app/page.tsx`, `app/api/**`). Reuse `src/lib/styles.ts` violet tokens, `SiteHeader` + `TrustLine` + `CommandPalette` (\u2318K).");
   lines.push("- **Android:** Kotlin 2.0 + Compose BOM 2024.12 + Navigation + DataStore + `ai.maximo.ideaslab` package (min 24 target 36) — new `.../ui/screens/" + screenName + "Screen.kt` + nav route. `PullRefresh` + `88dp + navigationBars` + `EncryptedSharedPreferences` retained.");
   lines.push("- **Ops:** Vercel deploy (`vercel --prod`), signed APK (`assembleRelease` v2), `fleet-history.json` trace (`kind: scaffold`), `/api/app/version` bump.");
-  lines.push("- **Out of scope:** No migration of the existing " + FLEET_COUNT + ", no Vercel quota changes, no Play Store publish.");
+  lines.push("- **Out of scope:** No migration of the existing " + FLEET_COUNT + " dashboards, no Vercel quota changes, no Play Store publish.");
   lines.push("");
 
   // 3

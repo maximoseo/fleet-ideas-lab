@@ -22,6 +22,9 @@ import ai.maximo.ideaslab.data.UpdateCheckWorker
 import ai.maximo.ideaslab.ui.AppNav
 import ai.maximo.ideaslab.ui.theme.FleetIdeasLabTheme
 
+/** Routes a deep link is allowed to open. Anything else is ignored. */
+private val DEEP_LINK_ROUTES = setOf("update", "ideas", "schema-studio")
+
 class MainActivity : FragmentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -50,17 +53,23 @@ class MainActivity : FragmentActivity() {
                     val has = try { api.me() } catch(_:Exception){ false }
                     start = if (has) "inventory" else "login"
                     // Handle notification deep link after nav ready
-                    if (has && open != null) {
+                    if (has && open != null && open in DEEP_LINK_ROUTES) {
                         kotlinx.coroutines.delay(600)
-                        when (open) {
-                            "update" -> nav.navigate("update")
-                            "ideas" -> nav.navigate("ideas")
-                            "schema-studio" -> nav.navigate("schema-studio")
-                        }
+                        nav.navigate(open)
                     }
                 }
                 if (start != null) {
-                    AppNav(navController = nav, startDestination = start!!, api = api, sessionStore = sessionStore, favoritesStore = favoritesStore, seenStore = seenStore)
+                    AppNav(
+                        navController = nav,
+                        startDestination = start!!,
+                        api = api,
+                        sessionStore = sessionStore,
+                        favoritesStore = favoritesStore,
+                        seenStore = seenStore,
+                        // Survives the login detour: without this, opening a deep link
+                        // while signed out drops the target and lands on Inventory.
+                        afterLogin = open?.takeIf { it in DEEP_LINK_ROUTES },
+                    )
                 } else {
                     Box(Modifier.fillMaxSize()) {}
                 }

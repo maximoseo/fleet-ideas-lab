@@ -30,7 +30,7 @@ val PrimaryTabs = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNav(navController: NavHostController, startDestination: String, api: ApiClient, sessionStore: SessionStore, favoritesStore: FleetFavoritesStore? = null, seenStore: FleetSeenStore? = null) {
+fun AppNav(navController: NavHostController, startDestination: String, api: ApiClient, sessionStore: SessionStore, favoritesStore: FleetFavoritesStore? = null, seenStore: FleetSeenStore? = null, afterLogin: String? = null) {
     val back by navController.currentBackStackEntryAsState()
     val route = back?.destination?.route ?: startDestination
     val hideBar = route == "login"
@@ -42,7 +42,12 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
         }
     ) { padding ->
         NavHost(navController = navController, startDestination = startDestination, modifier = Modifier.padding(padding)) {
-            composable("login") { LoginScreen(api, sessionStore) { navController.navigate("inventory"){ popUpTo("login"){inclusive=true} } } }
+            composable("login") {
+                LoginScreen(api, sessionStore) {
+                    // Land on the deep-link target when there was one, Inventory otherwise.
+                    navController.navigate(afterLogin ?: "inventory") { popUpTo("login") { inclusive = true } }
+                }
+            }
             composable("inventory") { InventoryScreenWithUpdate(navController, api, onNotifications = { navController.navigate("notifications") }) }
             composable("ideas") { IdeasScreen(api, favoritesStore = favoritesStore, seenStore = seenStore, onNotifications = { navController.navigate("notifications") }) }
             composable("favorites") { FavoritesScreen(favoritesStore = favoritesStore, onBrowseIdeas = { navController.navigate("ideas") }) }

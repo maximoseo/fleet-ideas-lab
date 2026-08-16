@@ -36,7 +36,7 @@ function HealthBar({ h }: { h: number }) {
 }
 
 function MiniGapRadar() {
-  // Derived — single source of truth: GAP_SCORES (domain x capability % from FLEET_COUNT dashboards)
+  // Derived — single source of truth: GAP_SCORES (domain x capability % within each domain)
   const domains: FleetDomain[] = ["seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"];
   const caps: Capability[] = ["analytics", "alerts", "automation", "reporting", "visualization"];
   const capLabel: Record<string, string> = { analytics: "ANL", alerts: "ALT", automation: "AUT", reporting: "REP", visualization: "VIS" };
@@ -58,7 +58,7 @@ function MiniGapRadar() {
             {caps.map((c) => {
               const s = GAP_SCORES[d]?.[c] ?? 8;
               const lvl = gapLevel(s);
-              return <div key={`${d}-${c}`} title={`${DOMAIN_LABEL[d]} x ${c}: ${s}% (${lvl}) — derived from ${FLEET_COUNT} dashboards`} className={`h-7 rounded-md ${cellColor(s)} flex items-center justify-center text-[10px] font-bold ${s < 30 ? "text-white/60" : "text-white/90"}`}>{s}</div>;
+              return <div key={`${d}-${c}`} title={`${DOMAIN_LABEL[d]} x ${c}: ${s}% (${lvl}) — % of the dashboards in this domain`} className={`h-7 rounded-md ${cellColor(s)} flex items-center justify-center text-[10px] font-bold ${s < 30 ? "text-white/60" : "text-white/90"}`}>{s}</div>;
             })}
           </div>
         ))}
@@ -189,7 +189,7 @@ export default function InventoryPage() {
                   ))}
                 </div>
                 <div className="mt-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-[11px] leading-4 text-white/40">
-                  <span className="font-semibold text-white/60">Evidence:</span> derived from {FLEET_COUNT} — primary <span className="text-white/60">{DOMAIN_LABEL[p.domain]}</span>
+                  <span className="font-semibold text-white/60">Evidence:</span> derived within its domain — primary <span className="text-white/60">{DOMAIN_LABEL[p.domain]}</span>
                   <span className="mx-1 text-white/20">·</span>
                   caps <span className="font-mono text-white/50">{p.capabilities.join(", ")}</span>
                   <span className="mx-1 text-white/20">·</span>
@@ -239,7 +239,7 @@ export default function InventoryPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-white">Gap Mini-Radar</h2>
-              <p className="text-xs" style={{ color: VIOLET.textSecondary }}>Derived Domains × Capabilities (analytics/alerts/automation/reporting/visualization) · white-space &lt;30 = opportunity · Scores from {FLEET_COUNT} dashboards, same source as Gaps page.</p>
+              <p className="text-xs" style={{ color: VIOLET.textSecondary }}>Derived Domains × Capabilities (analytics/alerts/automation/reporting/visualization) · white-space &lt;30 = opportunity · Scores are per-domain coverage, same source as the Gaps page.</p>
             </div>
             <Link href="/gaps" className="inline-flex min-h-[36px] items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Open Gap Radar →</Link>
           </div>

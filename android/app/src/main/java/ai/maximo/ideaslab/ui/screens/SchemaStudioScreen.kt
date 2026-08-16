@@ -59,7 +59,7 @@ fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
             delay(350)
             runValidation()
             refreshing = false
-            Toast.makeText(ctx, "Re-checked against the Google rules", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "Re-checked on this device — nothing was fetched", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -157,18 +157,37 @@ fun SchemaStudioScreen(onNotifications: (() -> Unit)? = null) {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         CountTile("Required missing", current.errorCount, Bad, Modifier.weight(1f))
                         CountTile("Recommended", current.warningCount, Warm, Modifier.weight(1f))
-                        CountTile("Nodes", current.nodes.size, VioletSoft, Modifier.weight(1f))
+                        CountTile("Nodes passing", current.nodes.size - current.uncheckedCount, VioletSoft, Modifier.weight(1f))
                     }
                 }
                 item {
-                    StatusCard(
-                        title = if (current.eligible) "No required property is missing"
-                        else "${current.errorCount} required " + (if (current.errorCount == 1) "property is" else "properties are") + " missing",
-                        body = if (current.eligible)
-                            "This markup carries everything Google documents as required for the detected types. Eligibility is not a guarantee — Google decides whether to show a rich result."
-                        else "Rich results are not awarded while a documented required property is absent.",
-                        tone = if (current.eligible) Violet else Bad,
-                    )
+                    // Three states, not two. "Not checked" is its own answer and must not
+                    // render as "passed".
+                    val unchecked = current.uncheckedCount
+                    val title: String
+                    val body: String
+                    val tone: Color
+                    when {
+                        current.errorCount > 0 -> {
+                            tone = Bad
+                            title = "${current.errorCount} required " +
+                                (if (current.errorCount == 1) "property is" else "properties are") + " missing"
+                            body = "Rich results are not awarded while a documented required property is absent."
+                        }
+                        unchecked > 0 -> {
+                            tone = Warm
+                            title = "$unchecked " +
+                                (if (unchecked == 1) "node uses a type" else "nodes use types") +
+                                " this screen does not cover"
+                            body = "Nothing required is missing from the types that were checked, but eligibility for the rest is unknown — not confirmed. Open the web app for the full type list."
+                        }
+                        else -> {
+                            tone = Violet
+                            title = "No required property is missing"
+                            body = "This markup carries everything Google documents as required for the detected types. Eligibility is not a guarantee — Google decides whether to show a rich result."
+                        }
+                    }
+                    StatusCard(title = title, body = body, tone = tone)
                 }
 
                 for (node in current.nodes) {

@@ -162,32 +162,53 @@ object SchemaRules {
     ) {
         val errorCount: Int get() = nodes.sumOf { n -> n.findings.count { it.severity == Severity.ERROR } }
         val warningCount: Int get() = nodes.sumOf { n -> n.findings.count { it.severity == Severity.WARNING } }
-        val eligible: Boolean get() = syntaxOk && errorCount == 0
+
+        /** Nodes whose @type has no rules here, so their eligibility is unknown. */
+        val uncheckedCount: Int get() = nodes.count { it.rule == null }
+
+        /**
+         * True only when every node matched a rule set and nothing required is missing.
+         * A node of an uncovered type makes this false rather than true: "we did not
+         * check it" must never render as "it passed".
+         */
+        val eligible: Boolean get() = syntaxOk && errorCount == 0 && uncheckedCount == 0
     }
 
     private val ISO_DATE = Regex("""^\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}(:\d{2})?(Z|[+-]\d{2}:\d{2})?)?$""")
 
-    /** Values a path reaches. An empty list means the path is not present. */
+    /**
+     * Values a path reaches. An empty list means the path is not present anywhere.
+     *
+     * Holes are carried forward as null rather than dropped. If mainEntity holds three
+     * questions and only the first has an acceptedAnswer.text, the other two come back
+     * as null — otherwise one good entry would mask every broken sibling.
+     */
     private fun resolve(node: Any?, path: String): List<Any?> {
         var current: List<Any?> = listOf(node)
         for (segment in path.split(".")) {
             val fanOut = segment.endsWith("[]")
             val key = if (fanOut) segment.dropLast(2) else segment
             val next = mutableListOf<Any?>()
+            var present = 0
             for (item in current) {
                 val candidates = if (item is JSONArray) (0 until item.length()).map { item.get(it) } else listOf(item)
                 for (candidate in candidates) {
-                    val obj = candidate as? JSONObject ?: continue
-                    if (!obj.has(key)) continue
+                    val obj = candidate as? JSONObject
+                    if (obj == null || !obj.has(key)) {
+                        next.add(null)
+                        continue
+                    }
+                    present++
                     val value = obj.get(key)
                     if (fanOut && value is JSONArray) {
-                        for (i in 0 until value.length()) next.add(value.get(i))
+                        if (value.length() == 0) next.add(null)
+                        else for (i in 0 until value.length()) next.add(value.get(i))
                     } else {
                         next.add(value)
                     }
                 }
             }
-            if (next.isEmpty()) return emptyList()
+            if (present == 0) return emptyList()
             current = next
         }
         return current
@@ -234,16 +255,29 @@ object SchemaRules {
         val reports = objects.map { node ->
             val findings = mutableListOf<Finding>()
             val rawType = node.opt("@type")
-            val type = when (rawType) {
-                is JSONArray -> if (rawType.length() > 0) rawType.getString(0) else ""
-                null -> ""
-                else -> rawType.toString()
+            // Must be a real string. org.json coerces, so {"@type":[123]} would otherwise
+            // arrive as the type "123" and be reported as merely uncovered.
+            val typeValue: Any? = when (rawType) {
+                is JSONArray -> if (rawType.length() > 0) rawType.opt(0) else null
+                else -> rawType
             }
+            val typeIsInvalid = typeValue != null && typeValue !== JSONObject.NULL && typeValue !is String
+            val type = (typeValue as? String)?.trim().orEmpty()
             val rule = ruleFor(type)
 
-            if (type.isBlank()) {
+            if (typeIsInvalid) {
+                findings.add(
+                    Finding(
+                        Severity.ERROR, "@type",
+                        "@type must be a string naming a schema.org type, not a ${typeValue!!::class.simpleName}.",
+                        "",
+                    )
+                )
+            }
+
+            if (type.isBlank() && !typeIsInvalid) {
                 findings.add(Finding(Severity.ERROR, "@type", "No @type. Search engines cannot tell what this describes.", ""))
-            } else if (rule == null) {
+            } else if (type.isNotBlank() && rule == null) {
                 findings.add(
                     Finding(
                         Severity.WARNING, "@type",
@@ -254,28 +288,36 @@ object SchemaRules {
             }
 
             rule?.let {
-                for ((path, note) in it.required) {
+                /**
+                 * One property, checked everywhere the path reaches. Any empty entry is a
+                 * finding — in a list, one filled entry does not excuse the empty ones.
+                 */
+                fun checkProp(path: String, note: String, severity: Severity) {
                     val values = resolve(node, path)
-                    if (values.isEmpty() || values.all(::isBlank)) {
-                        val message = if (values.isEmpty())
+
+                    if (values.isEmpty()) {
+                        val message = if (severity == Severity.ERROR)
                             "Missing. Google documents $path as required for ${it.label}."
-                        else "Present but empty. Fill $path with the real value from the page."
-                        findings.add(Finding(Severity.ERROR, path, message, note))
-                    } else {
-                        checkShape(path, values, findings)
+                        else "Not present. Google documents $path as recommended for ${it.label}."
+                        findings.add(Finding(severity, path, message, note))
+                        return
                     }
-                }
-                for ((path, note) in it.recommended) {
-                    val values = resolve(node, path)
-                    if (values.isEmpty() || values.all(::isBlank)) {
-                        val message = if (values.isEmpty())
-                            "Not present. Google documents $path as recommended for ${it.label}."
-                        else "Present but empty. Fill it with a real value or remove the key."
-                        findings.add(Finding(Severity.WARNING, path, message, note))
-                    } else {
-                        checkShape(path, values, findings)
+
+                    val missing = values.count(::isBlank)
+                    if (missing > 0) {
+                        val scope = if (values.size > 1) "$missing of ${values.size} entries are empty. "
+                        else "Present but empty. "
+                        val message = if (severity == Severity.ERROR)
+                            scope + "Fill $path with the real value from the page."
+                        else scope + "Fill it with a real value or remove the key."
+                        findings.add(Finding(severity, path, message, note))
                     }
+
+                    checkShape(path, values.filterNot(::isBlank), findings)
                 }
+
+                for ((path, note) in it.required) checkProp(path, note, Severity.ERROR)
+                for ((path, note) in it.recommended) checkProp(path, note, Severity.WARNING)
             }
 
             NodeReport(type.ifBlank { "(no @type)" }, rule, findings)
