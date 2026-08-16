@@ -72,6 +72,11 @@ export async function sbRpc<T>(fn: string, args: Record<string, unknown>): Promi
   return sb<T>(`rpc/${fn}`, { method: "POST", body: args });
 }
 
+/** Insert only rows whose PK is missing — existing rows stay untouched. */
+export async function sbInsertIgnore(table: string, rows: unknown | unknown[]): Promise<void> {
+  await sb(table, { method: "POST", body: rows, prefer: "resolution=ignore-duplicates,return=minimal" });
+}
+
 export async function sbDelete(table: string, query: string): Promise<void> {
   await sb(`${table}?${query}`, { method: "DELETE" });
 }

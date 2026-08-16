@@ -4,6 +4,7 @@ import { useMemo, useState, useRef, useCallback, useEffect } from "react";
 import Link from "next/link";
 import TrustLine from "@/components/TrustLine";
 import SiteHeader from "@/components/SiteHeader";
+import IdeaBoard from "@/components/IdeaBoard";
 import { STYLES } from "@/lib/styles";
 import { FLEET_IDEAS, FLEET_GENERATED_POOL, FLEET_COUNT, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus, type FleetIdea } from "@/lib/fleet";
 import { buildAgentPrompt, buildImprovePrompt } from "@/lib/agentPrompt";
@@ -35,6 +36,7 @@ export default function IdeasPage() {
   function toggleFav(slug: string) { setFavs((prev) => { const next = new Set(prev); if (next.has(slug)) next.delete(slug); else next.add(slug); try { localStorage.setItem("fleet_favorites", JSON.stringify([...next])); } catch {} return next; }); }
 
   const [confirmIdea, setConfirmIdea] = useState<FleetIdea | null>(null);
+  const [view, setView] = useState<"list" | "board">("list");
   const [shuffleSeed, setShuffleSeed] = useState(0);
   const [seenIds, setSeenIds] = useState<Set<string>>(() => new Set(FLEET_IDEAS.map((x)=>x.id)));
   useEffect(()=>{ try{ const raw=localStorage.getItem("fleet_seen_ideas"); if(raw){ const arr=JSON.parse(raw) as string[]; if(arr.length>0) setSeenIds((prev)=>{ const m=new Set(prev); arr.forEach((id:string)=>m.add(id)); return m;}); } }catch{} },[]);

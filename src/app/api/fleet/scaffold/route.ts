@@ -122,5 +122,20 @@ Mode: ${isVercel ? "vercel-tmp (ephemeral)" : "hostinger-persisted"}
     mode: isVercel ? "vercel-tmp" : "hostinger-persisted",
     note: isVercel ? "Preview scaffold in /tmp — ephemeral; clone to /root/projects/<slug> on your dev server" : "Persisted at /root/projects/<slug> on dev server",
     historyPath: path.join(baseDir, "fleet-history.json"),
+    /**
+     * Idea → ship handoff checklist. Order matters; each step names the exact
+     * fleet convention so an agent can execute it without asking.
+     */
+    shipChecklist: [
+      "1. Repo: gh repo create maximoseo/<slug> --private; push scaffold (fleet-ops-standard: plan → CodeRabbit → gates → push)",
+      "2. Vercel: create project (or API deploy POST /v13/deployments with gitSource ref main) — this repo has NO git link, deploy via API",
+      `3. Domain: attach <slug>.maximo-seo.ai in Vercel + Cloudflare CNAME <slug> → cname.vercel-dns.com (proxied OFF)`,
+      "4. Env: DASHBOARD_AUTH_SECRET + USERNAME + PASSWORD (sensitive), TURNSTILE keys; store a copy in ~/.hermes/secure/credentials/<slug>.env (600)",
+      "5. CI: copy .github/workflows/ci.yml + scripts/smoke-auth-matrix.mjs + .coderabbit.yaml from fleet-ideas-lab",
+      "6. Wire data: declare real providers only (vault TBD); no demo data — empty states stay honest",
+      "7. Register: add to src/lib/fleet.ts FLEET_INVENTORY (curated overlay) + dashboards-panel card (ONLY-ADD) + /root/kestra/data/fleet-urls.txt + fleet-gate-repos.txt",
+      "8. Pipeline: POST /api/fleet/ideas/transition { slug: <ideaSlug>, to: 'building' } at start, 'shipped' after live proof",
+      "9. Ship gate: latest production deploy READY + Vercel Failed-mail check on service@maximo-seo.com + live real-data proof (no demo)",
+    ],
   });
 }

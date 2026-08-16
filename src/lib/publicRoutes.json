@@ -3,6 +3,7 @@
   "exact": [
     "/api/app/version",
     "/api/app/download",
+    "/api/app/fleet",
     "/login",
     "/api/auth/login",
     "/api/auth/logout",

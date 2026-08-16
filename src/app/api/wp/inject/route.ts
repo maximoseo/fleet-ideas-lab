@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { checkHonesty } from "@/lib/honesty";
+import { recordInjection, markInjectionsRemoved } from "@/lib/injection-registry";
 import type { SiteProfile } from "@/lib/types";
 
 export const maxDuration = 30;
@@ -192,6 +193,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Could not create draft: ${draftRes.status} ${err.slice(0, 200)}` }, { status: draftRes.status });
       }
       const draft = await draftRes.json();
+      // Registry (fire-and-forget — never blocks the WP result)
+      void recordInjection({
+        site_url: base.origin,
+        page_id: draft.id,
+        page_slug: pageSlug,
+        marker_id: injectId,
+        mode: "draft",
+        style_name: styleName || null,
+        status: "draft",
+      });
       return NextResponse.json({
         ok: true,
         mode: "draft",
@@ -249,6 +260,17 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: `Could not update page: ${updateRes.status} ${err.slice(0, 200)}` }, { status: updateRes.status });
     }
     const updated = await updateRes.json();
+
+    // Registry (fire-and-forget — never blocks the WP result)
+    void recordInjection({
+      site_url: base.origin,
+      page_id: pageId,
+      page_slug: pageSlug,
+      marker_id: injectId,
+      mode: "inject",
+      style_name: styleName || null,
+      status: "live",
+    });
 
     return NextResponse.json({
       ok: true,
@@ -311,6 +333,9 @@ export async function DELETE(req: NextRequest) {
       signal: AbortSignal.timeout(20000),
     });
     if (!updateRes.ok) return NextResponse.json({ error: "Could not update page" }, { status: updateRes.status });
+
+    // Registry (fire-and-forget)
+    void markInjectionsRemoved(base.origin, pageId);
 
     return NextResponse.json({ ok: true, removed: true, message: "Design Lab styles removed. Page restored to its original styling." });
   } catch (err) {

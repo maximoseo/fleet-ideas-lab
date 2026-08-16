@@ -5,6 +5,19 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
+// Secrets/signing live in android/local.properties (gitignored) — never in git.
+// Required keys: APP_TOKEN, KEYSTORE_PATH, KEYSTORE_PASS, KEY_ALIAS, KEY_PASS
+// (each falls back to the same-named environment variable for CI).
+val localProps = java.util.Properties().apply {
+    val f = rootProject.file("local.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+fun localProp(key: String): String =
+    (localProps.getProperty(key) ?: System.getenv(key) ?: "").trim()
+fun String.gradleEscaped(): String = replace("\\", "\\\\").replace("\"", "\\\"")
+
+val hasReleaseKeystore = localProp("KEYSTORE_PATH").isNotEmpty()
+
 android {
     namespace = "ai.maximo.ideaslab"
     compileSdk = 36
@@ -13,25 +26,29 @@ android {
         applicationId = "ai.maximo.ideaslab"
         minSdk = 24
         targetSdk = 36
-        versionCode = 15
-        versionName = "1.1.4"
+        versionCode = 16
+        versionName = "1.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
-        buildConfigField("String", "BASE_URL", "\"https://fleet-ideas-lab.vercel.app\"")
+        buildConfigField("String", "BASE_URL", "\"https://fleet-ideas-lab.maximo-seo.ai\"")
+        // Bearer token for GET /api/app/fleet — injected at build time, never committed.
+        buildConfigField("String", "APP_TOKEN", "\"${localProp("APP_TOKEN").gradleEscaped()}\"")
     }
 
     signingConfigs {
         create("release") {
-            storeFile = file("../fleet-ideas-lab.jks")
-            storePassword = "fleetlab2026"
-            keyAlias = "fleetideaslab"
-            keyPassword = "fleetlab2026"
+            if (hasReleaseKeystore) {
+                storeFile = file(localProp("KEYSTORE_PATH"))
+                storePassword = localProp("KEYSTORE_PASS")
+                keyAlias = localProp("KEY_ALIAS")
+                keyPassword = localProp("KEY_PASS")
+            }
         }
     }
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("release")
+            if (hasReleaseKeystore) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
