@@ -58,8 +58,13 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
         if (seenFromStore.isNotEmpty()) seenIds = seenIds + seenFromStore
         else seenStore?.seedFromIdeas(FleetData.ideas.map { it.slug }.toSet())
     }
-    val visiblePool = remember(seenIds) { (FleetData.ideas + FleetData.generatedPool).filter { it.slug in seenIds } }
-    val baseIdeas = remember(visiblePool, shuffleSeed) {
+    var searchQ by remember { mutableStateOf("") }
+    val visiblePool = remember(seenIds, searchQ) {
+        val searching = searchQ.trim().isNotEmpty()
+        val allPool = FleetData.ideas + FleetData.generatedPool
+        if (searching) allPool else allPool.filter { it.slug in seenIds }
+    }
+    val baseIdeas = remember(visiblePool, shuffleSeed, searchQ) {
         if (shuffleSeed == 0) visiblePool else {
             val arr = visiblePool.toMutableList()
             var seed = shuffleSeed * 9301 + 49297
@@ -68,8 +73,17 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
             arr
         }
     }
-    val ideas = remember(baseIdeas, showOnlyFavorites, favSet) {
-        if (!showOnlyFavorites) baseIdeas else baseIdeas.filter { it.slug in favSet }
+    val ideas = remember(baseIdeas, showOnlyFavorites, favSet, searchQ) {
+        val withFav = if (!showOnlyFavorites) baseIdeas else baseIdeas.filter { it.slug in favSet }
+        val qq = searchQ.trim().lowercase()
+        if (qq.isEmpty()) withFav else withFav.filter { (it.title + " " + it.slug + " " + it.prompt + " " + it.evidence).lowercase().contains(qq) }
+    }
+    LaunchedEffect(ideas, searchQ) {
+        if (searchQ.trim().isEmpty()) return@LaunchedEffect
+        val unseenHits = ideas.filter { it.slug !in seenIds }
+        if (unseenHits.isEmpty()) return@LaunchedEffect
+        seenIds = seenIds + unseenHits.map { it.slug }.toSet()
+        seenStore?.addSeen(unseenHits.map { it.slug }.toSet())
     }
 
     fun doReload() {
@@ -143,6 +157,16 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
 
     Box(Modifier.fillMaxSize().statusBarsPadding().pullRefresh(pullState)) {
         Column(Modifier.fillMaxSize().padding(horizontal = FilDimens.screen)) {
+            OutlinedTextField(
+                value = searchQ,
+                onValueChange = { searchQ = it },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Search ideas, problem, solution…", style = FilType.label) },
+                singleLine = true,
+                shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp),
+                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = FilTheme.palette.accent, unfocusedBorderColor = FilTheme.palette.line),
+            )
+            Spacer(Modifier.height(8.dp))
             FilScreenHeader(
                 title = "Ideas",
                 subtitle = "${ideas.size} shown · 5 new + 6 enhance · pull to reload" + if (showOnlyFavorites) " · ★ favorites" else "",

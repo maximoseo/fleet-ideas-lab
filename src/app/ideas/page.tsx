@@ -47,17 +47,20 @@ export default function IdeasPage() {
   const pullStart = useRef<number | null>(null);
 
   const ALL_POOL: FleetIdea[] = useMemo(()=> [...FLEET_IDEAS, ...FLEET_GENERATED_POOL], []);
+  const searchRef = useRef<HTMLInputElement | null>(null);
   const filtered = useMemo(() => {
-    // Visible = seenIds (includes initial 11) — reload injects new unseen IDs, never repeats
-    const visiblePool = ALL_POOL.filter((it) => seenIds.has(it.id));
-    const base = visiblePool.filter((it) => {
+    const searching = q.trim().length > 0;
+    // When searching, span the whole pool so unseen research ideas are still findable.
+    // When not searching, respect seenIds so Reload novelty holds (never repeats).
+    const sourcePool = searching ? ALL_POOL : ALL_POOL.filter((it) => seenIds.has(it.id));
+    const base = sourcePool.filter((it) => {
       if (domain !== "all" && it.domain !== domain) return false;
       if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
       if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
       if (status !== ("all" as unknown as IdeaStatus) && it.status !== status) return false;
       if (kind !== "all" && (it as unknown as { kind: string }).kind !== kind) return false;
       if (favOnly && !favs.has(it.slug)) return false;
-      if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow} ${it.problem} ${it.solution}`.toLowerCase().includes(q.toLowerCase())) return false;
+      if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow} ${it.problem} ${it.solution} ${it.evidence}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
     // Fisher-Yates shuffle seeded by shuffleSeed (deterministic but different order each reload)
@@ -68,6 +71,18 @@ export default function IdeasPage() {
     for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
     return arr;
   }, [domain, effort, impact, status, kind, q, shuffleSeed, favOnly, favs, seenIds]);
+
+  // Auto-reveal search hits that were previously unseen so the result stays on this page.
+  useEffect(() => {
+    if (q.trim().length === 0) return;
+    const unseenHits = (filtered as FleetIdea[]).filter((it: FleetIdea) => !seenIds.has(it.id));
+    if (unseenHits.length === 0) return;
+    setSeenIds((prev) => {
+      const next = new Set(prev);
+      unseenHits.forEach((it: FleetIdea) => next.add(it.id));
+      return next;
+    });
+  }, [filtered, q]);
 
   const [briefMode, setBriefMode] = useState<"auto" | "build" | "improve">("auto");
   function resolveMode(idea: FleetIdea): "build" | "improve" {
@@ -155,6 +170,7 @@ export default function IdeasPage() {
   }, [filtered.length, seenIds, shuffleSeed, domain, effort, impact, kind, q]);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
+    if (document.activeElement === searchRef.current) return;
     if (window.scrollY === 0) pullStart.current = e.touches[0].clientY;
   }, []);
   const onTouchMove = useCallback((e: React.TouchEvent) => {
@@ -271,7 +287,7 @@ export default function IdeasPage() {
               ))}
             </div>
             <div className="ml-auto flex items-center gap-2 w-full sm:w-auto">
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas, problem, solution…" className="w-full sm:w-64 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-violet-500 focus:outline-none" />
+              <input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas, problem, solution…" className="w-full sm:w-64 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-violet-500 focus:outline-none" />
               <span className="hidden sm:inline text-xs text-white/40">{filtered.length} / {FLEET_IDEAS.length}</span>
             </div>
           </div>
