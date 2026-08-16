@@ -1,5 +1,5 @@
 import type { FleetIdea, FleetProjectUI } from "./fleet";
-import { FLEET_PROJECTS } from "./fleet";
+import { FLEET_PROJECTS, FLEET_COUNT } from "./fleet";
 
 function gapLabel(n: number): string {
   if (n < 30) return "white-space";
@@ -20,7 +20,7 @@ function header(idea: FleetIdea): string[] {
     "> **Slug:** `" + idea.slug + "` \u00b7 **Domain:** " + idea.domain + " \u00b7 **Kind:** " + idea.kind + (idea.targetSlug ? " \u2192 " + target : "") + " \u00b7 **Effort:** " + idea.effort + " \u00b7 **Priority:** " + idea.priority + " \u00b7 **Impact:** " + idea.impact + " \u00b7 **Status:** " + idea.status,
     "> **Why now:** " + idea.whyNow,
     "> **Gap:** " + gapLine,
-    "> **Source idea:** `" + idea.id + "` \u00b7 Fleet Ideas Lab (37 verified dashboards, Vercel team maximo-seo, 2026-08-15 audit)",
+    "> **Source idea:** `" + idea.id + "` \u00b7 Fleet Ideas Lab (" + FLEET_COUNT + " verified dashboards, Vercel team maximo-seo, audit baseline 2026-08-15)",
   ];
 }
 
@@ -61,7 +61,7 @@ export function buildAgentPrompt(idea: FleetIdea): string {
   lines.push("- **Web:** Next.js 16.2 + Tailwind 4 + App Router (`app/page.tsx`, `app/api/**`). Reuse `src/lib/styles.ts` violet tokens, `SiteHeader` + `TrustLine` + `CommandPalette` (\u2318K).");
   lines.push("- **Android:** Kotlin 2.0 + Compose BOM 2024.12 + Navigation + DataStore + `ai.maximo.ideaslab` package (min 24 target 36) — new `.../ui/screens/" + screenName + "Screen.kt` + nav route. `PullRefresh` + `88dp + navigationBars` + `EncryptedSharedPreferences` retained.");
   lines.push("- **Ops:** Vercel deploy (`vercel --prod`), signed APK (`assembleRelease` v2), `fleet-history.json` trace (`kind: scaffold`), `/api/app/version` bump.");
-  lines.push("- **Out of scope:** No migration of the 37, no Vercel quota changes, no Play Store publish.");
+  lines.push("- **Out of scope:** No migration of the existing " + FLEET_COUNT + ", no Vercel quota changes, no Play Store publish.");
   lines.push("");
 
   // 3
@@ -82,7 +82,7 @@ export function buildAgentPrompt(idea: FleetIdea): string {
   lines.push("- **Vercel FS:** Read-only except `/tmp`. `POST /api/fleet/scaffold` checks `process.env.VERCEL===\"1\" ? \"/tmp\" : \"/root/projects\"`. On prod the scaffold is **ephemeral** — must be cloned to `/root/projects/" + idea.slug + "` on `srv1813877` (Hostinger) for persistence; response `{mode: \"vercel-tmp\"}` explains it.");
   lines.push("- **Runtime:** Node 22, `NEXT_PUBLIC_*` vs server secrets separated, no secret echo. Turnstile `0x4AAAAAEQ` siteverify fail-CLOSED (`403` when token empty). `dl_session` cookie (`Encrypted dl_session`).");
   lines.push("- **Rate & quota:** Third-party APIs behind `api-vault-full-2026-08-06.txt` (600); missing keys render `TBD (vault)` — never fake data. Vercel sandbox duration/quota respected.");
-  lines.push("- **Repo:** `maximoseo/fleet-ideas-lab` master\u2192main, `src/lib/fleet.ts` remains single source of truth for 37/11/GAP_SCORES. Do not invent metrics.");
+  lines.push("- **Repo:** `maximoseo/fleet-ideas-lab` master\u2192main, `src/lib/fleet.ts` remains single source of truth for inventory/ideas/GAP_SCORES. Do not invent metrics.");
   lines.push("");
 
   // 5
@@ -90,13 +90,13 @@ export function buildAgentPrompt(idea: FleetIdea): string {
   lines.push("- **Theme:** Violet `#7C3AED` on `#0f0b1a` / `#1A1428`, 48dp min touch targets, `pb-[calc(88px+env(safe-area-inset-bottom))]` on Web, `contentPadding bottom 88dp + navigationBars` on Android. TrustLine `#F38020` on every page.");
   lines.push("- **Responsive:** `dp` only, `GridCells.Adaptive(minSize=160dp)` for cards, `statusBarsPadding()` for headers, chips wrap, not overflow. RTL-ready, no hardcoded truncation (use `Ellipsis`).");
   lines.push("- **States:** Empty (`\u2606 No favorites yet`), loading (spinner), error (toast + inline `\u2717`), pull indicator (`Pull to reload \u2193 / Release to reload \u21bb`).");
-  lines.push("- **A11y:** Contrast, keyboard `\u2318K` palette (37+11+40 indexed), screen-reader labels, `EncryptedSharedPreferences` for session, not raw prefs.");
+  lines.push("- **A11y:** Contrast, keyboard `\u2318K` palette (inventory + ideas + gaps indexed), screen-reader labels, `EncryptedSharedPreferences` for session, not raw prefs.");
   lines.push("");
 
   // 6
   lines.push("## 6. Data Sources & Integration");
   lines.push("- **This dashboard\u2019s data:** " + idea.dataNeeded);
-  lines.push("- **Fleet truth:** 37 live Vercel aliases + `GAP_SCORES` (`computeGapScores()` derived, domain\u00d7capability coverage). Never invent NAP/$/reviews/links; unknown \u2192 `TBD (vault)`.");
+  lines.push("- **Fleet truth:** " + FLEET_COUNT + " live Vercel aliases + `GAP_SCORES` (`computeGapScores()` derived, domain\u00d7capability coverage). Never invent NAP/$/reviews/links; unknown \u2192 `TBD (vault)`.");
   lines.push("- **Vault keys by name only:** e.g. `FIRECRAWL_API_KEY`, `V0_API_KEY`, `TURNSTILE_SECRET_KEY`, plus the new dashboard\u2019s APIs — do not print values.");
   lines.push("- **Supabase (optional):** `fleet_history` table when `SUPABASE_*` set, else `fleet-history.json` fallback (`/tmp` on Vercel, `/root/projects` on host, capped 200).");
   lines.push("");
@@ -117,7 +117,7 @@ export function buildAgentPrompt(idea: FleetIdea): string {
   lines.push("- **Sentry / log tail (`vercel logs`, `adb logcat`)** \u2014 proofs before handoff (no silent 500).");
   lines.push("");
   lines.push("### 7.2 Steps \u2014 numbered, agent-proof (inputs \u2192 outputs \u2192 command \u2192 verify) \u2014 do NOT skip");
-  lines.push("1. **Discover existing surface (read-only).** Inputs: `FLEET_INVENTORY` (37), `GAP_SCORES` derived, current `src/app/**`. Output: one-paragraph \u201Cwhat `" + idea.slug + "` does NOT reuse\u201D. Command: `grep -r \"" + idea.slug + "\" src/app` should be empty before scaffold. Verify: no file collision.");
+  lines.push("1. **Discover existing surface (read-only).** Inputs: `FLEET_INVENTORY` (" + FLEET_COUNT + "), `GAP_SCORES` derived, current `src/app/**`. Output: one-paragraph \u201Cwhat `" + idea.slug + "` does NOT reuse\u201D. Command: `grep -r \"" + idea.slug + "\" src/app` should be empty before scaffold. Verify: no file collision.");
   lines.push("2. **Scaffold.** Input: `POST /api/fleet/scaffold { slug: \"" + idea.slug + "\", kind: \"" + idea.kind + "\" }` with `dl_session`. Output: `package.json + README.md` at `/root/projects/" + idea.slug + "` (host) or `/tmp/" + idea.slug + "` (Vercel preview \u2014 ephemeral). Command: `curl -b dl_session=... -X POST .../api/fleet/scaffold`. Verify: response `{ ok: true, dir, mode }` + `ls $dir/README.md` + history entry `curl .../api/fleet/history | jq`. **Rollback point:** deleting `$dir` reverts all.");
   lines.push("3. **Design tokens \u2192 Storybook.** Input: Figma tokens. Output: `.../styles.ts` or Compose `Theme` updated; one Storybook story per widget: `" + idea.widgets.join("`, `") + "`. Command: `npm run storybook -- --ci` or `./gradlew :app:assembleDebug`. Verify: stories render, no lint error.");
   lines.push("4. **Data layer.** Input: `ApiClient` / `GET /api/fleet/*` or new `app/api/" + idea.slug + "/**`. Output: endpoint returns 200 with `TBD (vault)` when key missing. Command: `curl .../api/" + idea.slug + "/health`. Verify: `401` without `dl_session`, `200` with, never invented numbers.");
@@ -159,7 +159,7 @@ export function buildAgentPrompt(idea: FleetIdea): string {
   else lines.push("- [ ] Feature visible as tab inside `" + target + "` (no new Vercel project created)");
   lines.push("- [ ] `POST /api/fleet/scaffold` with valid `dl_session` on Vercel \u2192 200 (`dir /tmp/" + idea.slug + "`), without auth \u2192 401, duplicate \u2192 409");
   lines.push("- [ ] Android `assembleRelease` `verified using v2 scheme: true`, screen reachable via nav, pull-to-refresh shows spinner + toast, badge NEW/ENHANCE correct, favorites persist after kill");
-  lines.push("- [ ] No invented NAP/$/reviews/links \u2014 every numeric claim is traceable to 37/GAP_SCORES or marked `TBD (vault)`");
+  lines.push("- [ ] No invented NAP/$/reviews/links \u2014 every numeric claim is traceable to the inventory/GAP_SCORES or marked `TBD (vault)`");
   lines.push("- [ ] Brief copied verbatim produces this spec in an agent (Devin/Warp) without follow-up questions");
   lines.push("");
 
@@ -186,7 +186,7 @@ export function buildImprovePrompt(idea: FleetIdea): string {
   lines.push("> **Idea:** `" + idea.slug + "` \u00b7 **Kind:** enhancement \u00b7 **Effort:** " + idea.effort + " \u00b7 **Priority:** " + idea.priority + " \u00b7 **Impact:** " + idea.impact);
   lines.push("> **Gap:** " + gapLine);
   lines.push("> **Why improve now:** " + idea.whyNow);
-  lines.push("> **Source idea:** `" + idea.id + "` \u00b7 Fleet Ideas Lab (37 verified, Vercel team maximo-seo)");
+  lines.push("> **Source idea:** `" + idea.id + "` \u00b7 Fleet Ideas Lab (" + FLEET_COUNT + " verified, Vercel team maximo-seo)");
   lines.push("");
 
   lines.push("## 1. Objective");
@@ -214,7 +214,7 @@ export function buildImprovePrompt(idea: FleetIdea): string {
   lines.push("- **Additive only, not breaking.** No alias deleted, no domain moved, no existing tab/route renamed. If risky, gate behind `featureFlag \"" + idea.slug + "\"` default OFF — remove flag only after adoption.");
   lines.push("- **Vercel FS:** Same rule as build — `POST /api/fleet/scaffold { slug: \"" + idea.slug + "\", targetSlug: \"" + targetSlug + "\" }` writes `/tmp/" + idea.slug + "` on prod (ephemeral, 512MB) \u2192 must be cloned to `/root/projects/" + idea.slug + "` on `srv1813877` (Hostinger) for persistence. Response `{ kind: \"enhancement\", targetSlug: \"" + targetSlug + "\", mode: \"vercel-tmp\" }` tells CI it is a **tab**, not a new project. Do NOT create a new Vercel project for this idea.");
   lines.push("- **Existing stack:** Next.js 16.2 + Tailwind 4 violet for Web; Kotlin 2.0 + Compose BOM 2024.12 + Navigation + DataStore for APK (`ai.maximo.ideaslab`, min24 target36). Reuse existing `ApiClient`, `SessionStore`, `FleetFavoritesStore`, `NotificationHelper`, `TrustLine` — do not fork them. New tab lives at `app/<feature>/page.tsx` (Web) or `.../ui/screens/" + targetSlug + "/NewTab.kt` (Android).");
-  lines.push("- **No invented data** — same guard as build: unknown \u2192 `TBD (vault)` + vault key name only. Never fabricate NAP/$/reviews. Fleet truth (37 + GAP_SCORES) stays authoritative.");
+  lines.push("- **No invented data** — same guard as build: unknown \u2192 `TBD (vault)` + vault key name only. Never fabricate NAP/$/reviews. Fleet truth (" + FLEET_COUNT + " + GAP_SCORES) stays authoritative.");
   lines.push("- **Secrets:** `TURNSTILE_SECRET_KEY`, new tab API keys — names only in brief, values stay in `api-vault-full-2026-08-06.txt` (600). Turnstile `0x4AAAAAEQ` fail-closed still holds on target if it already enforces it.");
   lines.push("");
 
@@ -228,7 +228,7 @@ export function buildImprovePrompt(idea: FleetIdea): string {
   lines.push("## 6. Data Sources \u2014 Reuse + Add");
   lines.push("- **Reuse from `" + targetSlug + "`:** Keep its current sources untouched; do not remove any endpoint the target already reads.");
   lines.push("- **Add for this improvement:** " + idea.dataNeeded + " — add exactly those vault keys (by name) and surface `TBD (vault)` until wired. Add one new endpoint `GET /api/" + targetSlug + "/<feature>` or extend existing with new field, never replace.");
-  lines.push("- **Fleet truth still:** 37 live Vercel aliases + `GAP_SCORES` derived (`computeGapScores()`). Keep gap chip `Gap " + idea.gapScore + "%` consistent and link it back to `/gaps` or Fleet Ideas Lab idea.");
+  lines.push("- **Fleet truth still:** " + FLEET_COUNT + " live Vercel aliases + `GAP_SCORES` derived (`computeGapScores()`). Keep gap chip `Gap " + idea.gapScore + "%` consistent and link it back to `/gaps` or Fleet Ideas Lab idea.");
   lines.push("- **Supabase fallback:** `fleet_history` when `SUPABASE_*` set else `fleet-history.json` (`/tmp` on Vercel, `/root/projects` on host, capped 200).");
   lines.push("");
 
@@ -282,7 +282,7 @@ export function buildImprovePrompt(idea: FleetIdea): string {
   lines.push("- [ ] **Before/after alias (target preview):** `curl -I " + existingUrl + "` before (tab `/<feature>` 404) vs after (preview `curl -I " + existingUrl + "/<feature>` 200). Existing `curl -I " + existingUrl + "` + other tabs still 200 (no regression).");
   lines.push("- [ ] `npx tsc --noEmit` 0, `npm run build` 38+ routes for `" + targetSlug + "` (or this Fleet Ideas Lab if patch lands here), existing tabs still 200, new tab pull-to-refresh + favorites (reused store) work.");
   lines.push("- [ ] `POST /api/fleet/scaffold` payload for this idea included `targetSlug: \"" + targetSlug + "\"` and `GET /api/fleet/history` shows `kind: scaffold` with that `targetSlug`; `Copy IMPROVE brief` for this idea was logged as `kind: copy` with same `targetSlug`.");
-  lines.push("- [ ] No invented NAP/$/reviews (all numbers traceable to 37/GAP_SCORES `Gap " + idea.gapScore + "%` or marked `TBD (vault)`), bundle/APK deltas within guard (Web +5%, APK +1M), `assembleRelease v2 true` if APK touched.");
+  lines.push("- [ ] No invented NAP/$/reviews (all numbers traceable to the inventory/GAP_SCORES `Gap " + idea.gapScore + "%` or marked `TBD (vault)`), bundle/APK deltas within guard (Web +5%, APK +1M), `assembleRelease v2 true` if APK touched.");
   lines.push("- [ ] New tab follows CBC steps 1\u20139 in \u00a77 above in order; commands in \u00a77.2 produced the verified outputs listed; brief was pasted verbatim and required no follow-up questions.");
   lines.push("");
 
@@ -297,7 +297,7 @@ export function buildImprovePromptForProject(project: FleetProjectUI): string {
   const slug = project.slug;
   const name = project.name;
   const url = project.url;
-  const evidence = "Inventory: " + name + " (" + project.domain + ", " + project.status + ", health " + project.health + ", updated " + project.lastDeploy.slice(0, 10) + ") \u00b7 Gap derived vs 37 — suggest audit-first improve (derive Gaps, then propose tab).";
+  const evidence = "Inventory: " + name + " (" + project.domain + ", " + project.status + ", health " + project.health + ", updated " + project.lastDeploy.slice(0, 10) + ") \u00b7 Gap derived vs the live inventory — suggest audit-first improve (derive Gaps, then propose tab).";
 
   const lines: string[] = [];
   lines.push("IMPROVE:");
@@ -306,7 +306,7 @@ export function buildImprovePromptForProject(project: FleetProjectUI): string {
   lines.push("> **Target:** `" + slug + "` (" + name + ") \u00b7 `" + url + "`");
   lines.push("> **Domain:** " + project.domain + " \u00b7 **Status:** " + project.status + " \u00b7 **Health:** " + project.health + " \u00b7 **Updated:** " + project.lastDeploy.slice(0, 10));
   lines.push("> **Evidence:** " + evidence);
-  lines.push("> **Source:** Fleet Ideas Lab Inventory (37 verified, Vercel team maximo-seo) \u2014 open-ended improve, not tied to a single gap idea");
+  lines.push("> **Source:** Fleet Ideas Lab Inventory (" + FLEET_COUNT + " verified, Vercel team maximo-seo) \u2014 open-ended improve, not tied to a single gap idea");
   lines.push("");
 
   lines.push("## 1. Objective");

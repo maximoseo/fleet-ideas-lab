@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FLEET_PROJECTS, FLEET_IDEAS, GAP_SCORES, DOMAIN_LABEL, type FleetDomain } from "@/lib/fleet";
+import { FLEET_PROJECTS, FLEET_IDEAS, FLEET_COUNT, GAP_SCORES, DOMAIN_LABEL, type FleetDomain } from "@/lib/fleet";
 
 type Entry = { id: string; kind: "dashboard" | "idea" | "gap"; label: string; sub: string; href: string; score?: number };
 
@@ -66,7 +66,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
           )}
         </div>
         <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] text-white/30">
-          <span>37 dashboards · 11 ideas · 40 gaps · recent + search</span>
+          <span>{FLEET_COUNT} dashboards · 11 ideas · 40 gaps · recent + search</span>
           <span className="hidden sm:inline">Type to filter · Enter to jump</span>
         </div>
       </div>

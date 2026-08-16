@@ -5,7 +5,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import TrustLine from "@/components/TrustLine";
 import { STYLES } from "@/lib/styles";
-import { DOMAIN_LABEL, GAP_SCORES, gapProjects, FLEET_INVENTORY, type FleetDomain, type Capability } from "@/lib/fleet";
+import { DOMAIN_LABEL, GAP_SCORES, gapProjects, FLEET_INVENTORY, FLEET_COUNT, type FleetDomain, type Capability } from "@/lib/fleet";
 
 const VIOLET = STYLES.violet;
 
@@ -46,7 +46,7 @@ export default function GapsPage() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Gap Radar</h1>
-            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>Derived heatmap: each cell = % of 37 dashboards in that domain that expose the capability. White-space means “no one does this yet” — opportunity. Tap any cell for why the score + which dashboards cover it (or none — see linked idea). Data sources TBD (vault) — no invented metrics.</p>
+            <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>Derived heatmap: each cell = % of {FLEET_COUNT} dashboards in that domain that expose the capability. White-space means “no one does this yet” — opportunity. Tap any cell for why the score + which dashboards cover it (or none — see linked idea). Data sources TBD (vault) — no invented metrics.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setHighlight("all")} className={`min-h-[36px] rounded-full px-4 text-[13px] font-semibold ${highlight === "all" ? "bg-violet-600 text-white" : "border border-white/15 bg-white/5 text-white hover:bg-white/10"}`}>All cells</button>
@@ -128,7 +128,7 @@ export default function GapsPage() {
                 <div>
                   <div className="text-[11px] font-bold uppercase tracking-widest text-violet-300">{DOMAIN_LABEL[cell.d]} × {CAP_LABEL[cell.c]}</div>
                   <div className="mt-1 text-sm font-semibold text-white">Score {s} · <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${lv.cls}`}>{lv.label}</span></div>
-                  <p className="mt-2 max-w-2xl text-[12px] leading-5 text-white/60">Why {s}? <span className="text-white/80">{projects.length === 0 ? "No dashboard currently covers this exact domain×capability — white-space opportunity." : `${projects.length} of ~37 cover this pair (${Math.round((s))}% coverage).`}</span> Method: count of verified inventory entries whose primary domain = {DOMAIN_LABEL[cell.d]} and capabilities include {CAP_LABEL[cell.c]}. No invented metrics — vault sources flagged TBD.</p>
+                  <p className="mt-2 max-w-2xl text-[12px] leading-5 text-white/60">Why {s}? <span className="text-white/80">{projects.length === 0 ? "No dashboard currently covers this exact domain×capability — white-space opportunity." : `${projects.length} of ${FLEET_COUNT} cover this pair (${Math.round((s))}% coverage).`}</span> Method: count of verified inventory entries whose primary domain = {DOMAIN_LABEL[cell.d]} and capabilities include {CAP_LABEL[cell.c]}. No invented metrics — vault sources flagged TBD.</p>
                 </div>
                 <button onClick={() => setCell(null)} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white hover:bg-white/10">Close ✕</button>
               </div>

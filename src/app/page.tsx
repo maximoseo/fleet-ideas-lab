@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
-import { FLEET_PROJECTS, FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, GAP_SCORES, gapLevel, type FleetDomain, type Capability } from "@/lib/fleet";
+import { FLEET_PROJECTS, FLEET_IDEAS, FLEET_COUNT, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, GAP_SCORES, gapLevel, type FleetDomain, type Capability } from "@/lib/fleet";
 import { buildImprovePromptForProject } from "@/lib/agentPrompt";
 import TrustLine from "@/components/TrustLine";
 
@@ -36,7 +36,7 @@ function HealthBar({ h }: { h: number }) {
 }
 
 function MiniGapRadar() {
-  // Derived — single source of truth: GAP_SCORES (domain x capability % from 37 dashboards)
+  // Derived — single source of truth: GAP_SCORES (domain x capability % from FLEET_COUNT dashboards)
   const domains: FleetDomain[] = ["seo", "content", "local", "analytics", "automation", "design", "outreach", "technical"];
   const caps: Capability[] = ["analytics", "alerts", "automation", "reporting", "visualization"];
   const capLabel: Record<string, string> = { analytics: "ANL", alerts: "ALT", automation: "AUT", reporting: "REP", visualization: "VIS" };
@@ -58,7 +58,7 @@ function MiniGapRadar() {
             {caps.map((c) => {
               const s = GAP_SCORES[d]?.[c] ?? 8;
               const lvl = gapLevel(s);
-              return <div key={`${d}-${c}`} title={`${DOMAIN_LABEL[d]} x ${c}: ${s}% (${lvl}) — derived from 37 dashboards`} className={`h-7 rounded-md ${cellColor(s)} flex items-center justify-center text-[10px] font-bold ${s < 30 ? "text-white/60" : "text-white/90"}`}>{s}</div>;
+              return <div key={`${d}-${c}`} title={`${DOMAIN_LABEL[d]} x ${c}: ${s}% (${lvl}) — derived from ${FLEET_COUNT} dashboards`} className={`h-7 rounded-md ${cellColor(s)} flex items-center justify-center text-[10px] font-bold ${s < 30 ? "text-white/60" : "text-white/90"}`}>{s}</div>;
             })}
           </div>
         ))}
@@ -104,7 +104,7 @@ export default function InventoryPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Fleet Inventory</h1>
-              <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>37 verified dashboards across 13 domains — live Vercel fleet. Filter by domain, status, or search. Every URL is a real production alias, health from last deploy date. Audit 2026-08-15.</p>
+              <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>{FLEET_COUNT} verified dashboards across 13 domains — live Vercel fleet. Filter by domain, status, or search. Every URL is a real production alias, health from last deploy date. Audit 2026-08-15.</p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link href="/ideas" className="inline-flex min-h-[36px] items-center rounded-full bg-violet-600 px-4 text-[13px] font-semibold text-white hover:bg-violet-500">Explore Ideas →</Link>
                 <Link href="/gaps" className="inline-flex min-h-[36px] items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Gap Radar</Link>
@@ -189,7 +189,7 @@ export default function InventoryPage() {
                   ))}
                 </div>
                 <div className="mt-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2 text-[11px] leading-4 text-white/40">
-                  <span className="font-semibold text-white/60">Evidence:</span> derived from 37 — primary <span className="text-white/60">{DOMAIN_LABEL[p.domain]}</span>
+                  <span className="font-semibold text-white/60">Evidence:</span> derived from {FLEET_COUNT} — primary <span className="text-white/60">{DOMAIN_LABEL[p.domain]}</span>
                   <span className="mx-1 text-white/20">·</span>
                   caps <span className="font-mono text-white/50">{p.capabilities.join(", ")}</span>
                   <span className="mx-1 text-white/20">·</span>
@@ -239,7 +239,7 @@ export default function InventoryPage() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-white">Gap Mini-Radar</h2>
-              <p className="text-xs" style={{ color: VIOLET.textSecondary }}>Derived Domains × Capabilities (analytics/alerts/automation/reporting/visualization) · white-space &lt;30 = opportunity · Scores from 37 dashboards, same source as Gaps page.</p>
+              <p className="text-xs" style={{ color: VIOLET.textSecondary }}>Derived Domains × Capabilities (analytics/alerts/automation/reporting/visualization) · white-space &lt;30 = opportunity · Scores from {FLEET_COUNT} dashboards, same source as Gaps page.</p>
             </div>
             <Link href="/gaps" className="inline-flex min-h-[36px] items-center rounded-full border border-white/15 bg-white/5 px-4 text-[13px] font-semibold text-white hover:bg-white/10">Open Gap Radar →</Link>
           </div>
@@ -296,7 +296,7 @@ export default function InventoryPage() {
             </summary>
             <div className="mt-3 space-y-2 text-[12px] leading-5 text-white/55">
               <p><span className="font-semibold text-white/80">Sources:</span> Vercel <span className="font-mono text-white/70">/v9/projects?teamId=team_NVnIOFO7th3wYtoyRoqJnLhr</span> — 46 projects (team maximo-seo, 3 pages, framework nextjs/vite/unknown), Hostinger WHM <span className="font-mono">node1488.myfcloud.com:2087</span> read-only probe (0 tokens in vault → <span className="text-amber-300">TBD — WHM not yet wired for this app</span>), local <span className="font-mono">/root/projects</span> (9 local-only, non-dashboards: jarvis-hud, brain-dashboard, grr-*, etc. — excluded).</p>
-              <p><span className="font-semibold text-white/80">Filter:</span> 46 minus 9 utilities (maximo-seo marketing, apk-download, ronyb-deploy, summit-garage-prototype, seo-audit-report, site-scan-fix, todo-tasks, to-do-tasks, dp-work) → <span className="font-bold text-white">37 verified dashboards</span>. Each entry has live production alias + updatedAt (YYYY-MM-DD) + health (healthy ≤3d / degraded 4–7d / stale &gt;7d) + clean domain mapping.</p>
+              <p><span className="font-semibold text-white/80">Filter:</span> 46 minus 9 utilities (maximo-seo marketing, apk-download, ronyb-deploy, summit-garage-prototype, seo-audit-report, site-scan-fix, todo-tasks, to-do-tasks, dp-work) → <span className="font-bold text-white">{FLEET_COUNT} verified dashboards</span>. Each entry has live production alias + updatedAt (YYYY-MM-DD) + health (healthy ≤3d / degraded 4–7d / stale &gt;7d) + clean domain mapping.</p>
               <p><span className="font-semibold text-white/80">Duplicates:</span> <span className="font-mono text-white/70">competitor-intelligence</span> vs <span className="font-mono text-white/70">competitor-intelligence-dashboard</span> are <span className="font-semibold">two distinct Vercel projects</span> with different aliases (competitor-intel.maximo-seo.ai vs competitor-intelligence.maximo-seo.ai) — kept separate with notes. No invented entries remain.</p>
               <p className="text-white/35">Generated from <span className="font-mono">/tmp/vercel-projects.json</span> + <span className="font-mono">src/lib/fleet.ts</span> as single source of truth — mirrored to <span className="font-mono">android/data/FleetData.kt</span>.</p>
             </div>
