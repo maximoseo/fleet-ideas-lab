@@ -78,35 +78,40 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
         val qq = searchQ.trim().lowercase()
         if (qq.isEmpty()) withFav else withFav.filter { (it.title + " " + it.slug + " " + it.prompt + " " + it.evidence).lowercase().contains(qq) }
     }
+    // Auto-reveal search hits that were previously unseen — but guard against re-entry loop
     LaunchedEffect(ideas, searchQ) {
         if (searchQ.trim().isEmpty()) return@LaunchedEffect
         val unseenHits = ideas.filter { it.slug !in seenIds }
         if (unseenHits.isEmpty()) return@LaunchedEffect
         seenIds = seenIds + unseenHits.map { it.slug }.toSet()
-        seenStore?.addSeen(unseenHits.map { it.slug }.toSet())
+        try { seenStore?.addSeen(unseenHits.map { it.slug }.toSet()) } catch (_: Exception) {}
     }
 
     fun doReload() {
+        if (refreshing) return
         scope.launch {
-            refreshing = true
-            delay(400)
-            val allPool = FleetData.ideas + FleetData.generatedPool
-            val candidates = allPool.filter { it.slug !in seenIds }
-            if (candidates.isEmpty()) {
-                shuffleSeed++
-                Toast.makeText(ctx, "No more new ideas — reshuffled ${ideas.size} shown", Toast.LENGTH_SHORT).show()
-            } else {
-                val take = minOf(3, candidates.size)
-                var seed = (shuffleSeed + 1) * 9301 + 49297
-                fun rnd(): Double { seed = (seed * 9301 + 49297) % 233280; return seed / 233280.0 }
-                val shuffled = candidates.toMutableList().also { l -> for (i in l.size - 1 downTo 1) { val j = (rnd() * (i + 1)).toInt(); val t = l[i]; l[i] = l[j]; l[j] = t } }
-                val picked = shuffled.take(take)
-                seenIds = seenIds + picked.map { it.slug }.toSet()
-                seenStore?.addSeen(picked.map { it.slug }.toSet())
-                shuffleSeed++
-                Toast.makeText(ctx, "New ideas: " + picked.joinToString(", ") { it.slug } + " · now ${(ideas.size + take)} shown (reshuffled)", Toast.LENGTH_SHORT).show()
-            }
-            refreshing = false
+            try {
+                refreshing = true
+                delay(400)
+                val allPool = FleetData.ideas + FleetData.generatedPool
+                val candidates = allPool.filter { it.slug !in seenIds }
+                if (candidates.isEmpty()) {
+                    shuffleSeed++
+                    try { Toast.makeText(ctx, "No more new ideas \u2014 reshuffled ${ideas.size} shown", Toast.LENGTH_SHORT).show() } catch (_: Exception) {}
+                } else {
+                    val take = minOf(3, candidates.size)
+                    var seed = (shuffleSeed + 1) * 9301 + 49297
+                    fun rnd(): Double { seed = (seed * 9301 + 49297) % 233280; return seed / 233280.0 }
+                    val shuffled = candidates.toMutableList().also { l -> for (i in l.size - 1 downTo 1) { val j = (rnd() * (i + 1)).toInt(); val t = l[i]; l[i] = l[j]; l[j] = t } }
+                    val picked = shuffled.take(take)
+                    seenIds = seenIds + picked.map { it.slug }.toSet()
+                    try { seenStore?.addSeen(picked.map { it.slug }.toSet()) } catch (_: Exception) {}
+                    shuffleSeed++
+                    try { Toast.makeText(ctx, "New ideas: " + picked.joinToString(", ") { it.slug } + " \u00b7 now ${(ideas.size + take)} shown (reshuffled)", Toast.LENGTH_SHORT).show() } catch (_: Exception) {}
+                }
+            } catch (_: Exception) {
+                try { Toast.makeText(ctx, "Reload failed \u2014 try again", Toast.LENGTH_SHORT).show() } catch (_: Exception) {}
+            } finally { refreshing = false }
         }
     }
 
@@ -116,27 +121,42 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
     var endOfFeed by remember { mutableStateOf(false) }
     fun loadMore() {
         if (loadingMore || endOfFeed || refreshing) return
+        if (searchQ.trim().isNotEmpty()) return
         val allPool = FleetData.ideas + FleetData.generatedPool
         val candidates = allPool.filter { it.slug !in seenIds }
         if (candidates.isEmpty()) { endOfFeed = true; return }
         scope.launch {
-            loadingMore = true
-            delay(500)
-            val take = minOf(3, candidates.size)
-            var seed = (shuffleSeed + 1) * 9301 + 49297
-            fun rnd(): Double { seed = (seed * 9301 + 49297) % 233280; return seed / 233280.0 }
-            val shuffled = candidates.toMutableList().also { l -> for (i in l.size - 1 downTo 1) { val j = (rnd() * (i + 1)).toInt(); val t = l[i]; l[i] = l[j]; l[j] = t } }
-            val picked = shuffled.take(take)
-            seenIds = seenIds + picked.map { it.slug }.toSet()
-            seenStore?.addSeen(picked.map { it.slug }.toSet())
-            shuffleSeed++
-            loadingMore = false
-            if (candidates.size <= take) endOfFeed = true
-            Toast.makeText(ctx, "Loaded " + picked.joinToString(", ") { it.slug } + " · " + (ideas.size + take) + " shown", Toast.LENGTH_SHORT).show()
+            try {
+                loadingMore = true
+                delay(500)
+                val take = minOf(3, candidates.size)
+                var seed = (shuffleSeed + 1) * 9301 + 49297
+                fun rnd(): Double { seed = (seed * 9301 + 49297) % 233280; return seed / 233280.0 }
+                val shuffled = candidates.toMutableList().also { l -> for (i in l.size - 1 downTo 1) { val j = (rnd() * (i + 1)).toInt(); val t = l[i]; l[i] = l[j]; l[j] = t } }
+                val picked = shuffled.take(take)
+                seenIds = seenIds + picked.map { it.slug }.toSet()
+                try { seenStore?.addSeen(picked.map { it.slug }.toSet()) } catch (_: Exception) {}
+                shuffleSeed++
+                if (candidates.size <= take) endOfFeed = true
+                try { Toast.makeText(ctx, "Loaded " + picked.joinToString(", ") { it.slug } + " \u00b7 " + (ideas.size + take) + " shown", Toast.LENGTH_SHORT).show() } catch (_: Exception) {}
+            } catch (_: Exception) {
+                try { Toast.makeText(ctx, "Load failed \u2014 try again", Toast.LENGTH_SHORT).show() } catch (_: Exception) {}
+            } finally { loadingMore = false }
         }
     }
-    val shouldLoadMore by remember { derivedStateOf { val last = listState.layoutInfo.visibleItemsInfo.lastOrNull(); last != null && last.index >= visiblePool.size - 3 } }
-    LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadMore() }
+    // Sentinel: tracks filtered ideas.size (not raw pool) and pauses while searching — prevents double-fire that killed 2nd load
+    val shouldLoadMore by remember(ideas.size, endOfFeed, loadingMore, refreshing) {
+        derivedStateOf {
+            if (searchQ.trim().isNotEmpty()) false
+            else {
+                val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()
+                last != null && last.index >= ideas.size - 3 && ideas.isNotEmpty()
+            }
+        }
+    }
+    LaunchedEffect(shouldLoadMore) {
+        if (shouldLoadMore && !loadingMore && !endOfFeed && !refreshing && searchQ.trim().isEmpty()) loadMore()
+    }
     LaunchedEffect(seenIds) { endOfFeed = false }
 
     val briefs = remember {
@@ -169,7 +189,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
             Spacer(Modifier.height(8.dp))
             FilScreenHeader(
                 title = "Ideas",
-                subtitle = "${ideas.size} shown · 5 new + 6 enhance · pull to reload" + if (showOnlyFavorites) " · ★ favorites" else "",
+                subtitle = "${ideas.size} shown · 11 base + 18 pool · pull to reload" + if (showOnlyFavorites) " · ★ favorites" else "",
                 actions = {
                     FilterChip(
                         selected = showOnlyFavorites,
@@ -178,7 +198,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                         modifier = Modifier.heightIn(min = 36.dp),
                     )
                     IconButton(onClick = onNotifications, modifier = Modifier.size(FilDimens.touch)) {
-                        Text("🔔", style = MaterialTheme.typography.titleMedium)
+                        Text("\uD83D\uDD14", style = MaterialTheme.typography.titleMedium)
                     }
                 },
             )
@@ -203,7 +223,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                     onClick = { doReload() },
                     enabled = !refreshing,
                     contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-                ) { Text(if (refreshing) "↻ Reloading…" else "↻ Reload", style = FilType.chip) }
+                ) { Text(if (refreshing) "\u21BB Reloading…" else "\u21BB Reload", style = FilType.chip) }
             }
             if (ideas.isEmpty() && showOnlyFavorites) {
                 EmptyState(
@@ -220,7 +240,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 88.dp + 16.dp, top = 4.dp),
             ) {
-                items(ideas) { idea ->
+                items(ideas, key = { it.slug }) { idea ->
                     val brief = briefs[idea.slug]
                     val isOpen = expanded == idea.slug
                     val isFav = idea.slug in favSet
@@ -237,9 +257,11 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                             FilledTonalButton(
                                 onClick = {
                                     if (store != null) scope.launch {
-                                        store.toggleFavorite(idea.slug)
-                                        val nowFav = store.isFavorite(idea.slug)
-                                        Toast.makeText(ctx, if (nowFav) "Saved ★ ${idea.slug}" else "Removed ${idea.slug}", Toast.LENGTH_SHORT).show()
+                                        try {
+                                            store.toggleFavorite(idea.slug)
+                                            val nowFav = store.isFavorite(idea.slug)
+                                            Toast.makeText(ctx, if (nowFav) "Saved ★ ${idea.slug}" else "Removed ${idea.slug}", Toast.LENGTH_SHORT).show()
+                                        } catch (_: Exception) {}
                                     }
                                 },
                                 contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
@@ -252,7 +274,6 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                             }
                         }
                         Spacer(Modifier.height(6.dp))
-                        // Identity chips: priority (impact), kind, gap score in mono.
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                             FilTag(
                                 text = idea.impact.uppercase(),
@@ -305,9 +326,14 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                         showConfirm = false
                                         busySlug = idea.slug
                                         scope.launch {
-                                            val res = api.scaffold(idea.slug, idea.slug, idea.kind, idea.targetSlug.ifEmpty { null })
-                                            busySlug = null
-                                            Toast.makeText(ctx, if(res.ok) res.message else (res.error ?: "Failed"), Toast.LENGTH_LONG).show()
+                                            try {
+                                                val res = api.scaffold(idea.slug, idea.slug, idea.kind, idea.targetSlug.ifEmpty { null })
+                                                busySlug = null
+                                                Toast.makeText(ctx, if(res.ok) res.message else (res.error ?: "Failed"), Toast.LENGTH_LONG).show()
+                                            } catch (_: Exception) {
+                                                busySlug = null
+                                                try { Toast.makeText(ctx, "Scaffold failed — try again", Toast.LENGTH_SHORT).show() } catch (_: Exception) {}
+                                            }
                                         }
                                     }) {
                                         Text(if (idea.kind == "new") "Create dashboard" else "Scaffold tab")
@@ -321,7 +347,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 val m = resolveMode(idea)
                                 val full = if (m == "improve") buildImprovePrompt(idea) else buildAgentPrompt(idea)
                                 clipboard.setText(AnnotatedString(full))
-                                Toast.makeText(ctx, (if (m=="improve") "IMPROVE" else "BUILD") + " brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
+                                try { Toast.makeText(ctx, (if (m=="improve") "IMPROVE" else "BUILD") + " brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show() } catch (_: Exception) {}
                             }, modifier = Modifier.weight(1f).heightIn(min = 44.dp)) {
                                 Text(if (resolveMode(idea)=="improve") "Copy IMPROVE" else "Copy BUILD", style = FilType.chip)
                             }
@@ -336,7 +362,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                         }
                     }
                 }
-                item {
+                item(key = "ideas-sentinel") {
                     Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                         when {
                             loadingMore -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp); Text("Loading more ideas…", style = FilType.label, color = p.accent) }
