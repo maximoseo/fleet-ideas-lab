@@ -99,7 +99,8 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                         Text(site.domain, style = MaterialTheme.typography.bodySmall, color = Color(0xFFA89BC2), maxLines=1)
                         Spacer(Modifier.height(8.dp))
                         Text(site.stack, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B5F82))
-                        Text(explainer, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7280))
+                    Text("In plain English: " + site.plainExplainer, style = MaterialTheme.typography.labelSmall, color = Color(0xFFC4B5FD))
+                    Text(explainer, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7280))
                         Spacer(Modifier.height(8.dp))
                         Box(Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF7C3AED).copy(alpha=0.15f)).border(1.dp, Color(0xFF7C3AED).copy(alpha=0.3f), RoundedCornerShape(8.dp)).padding(horizontal=8.dp, vertical=4.dp)) {
                             Text(site.slug, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))

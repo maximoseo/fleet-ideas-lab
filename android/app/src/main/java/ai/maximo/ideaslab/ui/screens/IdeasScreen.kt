@@ -6,6 +6,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -93,6 +94,33 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
     }
 
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
+    val listState = rememberLazyListState()
+    var loadingMore by remember { mutableStateOf(false) }
+    var endOfFeed by remember { mutableStateOf(false) }
+    fun loadMore() {
+        if (loadingMore || endOfFeed || refreshing) return
+        val allPool = FleetData.ideas + FleetData.generatedPool
+        val candidates = allPool.filter { it.slug !in seenIds }
+        if (candidates.isEmpty()) { endOfFeed = true; return }
+        scope.launch {
+            loadingMore = true
+            delay(500)
+            val take = minOf(3, candidates.size)
+            var seed = (shuffleSeed + 1) * 9301 + 49297
+            fun rnd(): Double { seed = (seed * 9301 + 49297) % 233280; return seed / 233280.0 }
+            val shuffled = candidates.toMutableList().also { l -> for (i in l.size - 1 downTo 1) { val j = (rnd() * (i + 1)).toInt(); val t = l[i]; l[i] = l[j]; l[j] = t } }
+            val picked = shuffled.take(take)
+            seenIds = seenIds + picked.map { it.slug }.toSet()
+            seenStore?.addSeen(picked.map { it.slug }.toSet())
+            shuffleSeed++
+            loadingMore = false
+            if (candidates.size <= take) endOfFeed = true
+            Toast.makeText(ctx, "Loaded " + picked.joinToString(", ") { it.slug } + " \u00b7 " + (ideas.size + take) + " shown", Toast.LENGTH_SHORT).show()
+        }
+    }
+    val shouldLoadMore by remember { derivedStateOf { val last = listState.layoutInfo.visibleItemsInfo.lastOrNull(); last != null && last.index >= visiblePool.size - 3 } }
+    LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadMore() }
+    LaunchedEffect(seenIds) { endOfFeed = false }
 
     val briefs = remember {
         mapOf(
@@ -156,6 +184,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                 }
             }
             LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(bottom = 88.dp + 16.dp, top = 4.dp)
@@ -186,6 +215,9 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 val kindBg = if (idea.kind == "new") Color(0xFF10B981) else Color(0xFFF59E0B)
                                 Box(Modifier.clip(RoundedCornerShape(999.dp)).background(kindBg.copy(alpha=0.2f)).padding(horizontal=6.dp, vertical=1.dp)) {
                                     Text(if (idea.kind == "new") "NEW" else "ENHANCE", style = MaterialTheme.typography.labelSmall, color = kindBg, fontWeight = FontWeight.Bold)
+                                }
+                                if ("Research 2026-08-16" in idea.evidence) {
+                                    Box(Modifier.clip(RoundedCornerShape(999.dp)).background(Color(0xFF0EA5E9).copy(alpha=0.15f)).padding(horizontal=6.dp, vertical=1.dp)) { Text("Fresh from web \u00b7 2026-08-16", style = MaterialTheme.typography.labelSmall, color = Color(0xFF7DD3FC)) }
                                 }
                             }
                         }
@@ -258,6 +290,15 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 clipboard.setText(AnnotatedString(full))
                                 Toast.makeText(ctx, "IMPROVE brief copied (" + idea.slug + ")", Toast.LENGTH_SHORT).show()
                             }, modifier = Modifier.weight(1f), contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp)) { Text("Copy IMPROVE", style = MaterialTheme.typography.labelSmall) }
+                        }
+                    }
+                }
+                item {
+                    Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
+                        when {
+                            loadingMore -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp); Text("Loading more ideas\u2026", style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA)) }
+                            endOfFeed && ideas.isNotEmpty() -> Text("You\u2019ve seen all ideas \u2014 pull to reshuffle", style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7280))
+                            else -> Spacer(Modifier.height(4.dp))
                         }
                     }
                 }

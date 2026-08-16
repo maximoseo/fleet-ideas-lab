@@ -160,6 +160,40 @@ export default function IdeasPage() {
     const dy = e.touches[0].clientY - pullStart.current;
     if (dy > 0 && window.scrollY === 0) setPullY(Math.min(dy * 0.4, 72));
   }, []);
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [endOfFeed, setEndOfFeed] = useState(false);
+  // Infinite scroll: when sentinel enters viewport, load next unseen batch (same logic as Reload)
+  const loadMore = useCallback(() => {
+    if (loadingMore || endOfFeed || reloading) return;
+    const candidates = [...FLEET_IDEAS, ...FLEET_GENERATED_POOL].filter((it) => !seenIds.has(it.id)).filter((it) => {
+      if (domain !== "all" && it.domain !== domain) return false;
+      if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
+      if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
+      if (kind !== "all" && (it as unknown as { kind: string }).kind !== kind) return false;
+      if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow}`.toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
+    if (candidates.length === 0) { setEndOfFeed(true); return; }
+    setLoadingMore(true);
+    setTimeout(() => {
+      const take = Math.min(3, candidates.length);
+      let seed = (shuffleSeed+1)*9301+49297; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+      const shuffled=[...candidates]; for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const t=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=t; }
+      const picked=shuffled.slice(0,take);
+      setSeenIds((prev)=>{ const next=new Set(prev); picked.forEach((pp)=>next.add(pp.id)); return next; });
+      setShuffleSeed((s)=>s+1);
+      setLoadingMore(false);
+      if (candidates.length <= take) setEndOfFeed(true);
+    }, 500);
+  }, [loadingMore, endOfFeed, reloading, seenIds, shuffleSeed, domain, effort, impact, kind, q]);
+  useEffect(()=>{ setEndOfFeed(false); },[domain, effort, impact, kind, q, favOnly]);
+  useEffect(()=>{
+    const el=sentinelRef.current; if(!el) return;
+    const obs=new IntersectionObserver((entries)=>{ if(entries[0].isIntersecting) loadMore(); },{ rootMargin: "200px" });
+    obs.observe(el); return ()=>obs.disconnect();
+  },[loadMore]);
+
   const onTouchEnd = useCallback(() => {
     if (pullY > 48) doReload();
     pullStart.current = null;
@@ -252,6 +286,7 @@ export default function IdeasPage() {
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${badgePriority(idea.priority)}`}>{idea.priority}</span>
                 <button onClick={() => toggleFav(idea.slug)} className={`ml-1 rounded-full px-2 py-0.5 text-[12px] font-bold border ${favs.has(idea.slug) ? "bg-amber-500 text-black border-amber-500" : "bg-white/5 text-white/40 border-white/10 hover:text-white"}`}>{favs.has(idea.slug) ? "\u2665" : "\u2661"}</button>
                 <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${idea.kind === "new" ? "bg-emerald-500 text-white" : "bg-amber-500 text-black"}`}>{idea.kind === "new" ? "NEW" : "ENHANCE"}</span>
+                {idea.id.startsWith("idea-research") ? <span className="rounded-full bg-sky-500/15 border border-sky-500/30 px-2 py-0.5 text-[10px] font-bold text-sky-200">Fresh from web \u00b7 2026-08-16</span> : null}
                 <span className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold capitalize ${idea.impact === "high" ? "bg-emerald-500/15 text-emerald-300" : idea.impact === "medium" ? "bg-amber-500/15 text-amber-300" : "bg-white/10 text-white/60"}`}>{idea.impact}</span>
               </div>
               <h3 className="mt-2 text-[15px] font-bold leading-tight text-white">{idea.title}</h3>
@@ -310,6 +345,9 @@ export default function IdeasPage() {
             </div>
           ))}
         </div>
+        <div ref={sentinelRef} className="flex justify-center py-6">{
+          loadingMore ? <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200"><span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-transparent" /> Loading more ideas\u2026</span> : endOfFeed && filtered.length>0 ? <span className="text-xs text-white/30">You\u2019ve seen all ideas for this filter \u2014 try Clear or different domain</span> : null
+        }</div>
 
         {filtered.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">

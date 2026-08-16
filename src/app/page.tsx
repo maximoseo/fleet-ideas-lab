@@ -183,6 +183,7 @@ export default function InventoryPage() {
                 </div>
                 <h3 className="mt-2 text-[15px] font-bold leading-tight text-white group-hover:text-violet-200">{p.name}</h3>
                 <p className="mt-1 line-clamp-2 text-[13px] leading-5" style={{ color: VIOLET.textSecondary }}>{p.description}</p>
+                <p className="mt-1.5 rounded-lg border border-violet-500/20 bg-violet-500/10 px-2.5 py-1.5 text-[12px] leading-4 text-violet-100"><span className="font-bold">In plain English:</span> {p.plainExplainer}</p>
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {p.capabilities.map((c) => (
                     <span key={c} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/60">{c}</span>
