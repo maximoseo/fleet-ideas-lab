@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.FleetData
 import ai.maximo.ideaslab.data.FleetFavoritesStore
+import ai.maximo.ideaslab.data.FleetSeenStore
 import ai.maximo.ideaslab.data.buildAgentPrompt
 import ai.maximo.ideaslab.data.buildImprovePrompt
 import kotlinx.coroutines.delay
@@ -33,7 +34,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onNotifications: () -> Unit = {}) {
+fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, seenStore: FleetSeenStore? = null, onNotifications: () -> Unit = {}) {
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
@@ -47,12 +48,20 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onN
 
     val favSet by favoritesStore?.favoritesFlow()?.collectAsState(initial = emptySet()) ?: remember { mutableStateOf(emptySet<String>()) }
     val store = favoritesStore
-
-    val baseIdeas = remember(shuffleSeed) {
-        val n = FleetData.ideas.size
-        if (shuffleSeed == 0) FleetData.ideas else {
-            val k = shuffleSeed % n
-            FleetData.ideas.drop(k) + FleetData.ideas.take(k)
+    var seenIds by remember { mutableStateOf(FleetData.ideas.map { it.slug }.toSet()) }
+    val seenFromStore by seenStore?.seenFlow()?.collectAsState(initial = emptySet()) ?: remember { mutableStateOf(emptySet<String>()) }
+    LaunchedEffect(seenFromStore) {
+        if (seenFromStore.isNotEmpty()) seenIds = seenIds + seenFromStore
+        else seenStore?.seedFromIdeas(FleetData.ideas.map { it.slug }.toSet())
+    }
+    val visiblePool = remember(seenIds) { (FleetData.ideas + FleetData.generatedPool).filter { it.slug in seenIds } }
+    val baseIdeas = remember(visiblePool, shuffleSeed) {
+        if (shuffleSeed == 0) visiblePool else {
+            val arr = visiblePool.toMutableList()
+            var seed = shuffleSeed * 9301 + 49297
+            fun rnd(): Double { seed = (seed * 9301 + 49297) % 233280; return seed / 233280.0 }
+            for (i in arr.size - 1 downTo 1) { val j = (rnd() * (i + 1)).toInt(); val t = arr[i]; arr[i] = arr[j]; arr[j] = t }
+            arr
         }
     }
     val ideas = remember(baseIdeas, showOnlyFavorites, favSet) {
@@ -63,9 +72,23 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onN
         scope.launch {
             refreshing = true
             delay(400)
-            shuffleSeed++
+            val allPool = FleetData.ideas + FleetData.generatedPool
+            val candidates = allPool.filter { it.slug !in seenIds }
+            if (candidates.isEmpty()) {
+                shuffleSeed++
+                Toast.makeText(ctx, "No more new ideas \u2014 reshuffled ${ideas.size} shown", Toast.LENGTH_SHORT).show()
+            } else {
+                val take = minOf(3, candidates.size)
+                var seed = (shuffleSeed + 1) * 9301 + 49297
+                fun rnd(): Double { seed = (seed * 9301 + 49297) % 233280; return seed / 233280.0 }
+                val shuffled = candidates.toMutableList().also { l -> for (i in l.size - 1 downTo 1) { val j = (rnd() * (i + 1)).toInt(); val t = l[i]; l[i] = l[j]; l[j] = t } }
+                val picked = shuffled.take(take)
+                seenIds = seenIds + picked.map { it.slug }.toSet()
+                seenStore?.addSeen(picked.map { it.slug }.toSet())
+                shuffleSeed++
+                Toast.makeText(ctx, "New ideas: " + picked.joinToString(", ") { it.slug } + " \u00b7 now ${(ideas.size + take)} shown (reshuffled)", Toast.LENGTH_SHORT).show()
+            }
             refreshing = false
-            Toast.makeText(ctx, "Reloaded \u00b7 ${ideas.size} ideas" + if (showOnlyFavorites) " (favorites)" else "", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -128,7 +151,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, onN
                         Spacer(Modifier.height(4.dp))
                         Text("Tap \u2661 on any idea to save it \u2014 persists after restart", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9CA3AF))
                         Spacer(Modifier.height(12.dp))
-                        OutlinedButton(onClick = { showOnlyFavorites = false }) { Text("Show all 11") }
+                        OutlinedButton(onClick = { showOnlyFavorites = false }) { Text("Show all \u00b7 ${visiblePool.size}") }
                     }
                 }
             }

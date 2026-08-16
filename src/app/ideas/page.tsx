@@ -5,7 +5,7 @@ import Link from "next/link";
 import TrustLine from "@/components/TrustLine";
 import SiteHeader from "@/components/SiteHeader";
 import { STYLES } from "@/lib/styles";
-import { FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus, type FleetIdea } from "@/lib/fleet";
+import { FLEET_IDEAS, FLEET_GENERATED_POOL, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus, type FleetIdea } from "@/lib/fleet";
 import { buildAgentPrompt, buildImprovePrompt } from "@/lib/agentPrompt";
 
 const VIOLET = STYLES.violet;
@@ -36,13 +36,19 @@ export default function IdeasPage() {
 
   const [confirmIdea, setConfirmIdea] = useState<FleetIdea | null>(null);
   const [shuffleSeed, setShuffleSeed] = useState(0);
+  const [seenIds, setSeenIds] = useState<Set<string>>(() => new Set(FLEET_IDEAS.map((x)=>x.id)));
+  useEffect(()=>{ try{ const raw=localStorage.getItem("fleet_seen_ideas"); if(raw){ const arr=JSON.parse(raw) as string[]; if(arr.length>0) setSeenIds((prev)=>{ const m=new Set(prev); arr.forEach((id:string)=>m.add(id)); return m;}); } }catch{} },[]);
+  useEffect(()=>{ try{ localStorage.setItem("fleet_seen_ideas", JSON.stringify([...seenIds])); }catch{} },[seenIds]);
   const [reloading, setReloading] = useState(false);
   const [pullY, setPullY] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
   const pullStart = useRef<number | null>(null);
 
+  const ALL_POOL: FleetIdea[] = useMemo(()=> [...FLEET_IDEAS, ...FLEET_GENERATED_POOL], []);
   const filtered = useMemo(() => {
-    const base = FLEET_IDEAS.filter((it) => {
+    // Visible = seenIds (includes initial 11) — reload injects new unseen IDs, never repeats
+    const visiblePool = ALL_POOL.filter((it) => seenIds.has(it.id));
+    const base = visiblePool.filter((it) => {
       if (domain !== "all" && it.domain !== domain) return false;
       if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
       if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
@@ -52,11 +58,14 @@ export default function IdeasPage() {
       if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow} ${it.problem} ${it.solution}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
+    // Fisher-Yates shuffle seeded by shuffleSeed (deterministic but different order each reload)
     if (shuffleSeed === 0) return base;
-    const n = base.length || 1;
-    const k = shuffleSeed % n;
-    return [...base.slice(k), ...base.slice(0, k)];
-  }, [domain, effort, impact, status, kind, q, shuffleSeed, favOnly, favs]);
+    const arr = [...base];
+    let seed = shuffleSeed * 9301 + 49297;
+    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
+    return arr;
+  }, [domain, effort, impact, status, kind, q, shuffleSeed, favOnly, favs, seenIds]);
 
   const [briefMode, setBriefMode] = useState<"auto" | "build" | "improve">("auto");
   function resolveMode(idea: FleetIdea): "build" | "improve" {
@@ -119,10 +128,29 @@ export default function IdeasPage() {
 
   const doReload = useCallback(() => {
     setReloading(true);
-    setShuffleSeed((s) => s + 1);
-    setToast(`\u21bb Reloaded \u00b7 ${filtered.length} ideas`);
-    setTimeout(() => { setReloading(false); setToast(null); }, 1800);
-  }, [filtered.length]);
+    // Find unseen candidates matching current filters (domain/kind/effort/impact/q/fav) — never repeats an ID
+    const candidates = [...FLEET_IDEAS, ...FLEET_GENERATED_POOL].filter((it) => !seenIds.has(it.id)).filter((it) => {
+      if (domain !== "all" && it.domain !== domain) return false;
+      if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
+      if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
+      if (kind !== "all" && (it as unknown as { kind: string }).kind !== kind) return false;
+      if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow}`.toLowerCase().includes(q.toLowerCase())) return false;
+      return true;
+    });
+    if (candidates.length === 0) {
+      setShuffleSeed((s) => s + 1);
+      setToast("\u21bb No more new ideas for this filter \u2014 reshuffled " + filtered.length + " shown \u00b7 try Clear or different domain");
+    } else {
+      const take = Math.min(3, candidates.length);
+      // Shuffle candidates then take first N so each reload brings different New IDs
+      const shuffled = [...candidates]; let seed = (shuffleSeed+1)*9301+49297; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; }; for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const t=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=t; }
+      const picked = shuffled.slice(0, take);
+      setSeenIds((prev)=>{ const next=new Set(prev); picked.forEach((p)=>next.add(p.id)); return next; });
+      setShuffleSeed((s) => s + 1);
+      setToast("\u21bb New ideas: " + picked.map((p)=>p.slug).join(", ") + " \u00b7 now " + (filtered.length + take) + " shown (reshuffled)");
+    }
+    setTimeout(() => { setReloading(false); setToast(null); }, 2200);
+  }, [filtered.length, seenIds, shuffleSeed, domain, effort, impact, kind, q]);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (window.scrollY === 0) pullStart.current = e.touches[0].clientY;
@@ -140,7 +168,7 @@ export default function IdeasPage() {
 
   return (
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }} onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
-      <SiteHeader subtitle="12 ideas \u00b7 professional briefs + scaffold" />
+      <SiteHeader subtitle="11+ ideas \u00b7 professional briefs + scaffold \u00b7 Reload brings New IDs" />
       {pullY > 0 ? (
         <div className="flex justify-center py-2" style={{ height: 36, opacity: pullY / 72 }}>
           <span className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold ${pullY > 48 ? "border-violet-500/40 bg-violet-500/20 text-violet-200" : "border-white/10 bg-white/5 text-white/50"}`}>

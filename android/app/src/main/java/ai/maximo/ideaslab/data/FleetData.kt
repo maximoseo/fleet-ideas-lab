@@ -60,4 +60,17 @@ object FleetData {
         FleetIdea("link-velocity-tracker", "Enhance Competitor Intel: Link Velocity", "outreach", "low", "Enhance competitor-intelligence with Link Velocity tab: velocity chart + anchor mix + risk flag. Ahrefs/Majestic.", "enhancement", 96, "outreach\u00d7analytics 2/2 (96% strong) — outreach saturated; velocity is feature inside intel hub", "competitor-intelligence"),
         FleetIdea("cwv-budget-guard", "Enhance SiteWatch: CWV Budget Guard", "technical", "medium", "Enhance sitewatch with CWV Guard tab: LCP/CLS/INP gauges + budget bar + deploy gate. Lighthouse CI.", "enhancement", 86, "technical\u00d7alerts 6/7 (86% strong) — technical alerts saturated; CWV guard is feature", "sitewatch"),
     )
+    val generatedPool = listOf(
+        FleetIdea("seo-crawl-budget-sentinel", "SEO Crawl Budget Sentinel", "seo", "medium", "Build SEO Crawl Budget Sentinel: budget gauge + waste list + priority queue.", "new", 22, "Derived: seo reporting 22% gap — sentinel white-space", ""),
+        FleetIdea("content-freshness-radar", "Content Freshness Radar", "content", "medium", "Build Content Freshness Radar: heatmap + decay alerts + refresh queue.", "new", 18, "Derived: content alerts 18% white-space", ""),
+        FleetIdea("local-rank-pulse", "Local Rank Pulse", "local", "high", "Build Local Rank Pulse: grid pack tracker + volatility + competitor overlay.", "new", 28, "Derived: local alerts 28% gap", ""),
+        FleetIdea("analytics-cohort-explorer", "Analytics Cohort Explorer", "analytics", "medium", "Build Analytics Cohort Explorer: cohort table + retention curve + segment builder.", "new", 22, "Derived: analytics vis 22% gap", ""),
+        FleetIdea("automation-webhook-health", "Automation Webhook Health", "automation", "high", "Build Automation Webhook Health: timeline + failure rate + retry queue.", "new", 18, "Derived: automation alerts 18%", ""),
+        FleetIdea("design-system-diff", "Design System Diff", "design", "medium", "Build Design System Diff: token diff + visual diff + approval queue.", "new", 32, "Derived: design reporting 32% gap", ""),
+        FleetIdea("outreach-reply-predictor", "Outreach Reply Predictor", "outreach", "high", "Build Outreach Reply Predictor: reply score + follow-up timer + template suggest.", "new", 8, "Derived: outreach automation 8%", ""),
+        FleetIdea("technical-dependency-map", "Technical Dependency Map", "technical", "medium", "Build Technical Dependency Map: graph + risk hotspots + change impact.", "new", 8, "Derived: technical vis 8%", ""),
+        FleetIdea("geo-answer-share-tracker", "GEO Answer Share Tracker", "local", "high", "Build GEO Answer Share Tracker: share by engine + coverage + citation map.", "new", 28, "Derived: local analytics 28% gap", ""),
+        FleetIdea("client-ops-health-board", "Client Ops Health Board", "analytics", "high", "Build Client Ops Health Board: health score + risk list + usage meter.", "new", 18, "Derived: analytics automation 18%", ""),
+    )
+    val allIdeas: List<FleetIdea> get() = ideas + generatedPool
 }

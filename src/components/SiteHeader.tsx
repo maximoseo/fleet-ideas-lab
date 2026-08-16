@@ -7,7 +7,8 @@ import CommandPalette from "@/components/CommandPalette";
 
 const NAV = [
   { href: "/", label: "Inventory", hint: "Fleet overview" },
-  { href: "/ideas", label: "Ideas", hint: "12 concepts" },
+  { href: "/ideas", label: "Ideas", hint: "11 concepts" },
+  { href: "/favorites", label: "Favorites", hint: "Saved ideas" },
   { href: "/gaps", label: "Gaps", hint: "Gap radar" },
   { href: "/create", label: "Create", hint: "Scaffold" },
 ] as const;

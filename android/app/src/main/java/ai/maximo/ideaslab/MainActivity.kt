@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.NotificationHelper
 import ai.maximo.ideaslab.data.FleetFavoritesStore
+import ai.maximo.ideaslab.data.FleetSeenStore
 import ai.maximo.ideaslab.data.SessionStore
 import ai.maximo.ideaslab.data.UpdateCheckWorker
 import ai.maximo.ideaslab.ui.AppNav
@@ -35,6 +36,7 @@ class MainActivity : FragmentActivity() {
         }
         val sessionStore = SessionStore(applicationContext)
         val favoritesStore = FleetFavoritesStore(applicationContext)
+        val seenStore = FleetSeenStore(applicationContext)
         val api = ApiClient(sessionStore)
         val open = intent?.getStringExtra("open")
         setContent {
@@ -54,7 +56,7 @@ class MainActivity : FragmentActivity() {
                     }
                 }
                 if (start != null) {
-                    AppNav(navController = nav, startDestination = start!!, api = api, sessionStore = sessionStore, favoritesStore = favoritesStore)
+                    AppNav(navController = nav, startDestination = start!!, api = api, sessionStore = sessionStore, favoritesStore = favoritesStore, seenStore = seenStore)
                 } else {
                     Box(Modifier.fillMaxSize()) {}
                 }

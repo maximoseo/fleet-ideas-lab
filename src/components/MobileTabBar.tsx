@@ -22,6 +22,14 @@ const TABS = [
     ),
   },
   {
+    href: "/favorites", label: "Favorites",
+    icon: (a: boolean) => (
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.2 : 1.7} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 19L5 12a4 4 0 0 1 5.5-5.5L12 8l1.5-1.5A4 4 0 0 1 19 12l-7 7Z" />
+      </svg>
+    ),
+  },
+  {
     href: "/gaps", label: "Gaps",
     icon: (a: boolean) => (
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={a ? 2.2 : 1.7} strokeLinecap="round" strokeLinejoin="round">
@@ -81,7 +89,7 @@ export default function MobileTabBar() {
         </div>
       ) : null}
       <nav className="fixed inset-x-0 bottom-0 z-[60] border-t border-white/10 bg-[#0d0c16]/92 pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden" aria-label="Primary mobile">
-        <div className="grid grid-cols-5">
+        <div className="grid grid-cols-6">
           {TABS.map((t) => {
             const active = isActive(t.href);
             return (
