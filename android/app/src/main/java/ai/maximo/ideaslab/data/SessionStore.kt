@@ -29,9 +29,17 @@ class SessionStore(private val context: Context) {
         context.dataStore.edit { it[KEY_SESSION] = token; it[KEY_USERNAME] = username }
         encPrefs.edit().putString("dl_session", token).apply()
     }
+
+    /** Credentials for biometric re-login — encrypted at rest (AES256-GCM, Keystore-backed). */
+    suspend fun saveCredentials(username: String, password: String) {
+        encPrefs.edit().putString("saved_username", username).putString("saved_password", password).apply()
+    }
+    fun getSavedUsername(): String? = encPrefs.getString("saved_username", null)
+    fun getSavedPassword(): String? = encPrefs.getString("saved_password", null)
+
     suspend fun clear() {
         context.dataStore.edit { it.remove(KEY_SESSION); it.remove(KEY_USERNAME) }
-        encPrefs.edit().remove("dl_session").apply()
+        encPrefs.edit().remove("dl_session").remove("saved_password").apply()
     }
     suspend fun getSession(): String? {
         val ds = context.dataStore.data.map { it[KEY_SESSION] }.first()

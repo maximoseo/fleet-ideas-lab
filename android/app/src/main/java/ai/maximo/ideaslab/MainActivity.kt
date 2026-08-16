@@ -46,7 +46,10 @@ class MainActivity : FragmentActivity() {
             ?.takeIf { it.scheme == "fleetideaslab" }
             ?.host
         setContent {
-            FilTheme {
+            // Dark by design — this is an ops console, it starts in dark mode
+            // regardless of the system setting (light palette stays available
+            // in FilTheme for a future toggle).
+            FilTheme(darkTheme = true) {
                 val nav = rememberNavController()
                 var start by remember { mutableStateOf<String?>(null) }
                 LaunchedEffect(Unit) {

@@ -33,6 +33,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
 import ai.maximo.ideaslab.data.ApiClient
+import ai.maximo.ideaslab.data.LoginResult
 import ai.maximo.ideaslab.data.SessionStore
 import ai.maximo.ideaslab.ui.components.FilBanner
 import ai.maximo.ideaslab.ui.components.FilBannerTone
@@ -63,6 +64,8 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
         val mgr = BiometricManager.from(ctx)
         biometricAvailable = mgr.canAuthenticate(BiometricManager.Authenticators.BIOMETRIC_STRONG) == BiometricManager.BIOMETRIC_SUCCESS
         biometricEnabledStored = try { sessionStore.isBiometricEnabled() } catch(_: Exception) { false }
+        // Prefill the saved username — nobody should retype their email.
+        try { sessionStore.getSavedUsername()?.let { if (it.isNotBlank()) username = it } } catch(_: Exception) {}
         // Auto-prompt if session exists and biometric was enabled by user
         val hasSession = try { sessionStore.getSession()?.isNotEmpty() == true } catch(_: Exception){ false }
         if (biometricAvailable && biometricEnabledStored && hasSession) {
@@ -82,7 +85,16 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 scope.launch {
                     val has = try { api.me() } catch (_: Exception) { false }
-                    if (has) onSuccess() else error = "Session expired — please sign in again"
+                    if (has) { onSuccess(); return@launch }
+                    // Session expired — silent re-login with the encrypted saved
+                    // credentials (that's the whole point of fingerprint unlock).
+                    val savedUser = try { sessionStore.getSavedUsername() } catch(_: Exception) { null }
+                    val savedPass = try { sessionStore.getSavedPassword() } catch(_: Exception) { null }
+                    if (!savedUser.isNullOrBlank() && !savedPass.isNullOrBlank()) {
+                        val res = try { api.login(savedUser, savedPass, "") } catch(_: Exception) { LoginResult(false, "network") }
+                        if (res.ok) { onSuccess(); return@launch }
+                    }
+                    error = "Session expired — please sign in again"
                 }
             }
             override fun onAuthenticationError(code: Int, msg: CharSequence) {
@@ -105,6 +117,9 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
             val res = api.login(username.trim(), password, turnstileToken)
             busy = false
             if (res.ok) {
+                // Persist credentials (encrypted) so biometric unlock can
+                // re-login silently after the session expires.
+                try { sessionStore.saveCredentials(username.trim(), password) } catch(_: Exception){}
                 // Offer to enable biometric for next time if available and not yet enabled
                 if (biometricAvailable && !biometricEnabledStored) {
                     try { sessionStore.setBiometric(true) } catch(_: Exception){}
