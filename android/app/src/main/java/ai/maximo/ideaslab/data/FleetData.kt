@@ -8,6 +8,7 @@ object FleetData {
     val sites = listOf(
         FleetSite("fleet-hub", "Fleet Hub", "automation", "live", "reporting + automation"),
         FleetSite("fleet-ideas-lab", "Fleet Ideas Lab", "automation", "live", "reporting + automation"),
+        FleetSite("schema-studio", "Schema Studio", "technical", "live", "visualization + reporting"),
         FleetSite("content-automation", "Content Automation", "content", "live", "automation"),
         FleetSite("report-engine", "Report Engine", "analytics", "live", "reporting"),
         FleetSite("sitewatch", "SiteWatch", "technical", "live", "reporting + alerts"),

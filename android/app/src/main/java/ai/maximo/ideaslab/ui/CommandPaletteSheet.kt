@@ -31,7 +31,7 @@ fun CommandPaletteSheet(open: Boolean, onClose: () -> Unit, nav: NavController) 
   }
   AlertDialog(
     onDismissRequest = onClose,
-    title = { Text("\u2318K Jump — 37 · 11 · gaps", style = MaterialTheme.typography.titleSmall) },
+    title = { Text("\u2318K Jump — dashboards · ideas · gaps", style = MaterialTheme.typography.titleSmall) },
     text = {
       Column(Modifier.fillMaxWidth()) {
         OutlinedTextField(value = q, onValueChange = { q = it }, placeholder = { Text("site-intel, anomaly, outreach…", style = MaterialTheme.typography.bodySmall) }, singleLine = true, modifier = Modifier.fillMaxWidth())
@@ -41,7 +41,7 @@ fun CommandPaletteSheet(open: Boolean, onClose: () -> Unit, nav: NavController) 
             Surface(onClick = {
               onClose()
               when (kind) {
-                "dashboard" -> nav.navigate("inventory")
+                "dashboard" -> nav.navigate(if (slug == "schema-studio") "schema-studio" else "inventory")
                 "idea" -> nav.navigate("ideas")
                 else -> nav.navigate("gaps")
               }

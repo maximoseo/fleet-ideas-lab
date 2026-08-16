@@ -36,6 +36,17 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="fleetideaslab" android:host="share" />
             </intent-filter>
+            <!--
+              Schema Studio. Custom scheme only, on purpose: an https filter for
+              schema-studio.maximo-seo.ai would intercept the web app, which carries the
+              rich-result preview and the URL importer that this screen does not.
+            -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="fleetideaslab" android:host="schema-studio" />
+            </intent-filter>
         </activity>
     </application>
 </manifest>

@@ -50,6 +50,7 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
             composable("create") { CreateScreen(api) }
             composable("update") { UpdateScreen() }
             composable("notifications") { NotificationSettingsScreen() }
+            composable("schema-studio") { SchemaStudioScreen(onNotifications = { navController.navigate("notifications") }) }
             composable("fleet-history") { FleetHistoryScreen(api) }
         }
     }

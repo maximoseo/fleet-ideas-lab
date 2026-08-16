@@ -38,7 +38,10 @@ class MainActivity : FragmentActivity() {
         val favoritesStore = FleetFavoritesStore(applicationContext)
         val seenStore = FleetSeenStore(applicationContext)
         val api = ApiClient(sessionStore)
-        val open = intent?.getStringExtra("open")
+        // Two ways in: the notification extra, and a fleetideaslab://<host> deep link.
+        val open = intent?.getStringExtra("open") ?: intent?.data
+            ?.takeIf { it.scheme == "fleetideaslab" }
+            ?.host
         setContent {
             FleetIdeasLabTheme {
                 val nav = rememberNavController()
@@ -52,6 +55,7 @@ class MainActivity : FragmentActivity() {
                         when (open) {
                             "update" -> nav.navigate("update")
                             "ideas" -> nav.navigate("ideas")
+                            "schema-studio" -> nav.navigate("schema-studio")
                         }
                     }
                 }
