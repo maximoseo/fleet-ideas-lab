@@ -3,6 +3,7 @@
 import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
+import FleetStrip from "@/components/FleetStrip";
 import { STYLES } from "@/lib/styles";
 import { FLEET_PROJECTS, FLEET_IDEAS, FLEET_COUNT, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, GAP_SCORES, gapLevel, type FleetDomain, type Capability } from "@/lib/fleet";
 import { buildImprovePromptForProject } from "@/lib/agentPrompt";
@@ -125,6 +126,9 @@ export default function InventoryPage() {
             </div>
           </div>
         </div>
+
+        {/* Fleet strip — triage view, worst-first, links to /dashboard/<slug> */}
+        <FleetStrip />
 
         {/* Status legend — what beta actually means */}
         <div className="mt-5 rounded-xl border border-white/10 bg-white/[0.03] p-4">
