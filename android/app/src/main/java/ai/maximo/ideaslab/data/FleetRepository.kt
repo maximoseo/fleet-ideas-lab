@@ -157,7 +157,13 @@ class FleetRepository(private val context: Context) {
 /** "5m ago" style relative time for an ISO-8601 timestamp; minSdk-24 safe (no java.time). */
 fun relativeTime(iso: String, nowMillis: Long = System.currentTimeMillis()): String {
     val then = parseIso8601(iso) ?: return ""
-    val diff = nowMillis - then
+    return relativeAge(then, nowMillis)
+}
+
+/** "5m ago" style relative time for an epoch-millis timestamp. */
+fun relativeAge(millis: Long, nowMillis: Long = System.currentTimeMillis()): String {
+    if (millis <= 0) return ""
+    val diff = nowMillis - millis
     if (diff < 0) return "just now"
     val min = diff / 60_000
     return when {

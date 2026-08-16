@@ -26,9 +26,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import ai.maximo.ideaslab.data.FleetData
+import ai.maximo.ideaslab.data.FleetFeed
+import ai.maximo.ideaslab.data.FleetRepository
+import ai.maximo.ideaslab.data.FleetSource
 import ai.maximo.ideaslab.data.buildImprovePromptForProject
+import ai.maximo.ideaslab.data.relativeAge
+import ai.maximo.ideaslab.data.relativeTime
 import ai.maximo.ideaslab.ui.CommandPaletteSheet
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -40,20 +44,40 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
     val clipboardImprove = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
     var refreshing by remember { mutableStateOf(false) }
-    fun doReload() { scope.launch { refreshing = true; delay(400); shuffleSeed++; refreshing = false; Toast.makeText(ctx, "Reloaded \u00b7 ${FleetData.sites.size} sites", Toast.LENGTH_SHORT).show() } }
+    var feed by remember { mutableStateOf<FleetFeed?>(null) }
+    var reloadTick by remember { mutableStateOf(0) }
+    val repo = remember { FleetRepository(ctx.applicationContext) }
+    // Initial load + every manual reload hits the live feed; failures fall back
+    // to the cached copy, then to the bundled snapshot (source tells the truth).
+    LaunchedEffect(reloadTick) {
+        refreshing = true
+        feed = repo.load()
+        refreshing = false
+        if (reloadTick > 0) {
+            val f = feed
+            val msg = when (f?.source) {
+                FleetSource.LIVE -> "Live sync · ${f.sites.size} sites"
+                FleetSource.CACHE -> "Offline · cached copy"
+                else -> "Offline snapshot · bundled data"
+            }
+            Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
+        }
+    }
+    fun doReload() { if (!refreshing) reloadTick++ }
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
-    val sites = remember(shuffleSeed) {
-        if (shuffleSeed == 0) FleetData.sites else {
-            val n = FleetData.sites.size
+    val baseSites = feed?.sites ?: FleetData.sites
+    val sites = remember(shuffleSeed, baseSites) {
+        if (shuffleSeed == 0) baseSites else {
+            val n = baseSites.size
             val k = shuffleSeed % n
-            FleetData.sites.drop(k) + FleetData.sites.take(k)
+            baseSites.drop(k) + baseSites.take(k)
         }
     }
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Fleet Inventory", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                Text("${FleetData.sites.size} verified \u00b7 audit 2026-08-15 \u00b7 violet #7C3AED", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
+                Text("${baseSites.size} verified \u00b7 audit 2026-08-15 \u00b7 violet #7C3AED", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurface.copy(alpha=0.6f))
             }
             FilledTonalButton(onClick = { shuffleSeed++ }, modifier = Modifier.height(36.dp), contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp)) {
                 Text("Find more \u21bb", style = MaterialTheme.typography.labelMedium)
@@ -72,9 +96,16 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
         }
         Spacer(Modifier.height(8.dp))
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(6.dp).clip(RoundedCornerShape(999.dp)).background(Color(0xFFF38020)))
+            val f = feed
+            val (syncLabel, syncColor) = when (f?.source) {
+                FleetSource.LIVE -> "Live sync \u00b7 ${f.sites.size} dashboards \u00b7 updated ${relativeAge(f.fetchedAtMillis)}" to Color(0xFF34D399)
+                FleetSource.CACHE -> "Offline \u00b7 cached copy from ${relativeAge(f.fetchedAtMillis)}" to Color(0xFFFBBF24)
+                FleetSource.SNAPSHOT -> "Offline snapshot \u00b7 bundled 2026-08-15 \u00b7 no live data" to Color(0xFF9CA3AF)
+                null -> "Syncing fleet feed\u2026" to Color(0xFF9CA3AF)
+            }
+            Box(Modifier.size(6.dp).clip(RoundedCornerShape(999.dp)).background(syncColor))
             Spacer(Modifier.width(6.dp))
-            Text("Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+            Text(syncLabel, style = MaterialTheme.typography.labelSmall, color = syncColor)
         }
         Box(Modifier.fillMaxSize().pullRefresh(pullState)) {
             LazyVerticalGrid(
@@ -101,6 +132,35 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                         Text(site.stack, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B5F82))
                     Text("In plain English: " + site.plainExplainer, style = MaterialTheme.typography.labelSmall, color = Color(0xFFC4B5FD))
                     Text(explainer, style = MaterialTheme.typography.labelSmall, color = Color(0xFF6B7280))
+                        // Live probe health — only rendered once a feed (live or cached) exists.
+                        val health = feed?.health?.get(site.slug)
+                        if (health != null) {
+                            Spacer(Modifier.height(6.dp))
+                            val (hLabel, hColor) = when (health.state) {
+                                "healthy" -> "healthy" to Color(0xFF34D399)
+                                "degraded" -> "degraded" to Color(0xFFFBBF24)
+                                "down" -> "down" to Color(0xFFF87171)
+                                else -> "unknown" to Color(0xFF9CA3AF)
+                            }
+                            val checked = relativeTime(health.checkedAt)
+                            val detail = buildString {
+                                append(hLabel)
+                                if (health.latencyMs > 0) append(" \u00b7 ${health.latencyMs}ms")
+                                if (checked.isNotEmpty()) append(" \u00b7 $checked")
+                            }
+                            Row(Modifier.clip(RoundedCornerShape(999.dp)).background(hColor.copy(alpha=0.15f)).border(1.dp, hColor.copy(alpha=0.3f), RoundedCornerShape(999.dp)).padding(horizontal=8.dp, vertical=3.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(6.dp).clip(RoundedCornerShape(999.dp)).background(hColor))
+                                Spacer(Modifier.width(6.dp))
+                                Text(detail, style = MaterialTheme.typography.labelSmall, color = hColor)
+                            }
+                        } else if (feed != null && feed?.source != FleetSource.SNAPSHOT) {
+                            Spacer(Modifier.height(6.dp))
+                            Row(Modifier.clip(RoundedCornerShape(999.dp)).background(Color(0xFF9CA3AF).copy(alpha=0.12f)).padding(horizontal=8.dp, vertical=3.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Box(Modifier.size(6.dp).clip(RoundedCornerShape(999.dp)).background(Color(0xFF9CA3AF)))
+                                Spacer(Modifier.width(6.dp))
+                                Text("unknown \u00b7 no probe data", style = MaterialTheme.typography.labelSmall, color = Color(0xFF9CA3AF))
+                            }
+                        }
                         Spacer(Modifier.height(8.dp))
                         Box(Modifier.clip(RoundedCornerShape(8.dp)).background(Color(0xFF7C3AED).copy(alpha=0.15f)).border(1.dp, Color(0xFF7C3AED).copy(alpha=0.3f), RoundedCornerShape(8.dp)).padding(horizontal=8.dp, vertical=4.dp)) {
                             Text(site.slug, style = MaterialTheme.typography.labelSmall, color = Color(0xFFA78BFA))

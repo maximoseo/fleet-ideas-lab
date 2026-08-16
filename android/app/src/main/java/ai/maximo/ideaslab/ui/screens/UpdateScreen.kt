@@ -84,6 +84,18 @@ fun UpdateScreen() {
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("Updates", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Card(Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = Color(0xFF140F2A))) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("What's new in 1.2.0", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color(0xFFA78BFA))
+                Text(
+                    "Live health sync \u2014 the Inventory now pulls the live fleet feed (/api/app/fleet) " +
+                        "and shows a per-dashboard health chip (healthy / degraded / down) with latency and " +
+                        "last-checked time. Fully offline-honest: on any failure it falls back to the last " +
+                        "cached copy, then to the bundled snapshot with a clear 'offline snapshot' indicator.",
+                    style = MaterialTheme.typography.bodySmall, color = Color(0xFFB8AAD6)
+                )
+            }
+        }
         when (val s = state) {
             null -> { CircularProgressIndicator() }
             is UpdateCheckResult.UpToDate -> {
