@@ -28,6 +28,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             __html: `(function(){try{var t=localStorage.getItem("fil-theme");if(t!=="light"&&t!=="dark"){t=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";}document.documentElement.dataset.theme=t;}catch(e){}})();`,
           }}
         />
+        {/* Before-paint lang bootstrap: localStorage "fil-lang"; he → dir=rtl. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var l=localStorage.getItem("fil-lang");if(l==="he"){document.documentElement.lang="he";document.documentElement.dir="rtl";}}catch(e){}})();`,
+          }}
+        />
       </head>
       <body className={`${heebo.variable} ${rubik.variable} ${mono.variable} font-sans antialiased`}>
         {children}
