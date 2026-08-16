@@ -220,10 +220,19 @@ export default function IdeasPage() {
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight" style={{ fontFamily: VIOLET.fontDisplay }}>Ideas</h1>
             <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>{FLEET_IDEAS.length} professional briefs — deduplicated against {FLEET_COUNT} live dashboards. <span className="font-semibold text-emerald-300">5 New dashboards</span> (white-space) + <span className="font-semibold text-amber-300">6 Enhancements</span> (add as tab inside existing dashboard) — 1 duplicate removed (Content Decay already live). Tap to expand full brief with evidence.</p>
           </div>
-          <div className="flex gap-2"><button onClick={doReload} disabled={reloading} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20 disabled:opacity-50">{reloading ? "\u21bb Reloading\u2026" : "Find more ideas \u21bb"}</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create \u2192</Link></div>
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1" role="tablist" aria-label="Ideas view">
+              {(["list", "board"] as const).map((v) => (
+                <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={`min-h-[32px] rounded-full px-4 text-[12px] font-semibold capitalize transition ${view === v ? "bg-violet-600 text-white" : "text-white/60 hover:text-white"}`}>{v === "list" ? "List" : "Board"}</button>
+              ))}
+            </div>
+            <div className="flex gap-2"><button onClick={doReload} disabled={reloading} className="inline-flex min-h-[44px] items-center rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-sm font-semibold text-violet-200 hover:bg-violet-500/20 disabled:opacity-50">{reloading ? "\u21bb Reloading\u2026" : "Find more ideas \u21bb"}</button><Link href="/create" className="inline-flex min-h-[44px] items-center rounded-full bg-violet-600 px-5 text-sm font-semibold text-white hover:bg-violet-500">Create \u2192</Link></div>
+          </div>
         </div>
 
         {/* Filters */}
+        {view === "list" ? (
+        <>
         <div className="flex flex-wrap items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 p-1 w-fit">
             <span className="px-2 text-[11px] font-bold text-violet-200">Brief mode:</span>
             {(["auto", "build", "improve"] as const).map((m) => (
@@ -262,11 +271,13 @@ export default function IdeasPage() {
               ))}
             </div>
             <div className="ml-auto flex items-center gap-2 w-full sm:w-auto">
-              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas, problem, solution\u2026" className="w-full sm:w-64 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-violet-500 focus:outline-none" />
+              <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas, problem, solution…" className="w-full sm:w-64 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-violet-500 focus:outline-none" />
               <span className="hidden sm:inline text-xs text-white/40">{filtered.length} / {FLEET_IDEAS.length}</span>
             </div>
           </div>
         </div>
+        </>
+        ) : null}
 
         {scaffoldResult ? (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border border-violet-500/30 bg-violet-500/15 px-4 py-3">
@@ -278,6 +289,10 @@ export default function IdeasPage() {
           On <span className="font-mono text-white/60">fleet-ideas-lab.vercel.app</span> scaffolds land in <span className="font-mono text-violet-200">/tmp/&lt;slug&gt;</span> (ephemeral — Vercel sandbox). On Hostinger <span className="font-mono text-white/60">srv1813877</span> they persist at <span className="font-mono text-violet-200">/root/projects/&lt;slug&gt;</span>. History keeps a trace either way — see <a href="/history" className="text-violet-300 underline">History</a>.
         </div>
 
+        {view === "board" ? <IdeaBoard /> : null}
+
+        {view === "list" ? (
+        <>
         <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((idea) => (
             <div key={idea.id} className="flex flex-col rounded-2xl border p-4 sm:p-5 hover:shadow-lg hover:shadow-violet-500/10 transition" style={{ background: VIOLET.surface, borderColor: VIOLET.border }}>
@@ -356,6 +371,8 @@ export default function IdeasPage() {
             <p className="text-sm text-white/60">{favOnly && favs.size === 0 ? "\u2606 No favorites yet \u2014 tap \u2661 on any idea" : favOnly ? "No favorites match your filters" : "No ideas match your filters."}</p>
             <button onClick={() => { setDomain("all"); setEffort("all" as unknown as Effort); setImpact("all" as unknown as Impact); setStatus("all" as unknown as IdeaStatus); setKind("all"); setFavOnly(false); setQ(""); }} className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10">Clear filters</button>
           </div>
+        ) : null}
+        </>
         ) : null}
 
         {toast ? (

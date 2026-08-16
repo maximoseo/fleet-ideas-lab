@@ -14,6 +14,7 @@ const NAV = [
 ] as const;
 
 const MORE = [
+  { href: "/changelog", label: "Changelog", hint: "Pipeline transitions" },
   { href: "/audit", label: "Site Audit", hint: "Audit a client site" },
   { href: "/generate", label: "Design System", hint: "Tokens & CSS" },
   { href: "/redesign", label: "Redesign", hint: "Redesign a live site" },
