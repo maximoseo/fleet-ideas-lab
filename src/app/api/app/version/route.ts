@@ -5,16 +5,16 @@ export const runtime = "nodejs";
 // Single source of truth for Android release — keep in sync with android/app/build.gradle.kts
 // Bump versionCode/versionName here with every signed APK you ship.
 const APP_VERSION = {
-  versionCode: 25,
-  versionName: "1.2.9",
+  versionCode: 26,
+  versionName: "1.3.0",
   minSdk: 24,
   targetSdk: 36,
-  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.2.9/fleet-ideas-lab-v1.2.9.apk",
+  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.3.0/fleet-ideas-lab-v1.3.0.apk",
   fallbackUrl: "https://fleet-ideas-lab.maximo-seo.ai/api/app/download",
   changelog:
-    "Brand + UI copy 1.2.9: every user-facing Design Lab string → Fleet Ideas Lab (login header + bulb icon, loading, share, experiments, WP draft titles/markers) + title/meta/ICO already violet #7C3AED. Retained: stable infinite scroll + xl:4 dense.",
+    "1.3.0 Create workspace: canvas Bento Ops + Three-Pane hybrid (rail 68px + inbox 300px + detail 01→06) bound to 38 dashboards / 29 ideas pool with real POST /api/fleet/scaffold (4-arg) + terminal footer + in-app update via WorkManager/FileProvider (/api/app/download 302→GitHub).",
   mandatory: false,
-  releasedAt: "2026-08-16T15:00:00Z",
+  releasedAt: "2026-08-17T15:30:00Z",
 };
 
 export async function GET() {
