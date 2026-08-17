@@ -1,13 +1,19 @@
 package ai.maximo.ideaslab.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.GridView
+import androidx.compose.material.icons.outlined.StarOutline
+import androidx.compose.material.icons.outlined.GridOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -17,6 +23,8 @@ import ai.maximo.ideaslab.data.FleetFavoritesStore
 import ai.maximo.ideaslab.data.FleetSeenStore
 import ai.maximo.ideaslab.data.SessionStore
 import ai.maximo.ideaslab.ui.screens.*
+import ai.maximo.ideaslab.ui.theme.FilTheme
+import ai.maximo.ideaslab.ui.theme.FilType
 
 data class NavItem(val route: String, val label: String, val icon: ImageVector)
 
@@ -34,24 +42,29 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
     val back by navController.currentBackStackEntryAsState()
     val route = back?.destination?.route ?: startDestination
     val hideBar = route == "login"
+    val p = FilTheme.palette
 
     Scaffold(
         contentWindowInsets = WindowInsets.navigationBars,
+        containerColor = p.bg,
         topBar = {
             if (!hideBar) {
                 TopAppBar(
-                    title = { Text("Fleet Ideas Lab", style = androidx.compose.material3.MaterialTheme.typography.titleSmall) },
+                    title = { Text("Fleet Ideas Lab", style = FilType.cardTitle, color = p.text) },
                     actions = {
-                        IconButton(onClick = { navController.navigate("notifications") }) {
-                            Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
+                        IconButton(onClick = { navController.navigate("notifications") }, modifier = Modifier.size(44.dp)) {
+                            Icon(Icons.Filled.Notifications, contentDescription = "Notifications", tint = p.muted, modifier = Modifier.size(22.dp))
                         }
-                        IconButton(onClick = { navController.navigate("settings") }) {
-                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                        IconButton(onClick = { navController.navigate("settings") }, modifier = Modifier.size(44.dp)) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings", tint = p.muted, modifier = Modifier.size(22.dp))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                        containerColor = p.panel,
+                        titleContentColor = p.text,
+                        actionIconContentColor = p.muted,
                     ),
+                    modifier = Modifier.border(BorderStroke(1.dp, p.line.copy(alpha = 0.5f))),
                 )
             }
         },
@@ -83,13 +96,49 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
 
 @Composable
 private fun BottomBar(nav: NavHostController, route: String) {
-    NavigationBar {
+    val p = FilTheme.palette
+    NavigationBar(
+        containerColor = p.panel,
+        contentColor = p.text,
+        tonalElevation = 0.dp,
+        modifier = Modifier
+            .height(80.dp)
+            .border(BorderStroke(1.dp, p.line), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)),
+    ) {
         PrimaryTabs.forEach { item ->
+            val selected = route == item.route
+            // Filled for selected, outlined-equivalent for unselected where available
+            val iconVector: ImageVector = when {
+                selected -> item.icon
+                item.route == "inventory" -> Icons.Outlined.GridView
+                item.route == "favorites" -> Icons.Outlined.StarOutline
+                item.route == "gaps" -> Icons.Outlined.GridOn
+                else -> item.icon
+            }
             NavigationBarItem(
-                selected = route == item.route,
-                onClick = { if(route!=item.route) nav.navigate(item.route) },
-                icon = { Icon(item.icon, item.label) },
-                label = { Text(item.label, maxLines=1) }
+                selected = selected,
+                onClick = { if (route != item.route) nav.navigate(item.route) },
+                icon = {
+                    Icon(
+                        imageVector = iconVector,
+                        contentDescription = item.label,
+                        modifier = Modifier.size(24.dp),
+                    )
+                },
+                label = {
+                    Text(
+                        text = item.label,
+                        maxLines = 1,
+                        style = FilType.label.copy(fontSize = 10.sp, letterSpacing = 0.2.sp),
+                    )
+                },
+                colors = NavigationBarItemDefaults.colors(
+                    selectedIconColor = p.onAccent,
+                    selectedTextColor = p.text,
+                    indicatorColor = p.accentDeep,
+                    unselectedIconColor = p.muted,
+                    unselectedTextColor = p.muted,
+                ),
             )
         }
     }

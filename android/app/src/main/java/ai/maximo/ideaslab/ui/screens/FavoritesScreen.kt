@@ -82,7 +82,7 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
                     ) { Text("Browse 11 ideas →", style = FilType.chip) }
                 }
             } else {
-                LazyColumn(verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap), modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 88.dp + 16.dp, top = 4.dp)) {
+                LazyColumn(verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap), modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 80.dp + 24.dp, top = 4.dp)) {
                     items(list) { idea ->
                         var expanded by remember(idea.slug) { mutableStateOf(false) }
                         FilCard {

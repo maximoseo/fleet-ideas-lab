@@ -204,7 +204,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                     start = FilDimens.screen,
                     end = FilDimens.screen,
                     top = 8.dp,
-                    bottom = 88.dp + 16.dp,
+                    bottom = 80.dp + 24.dp,
                 ),
             ) {
                 if (feed == null) {

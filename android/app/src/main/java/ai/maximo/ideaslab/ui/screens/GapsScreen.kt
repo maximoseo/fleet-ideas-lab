@@ -132,7 +132,7 @@ fun GapsScreen() {
                                 }
                             }
                         }
-                        Spacer(Modifier.height(88.dp + 16.dp))
+                        Spacer(Modifier.height(80.dp + 24.dp))
                     }
                 }
             }

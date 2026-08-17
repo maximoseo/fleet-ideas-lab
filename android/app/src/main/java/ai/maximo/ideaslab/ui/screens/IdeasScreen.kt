@@ -176,16 +176,22 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
 
     Box(Modifier.fillMaxSize().statusBarsPadding().pullRefresh(pullState)) {
         Column(Modifier.fillMaxSize().padding(horizontal = FilDimens.screen)) {
+            Spacer(Modifier.height(4.dp))
             OutlinedTextField(
                 value = searchQ,
                 onValueChange = { searchQ = it },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Search ideas, problem, solution\u2026", style = FilType.label) },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+                placeholder = { Text("Search ideas, problem, solution\u2026", style = FilType.bodySmall, color = p.muted2) },
                 singleLine = true,
+                textStyle = FilType.bodySmall,
                 shape = androidx.compose.foundation.shape.RoundedCornerShape(999.dp),
-                colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = FilTheme.palette.accent, unfocusedBorderColor = FilTheme.palette.line),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = p.accent, unfocusedBorderColor = p.line,
+                    focusedContainerColor = p.panel, unfocusedContainerColor = p.panel,
+                    cursorColor = p.accent, focusedTextColor = p.text, unfocusedTextColor = p.text,
+                ),
             )
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
             FilScreenHeader(
                 title = "Ideas",
                 subtitle = "${ideas.size} shown \u00b7 11 base + 18 pool \u00b7 pull to reload" + if (showOnlyFavorites) " \u00b7 \u2605 favorites" else "",
@@ -194,15 +200,20 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                         selected = showOnlyFavorites,
                         onClick = { showOnlyFavorites = !showOnlyFavorites },
                         label = { Text("\u2605 ${favSet.size}", style = FilType.chip) },
-                        modifier = Modifier.heightIn(min = 36.dp),
+                        modifier = Modifier.heightIn(min = 40.dp),
+                        colors = FilterChipDefaults.filterChipColors(
+                            selectedContainerColor = p.accentDeep, selectedLabelColor = p.onAccent,
+                            containerColor = p.panel2, labelColor = p.muted,
+                        ),
                     )
-                    IconButton(onClick = onNotifications, modifier = Modifier.size(FilDimens.touch)) {
+                    IconButton(onClick = onNotifications, modifier = Modifier.size(44.dp)) {
                         Text("\uD83D\uDD14", style = MaterialTheme.typography.titleMedium)
                     }
                 },
             )
-            FilInset(padding = PaddingValues(horizontal = 10.dp, vertical = 6.dp)) {
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+            Spacer(Modifier.height(8.dp))
+            FilInset(padding = PaddingValues(horizontal = 12.dp, vertical = 10.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text("BRIEF MODE", style = FilType.sectionLabel, color = p.muted2)
                     Spacer(Modifier.weight(1f))
                     for (m in listOf("auto", "build", "improve")) {
@@ -211,19 +222,27 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                             selected = briefMode == m,
                             onClick = { briefMode = m },
                             label = { Text(label, style = FilType.label) },
-                            modifier = Modifier.heightIn(min = 32.dp),
+                            modifier = Modifier.heightIn(min = 36.dp),
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = if (briefMode == m) p.accentDeep else p.panel3,
+                                selectedLabelColor = if (briefMode == m) p.onAccent else p.muted,
+                                containerColor = p.panel3, labelColor = p.muted,
+                            ),
                         )
                     }
                 }
             }
-            Spacer(Modifier.height(4.dp))
+            Spacer(Modifier.height(10.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
                 FilledTonalButton(
                     onClick = { doReload() },
                     enabled = !refreshing,
-                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+                    colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.panel3, contentColor = p.text),
+                    modifier = Modifier.heightIn(min = 40.dp),
                 ) { Text(if (refreshing) "\u21BB Reloading\u2026" else "\u21BB Reload", style = FilType.chip) }
             }
+            Spacer(Modifier.height(8.dp))
             if (ideas.isEmpty()) {
                 EmptyState(
                     title = if (showOnlyFavorites) "No favorites yet" else "No ideas match",
@@ -237,7 +256,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap),
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(bottom = 88.dp + 16.dp, top = 4.dp),
+                contentPadding = PaddingValues(bottom = 80.dp + 24.dp, top = 4.dp),
             ) {
                 items(ideas, key = { it.slug }) { idea ->
                     val brief = briefs[idea.slug]

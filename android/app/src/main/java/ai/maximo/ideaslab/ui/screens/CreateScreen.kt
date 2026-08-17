@@ -137,7 +137,7 @@ fun CreateScreen(api: ApiClient) {
     }
 
     Box(Modifier.fillMaxSize().statusBarsPadding().pullRefresh(pullState)) {
-        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(FilDimens.screen).padding(bottom = 88.dp + 16.dp)) {
+        Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(FilDimens.screen).padding(bottom = 80.dp + 24.dp)) {
             FilScreenHeader(
                 title = "Create / Scaffold",
                 subtitle = "POST /api/fleet/scaffold \u00b7 ${counts.third} ideas \u00b7 pull to reload",

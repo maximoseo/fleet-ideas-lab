@@ -89,7 +89,7 @@ fun UpdateScreen() {
     }
 
     Column(
-        Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(FilDimens.screen).padding(bottom = 88.dp + 16.dp),
+        Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState()).padding(FilDimens.screen).padding(bottom = 80.dp + 24.dp),
         verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap),
     ) {
         FilScreenHeader(title = "Updates", subtitle = "In-app APK updates · checked against /api/app/version")

@@ -30,7 +30,7 @@ private fun StubToolScreen(title: String, blurb: String, @Suppress("UNUSED_PARAM
     var url by remember { mutableStateOf("") }
     Column(
         Modifier.fillMaxSize().statusBarsPadding().verticalScroll(rememberScrollState())
-            .padding(FilDimens.screen).padding(bottom = 88.dp + 16.dp),
+            .padding(FilDimens.screen).padding(bottom = 80.dp + 24.dp),
     ) {
         FilScreenHeader(title = title, subtitle = blurb)
         OutlinedTextField(
