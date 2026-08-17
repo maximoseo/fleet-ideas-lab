@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
     }
 
     // 2. Build the new CSS with marker
-    const marker = `/* \u2550\u2550\u2550 Design Lab Injection \u2550\u2550\u2550 */\n/* Injected: ${new Date().toISOString()} */\n/* Mode: ${mode || "theme"} */\n`;
+    const marker = `/* \u2550\u2550\u2550 Fleet Ideas Lab Injection \u2550\u2550\u2550 */\n/* Injected: ${new Date().toISOString()} */\n/* Mode: ${mode || "theme"} */\n`;
     const newCss = mode === "append" ? (currentCss ? currentCss + "\n\n" + marker + css : marker + css) : marker + css;
 
     let lastError = "";
@@ -177,7 +177,7 @@ export async function POST(req: NextRequest) {
 
 /**
  * DELETE /api/wp/theme-css
- * Removes Design Lab CSS from theme Additional CSS (rollback).
+ * Removes Fleet Ideas Lab CSS (also legacy Design Lab) from theme Additional CSS (rollback).
  */
 export async function DELETE(req: NextRequest) {
   try {
@@ -205,11 +205,11 @@ export async function DELETE(req: NextRequest) {
     const settings = await res.json();
     const currentCss = settings.custom_css_additional_css || settings.additional_css || "";
 
-    if (!currentCss.includes("Design Lab Injection")) {
-      return NextResponse.json({ ok: true, removed: false, message: "No Design Lab CSS found in theme." });
+    if (!currentCss.includes("Fleet Ideas Lab Injection") && !currentCss.includes("Design Lab Injection")) {
+      return NextResponse.json({ ok: true, removed: false, message: "No Fleet Ideas Lab CSS found in theme." });
     }
 
-    const cleaned = currentCss.replace(/\/\* \u2550\u2550\u2550 Design Lab Injection \u2550\u2550\u2550 \*\/[\s\S]*$/m, "").trim();
+    const cleaned = currentCss.replace(/\/\* \u2550\u2550\u2550 (?:Fleet Ideas Lab|Design Lab) Injection \u2550\u2550\u2550 \*\/[\s\S]*$/m, "").trim();
 
     const updateRes = await fetch(`${apiBase}/wp/v2/settings`, {
       method: "POST",
@@ -220,7 +220,7 @@ export async function DELETE(req: NextRequest) {
 
     if (!updateRes.ok) return NextResponse.json({ error: "Could not update settings" }, { status: updateRes.status });
 
-    return NextResponse.json({ ok: true, removed: true, message: "Design Lab CSS removed from theme." });
+    return NextResponse.json({ ok: true, removed: true, message: "Fleet Ideas Lab CSS removed from theme." });
   } catch (err) {
     return NextResponse.json({ error: "Rollback failed: " + (err instanceof Error ? err.message : "unknown") }, { status: 500 });
   }

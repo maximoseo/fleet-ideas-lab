@@ -162,7 +162,7 @@ export function styleTokensToHtml(style: StyleTokensInput, tweaks?: TweaksInput)
   // Include just enough structure to let typography/spatial/responsive/interaction/motion/ux checks fire meaningfully
   return `<!doctype html><html><head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${style.id} — Design Lab preview</title>
+<title>${style.id} — Fleet Ideas Lab preview</title>
 <meta name="description" content="Preview of ${style.id} style">
 <style>
 :root{--bg:${style.bg};--surface:${style.surface};--accent:${accent};--radius:${r}px}

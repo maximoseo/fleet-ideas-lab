@@ -5,14 +5,14 @@ export const runtime = "nodejs";
 // Single source of truth for Android release — keep in sync with android/app/build.gradle.kts
 // Bump versionCode/versionName here with every signed APK you ship.
 const APP_VERSION = {
-  versionCode: 24,
-  versionName: "1.2.8",
+  versionCode: 25,
+  versionName: "1.2.9",
   minSdk: 24,
   targetSdk: 36,
-  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.2.8/fleet-ideas-lab-v1.2.8.apk",
+  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.2.9/fleet-ideas-lab-v1.2.9.apk",
   fallbackUrl: "https://fleet-ideas-lab.maximo-seo.ai/api/app/download",
   changelog:
-    "Brand align 1.2.8: web title/meta/ICO now match the Android app (Fleet Ideas Lab, violet #7C3AED bulb) — fixes stale Design Lab metadata. Retained: stable infinite scroll + xl:4 dense + sticky filters + Load more · unseen left.",
+    "Brand + UI copy 1.2.9: every user-facing Design Lab string → Fleet Ideas Lab (login header + bulb icon, loading, share, experiments, WP draft titles/markers) + title/meta/ICO already violet #7C3AED. Retained: stable infinite scroll + xl:4 dense.",
   mandatory: false,
   releasedAt: "2026-08-16T15:00:00Z",
 };

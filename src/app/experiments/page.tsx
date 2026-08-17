@@ -54,7 +54,7 @@ export default function ExperimentsPage() {
   async function markRemoved(row: Injection) {
     if (busyId) return;
     const ok = window.confirm(
-      `Mark this injection as removed in the REGISTRY only?\n\n${row.site_url} · page ${row.page_id} · ${row.style_name || row.marker_id}\n\nThis does NOT change the WordPress page. Actual rollback goes through the injector (Design Lab → Remove styles).`,
+      `Mark this injection as removed in the REGISTRY only?\n\n${row.site_url} · page ${row.page_id} · ${row.style_name || row.marker_id}\n\nThis does NOT change the WordPress page. Actual rollback goes through the injector (Fleet Ideas Lab → Remove styles).`,
     );
     if (!ok) return;
     setBusyId(row.id);
@@ -85,7 +85,7 @@ export default function ExperimentsPage() {
       <div className="mx-auto max-w-6xl px-4 pb-24 pt-6">
         <h1 className="text-2xl font-extrabold tracking-tight">Experiments Registry</h1>
         <p className="mt-1 text-sm text-white/50">
-          Every WordPress injection the design lab has made — what is live where, and what was rolled back.
+          Every WordPress injection Fleet Ideas Lab has made — what is live where, and what was rolled back.
           Registry state only; actual rollback runs through the injector.
         </p>
 
@@ -157,7 +157,7 @@ export default function ExperimentsPage() {
                 <tr>
                   <td colSpan={7} className="px-4 py-10 text-center text-white/40">
                     {rows.length === 0
-                      ? "No injections recorded yet. The registry fills in the next time the design lab injects into WordPress."
+                      ? "No injections recorded yet. The registry fills in the next time Fleet Ideas Lab injects into WordPress."
                       : `No ${filter} injections.`}
                   </td>
                 </tr>

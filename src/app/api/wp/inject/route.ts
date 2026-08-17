@@ -182,7 +182,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers,
         body: JSON.stringify({
-          title: `[Design Lab] ${pageTitle} — ${styleName || "Styled"} (Draft)`,
+          title: `[Fleet Ideas Lab] ${pageTitle} — ${styleName || "Styled"} (Draft)`,
           content: styledContent,
           status: "draft",
         }),
@@ -322,7 +322,7 @@ export async function DELETE(req: NextRequest) {
     const content: string = page.content?.raw || "";
 
     if (!content.includes(MARKER_PREFIX)) {
-      return NextResponse.json({ ok: true, removed: false, message: "No Design Lab styles found on this page." });
+      return NextResponse.json({ ok: true, removed: false, message: "No Fleet Ideas Lab styles found on this page." });
     }
 
     const cleaned = stripPreviousInjections(content);
@@ -337,7 +337,7 @@ export async function DELETE(req: NextRequest) {
     // Registry after the response
     after(() => markInjectionsRemoved(base.origin, pageId));
 
-    return NextResponse.json({ ok: true, removed: true, message: "Design Lab styles removed. Page restored to its original styling." });
+    return NextResponse.json({ ok: true, removed: true, message: "Fleet Ideas Lab styles removed. Page restored to its original styling." });
   } catch (err) {
     return NextResponse.json({ error: "Rollback failed: " + (err instanceof Error ? err.message : "unknown") }, { status: 500 });
   }

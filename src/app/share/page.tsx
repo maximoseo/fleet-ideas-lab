@@ -30,7 +30,7 @@ export default function SharePage() {
       <header className="border-b border-white/10 px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <h1 className="text-xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>🔗 Shared Analysis</h1>
-          <a href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/70 transition hover:bg-white/20">← Design Lab</a>
+          <a href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/70 transition hover:bg-white/20">← Fleet Ideas Lab</a>
         </div>
       </header>
 

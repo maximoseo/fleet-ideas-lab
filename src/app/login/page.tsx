@@ -64,10 +64,16 @@ function LoginForm() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-violet-500/15 border border-violet-500/30 mb-4">
-            <span className="text-2xl">◈</span>
+            <svg width="28" height="28" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+              <rect width="32" height="32" rx="7" fill="#7C3AED"/>
+              <path d="M16 8.5c-3 0-5.2 2.24-5.2 5.04 0 1.76.8 3.2 2 4.08v2.24h6.4v-2.24c1.2-.88 2-2.32 2-4.08C21.2 10.74 19 8.5 16 8.5Z" stroke="white" strokeWidth="1.15" strokeLinecap="round" fill="none"/>
+              <rect x="10.2" y="20.4" width="11.6" height="1.9" rx="0.9" fill="white"/>
+              <rect x="11.2" y="22.9" width="9.6" height="1.4" rx="0.7" fill="white"/>
+              <path d="M16 5.5v1.6M10.2 8.2l1.1 1.1M21.8 8.2l-1.1 1.1" stroke="white" strokeWidth="0.9" strokeLinecap="round"/>
+            </svg>
           </div>
-          <h1 className="text-2xl font-semibold text-violet-50">Design Lab</h1>
-          <p className="text-sm text-violet-200/50 mt-1">MaximoSEO</p>
+          <h1 className="text-2xl font-semibold text-violet-50">Fleet Ideas Lab</h1>
+          <p className="text-sm text-violet-200/50 mt-1">MaximoSEO · Ideas Lab</p>
         </div>
 
         <form

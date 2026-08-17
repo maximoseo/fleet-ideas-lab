@@ -78,7 +78,7 @@ async function processPage(
       method: "POST",
       headers,
       body: JSON.stringify({
-        title: `[Design Lab] ${pageTitle} — ${styleName || "Styled"} (Draft)`,
+        title: `[Fleet Ideas Lab] ${pageTitle} — ${styleName || "Styled"} (Draft)`,
         content: styledContent,
         status: "draft",
       }),

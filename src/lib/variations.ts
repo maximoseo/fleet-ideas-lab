@@ -68,7 +68,7 @@ export function generateVariations(site: SiteAnalysis): DesignVariation[] {
       tagline: "Better fonts, stronger hierarchy",
       description:
         "Replaces the default font stack with a distinctive display + body pairing, tightens letter-spacing on headings, and establishes a clear type scale. The single highest-impact change for most sites.",
-      css: `/* ══ Design Lab: Typography Upgrade ══ */
+      css: `/* ══ Fleet Ideas Lab: Typography Upgrade ══ */
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Heebo:wght@400;500;600&display=swap');
 
 body { font-family: 'Heebo', -apple-system, sans-serif !important; line-height: 1.65 !important; }
@@ -99,7 +99,7 @@ button, .button, input[type="submit"] {
       tagline: "Your palette, but with contrast",
       description:
         `Keeps your brand colors (${siteAccent}) but fixes contrast, adds a proper accent hierarchy, and removes muddy grays. Buttons and links become unmistakable.`,
-      css: `/* ══ Design Lab: Color Refresh ══ */
+      css: `/* ══ Fleet Ideas Lab: Color Refresh ══ */
 :root {
   --dl-accent: ${siteAccent};
   --dl-accent-strong: ${darken(siteAccent, 25)};
@@ -137,7 +137,7 @@ hr, .separator { border-color: #e7e5e4 !important; }`,
       tagline: "Air, alignment, breathing room",
       description:
         "Fixes cramped layouts: generous section padding, consistent max-width, proper vertical rhythm between headings and paragraphs. Makes the site feel immediately more premium.",
-      css: `/* ══ Design Lab: Spacing & Rhythm ══ */
+      css: `/* ══ Fleet Ideas Lab: Spacing & Rhythm ══ */
 section, .entry-content > *, .wp-block-group {
   margin-block: 2.5rem !important;
 }
@@ -165,7 +165,7 @@ li { margin-block: 0.4em !important; }`,
       tagline: "Typography + color + spacing, unified",
       description:
         "The complete package: all three improvements combined into one coherent design system. Recommended if you want the biggest visible change in a single step.",
-      css: `/* ══ Design Lab: Full Treatment ══ */
+      css: `/* ══ Fleet Ideas Lab: Full Treatment ══ */
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Heebo:wght@400;500;600&display=swap');
 :root {
   --dl-accent: ${siteAccent};
@@ -203,7 +203,7 @@ footer,.site-footer { padding-block: 3rem !important; margin-top: 4rem !importan
       tagline: "A premium dark theme",
       description:
         "Inverts the site into a deep, low-glare dark theme with your accent color glowing against dark surfaces. Great for modern brands and portfolios.",
-      css: `/* ══ Design Lab: Dark Mode ══ */
+      css: `/* ══ Fleet Ideas Lab: Dark Mode ══ */
 @import url('https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800&family=Heebo:wght@400;500;600&display=swap');
 :root {
   --dl-accent: ${lighten(siteAccent, 40)};
