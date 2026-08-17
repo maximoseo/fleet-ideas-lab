@@ -20,15 +20,15 @@ interface PipelineEvent {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  backlog: "bg-white/10 text-white/60 border-white/15",
-  planned: "bg-blue-500/15 text-blue-300 border-blue-500/25",
-  building: "bg-amber-500/15 text-amber-300 border-amber-500/25",
+  backlog: "bg-white/10 text-white/75 border-white/15",
+  planned: "bg-blue-500/15 text-blue-200 border-blue-500/25",
+  building: "bg-amber-500/15 text-amber-200 border-amber-500/25",
   shipped: "bg-violet-500/20 text-violet-200 border-violet-500/40",
-  archived: "bg-white/5 text-white/40 border-white/10",
+  archived: "bg-white/5 text-white/65 border-white/10",
 };
 
 function StatusBadge({ s }: { s: string | null }) {
-  if (!s) return <span className="text-white/30">—</span>;
+  if (!s) return <span className="text-white/60">—</span>;
   return (
     <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${STATUS_STYLE[s] || STATUS_STYLE.backlog}`}>
       {s}
@@ -99,7 +99,7 @@ export default function ChangelogPage() {
         </div>
 
         {!persisted && !loading ? (
-          <div className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-200">
+          <div className="mt-5 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-100">
             Pipeline persistence offline — no events are being recorded.
           </div>
         ) : null}
@@ -112,7 +112,7 @@ export default function ChangelogPage() {
           </div>
         ) : error ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <p className="text-sm text-white/60">Changelog could not load ({error}).</p>
+            <p className="text-sm text-white/75">Changelog could not load ({error}).</p>
             <button
               onClick={load}
               className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10"
@@ -122,9 +122,9 @@ export default function ChangelogPage() {
           </div>
         ) : events.length === 0 ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <p className="text-sm text-white/60">
+            <p className="text-sm text-white/75">
               No transitions recorded yet. Move an idea on the{" "}
-              <Link href="/ideas" className="text-violet-300 underline">
+              <Link href="/ideas" className="text-violet-200 underline">
                 pipeline board
               </Link>{" "}
               and it will show up here.
@@ -152,16 +152,16 @@ export default function ChangelogPage() {
                     <span className="font-mono text-[13px] font-bold text-white">{ev.slug}</span>
                     <span className="flex items-center gap-1.5">
                       <StatusBadge s={ev.from_status} />
-                      <span className="text-white/40" aria-hidden>
+                      <span className="text-white/65" aria-hidden>
                         →
                       </span>
                       <StatusBadge s={ev.to_status} />
                     </span>
-                    <time className="ml-auto font-mono text-[11px] text-white/40" dateTime={ev.created_at}>
+                    <time className="ml-auto font-mono text-[11px] text-white/65" dateTime={ev.created_at}>
                       {formatTs(ev.created_at)}
                     </time>
                   </div>
-                  {ev.note ? <p className="mt-1.5 text-[12px] leading-5 text-white/60">{ev.note}</p> : null}
+                  {ev.note ? <p className="mt-1.5 text-[12px] leading-5 text-white/75">{ev.note}</p> : null}
                 </li>
               );
             })}

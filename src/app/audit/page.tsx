@@ -42,7 +42,7 @@ function ScoreRing({ score }: { score: number }) {
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-3xl font-bold" style={{ color }}>{score}</span>
-        <span className="text-xs text-white/40">{label}</span>
+        <span className="text-xs text-white/65">{label}</span>
       </div>
     </div>
   );
@@ -145,22 +145,22 @@ export default function AuditPage() {
           <div className="mx-auto max-w-xl py-20 text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-violet-500/30 border-t-violet-500" />
             <p className="text-lg font-semibold">Scanning {url} for slop…</p>
-            <p className="mt-1 text-sm text-white/40">Checking 46 patterns across 7 categories</p>
+            <p className="mt-1 text-sm text-white/65">Checking 46 patterns across 7 categories</p>
           </div>
         )}
 
         {step === "result" && score && (
           <div>
-            <button onClick={() => { setStep("input"); setScore(null); }} className="mb-6 rounded-lg bg-white/10 px-4 py-2 text-sm text-white/60 transition hover:bg-white/20">
+            <button onClick={() => { setStep("input"); setScore(null); }} className="mb-6 rounded-lg bg-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/20">
               ← New audit
             </button>
 
             {/* Score card */}
             <div className="mb-8 rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
               <h2 className="mb-1 text-lg font-bold">{siteTitle}</h2>
-              <p className="mb-4 text-xs text-white/40" dir="ltr">{url}</p>
+              <p className="mb-4 text-xs text-white/65" dir="ltr">{url}</p>
               <ScoreRing score={score.score} />
-              <p className="mt-3 text-sm text-white/60">
+              <p className="mt-3 text-sm text-white/75">
                 <span className="font-bold text-red-400">{score.detected}</span> of {score.total} slop patterns detected
               </p>
             </div>
@@ -173,7 +173,7 @@ export default function AuditPage() {
                   <div className={`text-lg font-bold ${data.detected > 0 ? "text-red-400" : "text-green-400"}`}>
                     {data.detected}/{data.total}
                   </div>
-                  <div className="text-[10px] text-white/40">{CATEGORY_LABELS[cat]}</div>
+                  <div className="text-[10px] text-white/65">{CATEGORY_LABELS[cat]}</div>
                 </button>
               ))}
             </div>
@@ -220,7 +220,7 @@ export default function AuditPage() {
                   {passedOnly.map(r => (
                     <div key={r.pattern.id} className="flex items-center gap-2 rounded-lg border border-green-500/20 bg-green-500/5 px-3 py-2">
                       <span className="text-green-400">✓</span>
-                      <span className="text-xs text-white/60">{r.pattern.label}</span>
+                      <span className="text-xs text-white/75">{r.pattern.label}</span>
                     </div>
                   ))}
                 </div>

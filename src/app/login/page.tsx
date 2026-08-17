@@ -108,7 +108,7 @@ function LoginForm() {
             </svg>
           </div>
           <h1 className="text-2xl font-semibold text-violet-50">Fleet Ideas Lab</h1>
-          <p className="text-sm text-violet-200/50 mt-1">MaximoSEO · Ideas Lab</p>
+          <p className="text-sm text-violet-200/75 mt-1">MaximoSEO · Ideas Lab</p>
         </div>
 
         <form
@@ -181,7 +181,7 @@ function LoginForm() {
           </button>
         </form>
 
-        <p className="text-center text-xs text-violet-200/30 mt-6">
+        <p className="text-center text-xs text-violet-200/65 mt-6">
           This tool can publish to connected WordPress sites. Authorised operators only.
         </p>
       </div>

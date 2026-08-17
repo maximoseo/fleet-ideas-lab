@@ -124,13 +124,13 @@ export default function SuggestionsPage() {
           <div className="mx-auto max-w-xl py-20 text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-violet-500/30 border-t-violet-500" />
             <p className="text-lg font-semibold">Analyzing {url}…</p>
-            <p className="mt-1 text-sm text-white/40">Generating prioritized suggestions</p>
+            <p className="mt-1 text-sm text-white/65">Generating prioritized suggestions</p>
           </div>
         )}
 
         {step === "result" && (
           <div>
-            <button onClick={() => { setStep("input"); setSuggestions([]); }} className="mb-6 rounded-lg bg-white/10 px-4 py-2 text-sm text-white/60 transition hover:bg-white/20">
+            <button onClick={() => { setStep("input"); setSuggestions([]); }} className="mb-6 rounded-lg bg-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/20">
               ← New analysis
             </button>
 
@@ -157,7 +157,7 @@ export default function SuggestionsPage() {
                     <span className="text-xl">{CATEGORY_ICON[s.category] || "💡"}</span>
                     <div className="flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs text-white/30">#{i + 1}</span>
+                        <span className="text-xs text-white/60">#{i + 1}</span>
                         <h4 className="text-sm font-bold">{s.title}</h4>
                         <span className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase ${IMPACT_STYLE[s.impact]}`}>
                           {s.impact} impact
@@ -171,7 +171,7 @@ export default function SuggestionsPage() {
                       </p>
                       <div className="mt-2 rounded-lg bg-violet-500/10 p-3">
                         <p className="text-xs text-white/70">
-                          <span className="font-medium text-violet-300">Fix: </span>{s.recommendation}
+                          <span className="font-medium text-violet-200">Fix: </span>{s.recommendation}
                         </p>
                       </div>
                     </div>

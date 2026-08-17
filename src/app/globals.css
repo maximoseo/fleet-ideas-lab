@@ -64,25 +64,40 @@ body {
    white/* Tailwind utilities. Until those are migrated to tokens,
    map the known values in light mode. Never color alone — labels
    and structure already pair with color elsewhere. */
+/* Both spellings of every value, and that is the whole bug.
+   The server renders style="background:#1a1428", so these rules matched and
+   the page looked right — for one frame. React re-serialises the inline style
+   on hydration to "background: rgb(26, 20, 40)", the hex selectors stop
+   matching, and every panel snaps back to dark on a light page. Measured with
+   axe on 2026-08-17: 195 contrast failures in light mode against 43 in dark.
+   Until these inline hexes become real tokens, match both forms. */
 :root[data-theme="light"] [style*="#0f0b1a"],
-:root[data-theme="light"] [style*="#0c0a14"] {
+:root[data-theme="light"] [style*="#0c0a14"],
+:root[data-theme="light"] [style*="rgb(15, 11, 26)"],
+:root[data-theme="light"] [style*="rgb(12, 10, 20)"] {
   background: var(--bg) !important;
   background-image: none !important;
 }
 :root[data-theme="light"] [style*="#1a1428"],
-:root[data-theme="light"] [style*="#231c33"] {
+:root[data-theme="light"] [style*="#231c33"],
+:root[data-theme="light"] [style*="rgb(26, 20, 40)"],
+:root[data-theme="light"] [style*="rgb(35, 28, 51)"] {
   background: var(--panel) !important;
   background-image: none !important;
   border-color: var(--line) !important;
 }
-:root[data-theme="light"] [style*="#3d3355"] {
+:root[data-theme="light"] [style*="#3d3355"],
+:root[data-theme="light"] [style*="rgb(61, 51, 85)"] {
   border-color: var(--line) !important;
 }
-:root[data-theme="light"] [style*="#f0ecf7"] {
+:root[data-theme="light"] [style*="#f0ecf7"],
+:root[data-theme="light"] [style*="rgb(240, 236, 247)"] {
   color: var(--text) !important;
 }
 :root[data-theme="light"] [style*="#a89bc2"],
-:root[data-theme="light"] [style*="#6b5f82"] {
+:root[data-theme="light"] [style*="#6b5f82"],
+:root[data-theme="light"] [style*="rgb(168, 155, 194)"],
+:root[data-theme="light"] [style*="rgb(107, 95, 130)"] {
   color: var(--muted) !important;
 }
 
@@ -106,6 +121,64 @@ body {
 :root[data-theme="light"] [class*="placeholder:text-white"]::placeholder {
   color: var(--muted) !important;
   opacity: 0.7;
+}
+
+/* The exclusion above is "not on an accent fill", but it matched on the class
+   NAME, so a 10%-opacity tint like bg-violet-500/10 counted as a fill and kept
+   its white text. On a light page that is white on near-white: the status
+   pills, the "Find more ideas" button and every plain-English explainer box
+   were invisible in light mode.
+   A tint carries a slash; a real fill does not. Re-darken the tinted ones. */
+:root[data-theme="light"] [class*="bg-violet-500/"],
+:root[data-theme="light"] [class*="bg-violet-600/"],
+:root[data-theme="light"] [class*="bg-emerald-500/"],
+:root[data-theme="light"] [class*="bg-amber-500/"],
+:root[data-theme="light"] [class*="bg-sky-500/"],
+:root[data-theme="light"] [class*="bg-blue-500/"],
+:root[data-theme="light"] [class*="bg-red-500/"],
+:root[data-theme="light"] [class*="bg-violet-500/"] *,
+:root[data-theme="light"] [class*="bg-emerald-500/"] *,
+:root[data-theme="light"] [class*="bg-amber-500/"] *,
+:root[data-theme="light"] [class*="bg-sky-500/"] *,
+:root[data-theme="light"] [class*="bg-blue-500/"] *,
+:root[data-theme="light"] [class*="bg-red-500/"] * {
+  color: var(--text) !important;
+}
+
+/* Tinted status text (emerald/amber/violet/sky/blue/red) is picked for a dark
+   background. In light mode those pale shades land on a near-white surface and
+   fail contrast badly — measured with axe on 2026-08-17: 195 failures in light
+   against 43 in dark, which is what "the light theme shipped untested" looks
+   like.
+   Elements sitting on a saturated accent fill keep their own colour. */
+:root[data-theme="light"] [class*="text-emerald-1"]:not([class*="bg-emerald-5"]),
+:root[data-theme="light"] [class*="text-emerald-2"]:not([class*="bg-emerald-5"]),
+:root[data-theme="light"] [class*="text-emerald-3"]:not([class*="bg-emerald-5"]) {
+  color: #046c4e !important;
+}
+:root[data-theme="light"] [class*="text-amber-5"],
+:root[data-theme="light"] [class*="text-amber-1"]:not([class*="bg-amber-5"]),
+:root[data-theme="light"] [class*="text-amber-2"]:not([class*="bg-amber-5"]),
+:root[data-theme="light"] [class*="text-amber-3"]:not([class*="bg-amber-5"]) {
+  color: #8a5200 !important;
+}
+:root[data-theme="light"] [class*="text-violet-1"]:not([class*="bg-violet-5"]):not([class*="bg-violet-6"]),
+:root[data-theme="light"] [class*="text-violet-2"]:not([class*="bg-violet-5"]):not([class*="bg-violet-6"]),
+:root[data-theme="light"] [class*="text-violet-3"]:not([class*="bg-violet-5"]):not([class*="bg-violet-6"]) {
+  color: #5b21b6 !important;
+}
+:root[data-theme="light"] [class*="text-sky-1"],
+:root[data-theme="light"] [class*="text-sky-2"],
+:root[data-theme="light"] [class*="text-sky-3"] {
+  color: #075985 !important;
+}
+:root[data-theme="light"] [class*="text-blue-2"],
+:root[data-theme="light"] [class*="text-blue-3"] {
+  color: #1e40af !important;
+}
+:root[data-theme="light"] [class*="text-red-3"],
+:root[data-theme="light"] [class*="text-red-4"] {
+  color: #991b1b !important;
 }
 
 /* Room for the mobile bottom tab bar (58px + safe area) */

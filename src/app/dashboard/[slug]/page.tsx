@@ -66,7 +66,7 @@ function freshness(updated: string | undefined): { band: "good" | "warn" | "bad"
 
 const BAND_STYLE: Record<"good" | "warn" | "bad", string> = {
   good: "border-violet-500/30 bg-violet-500/10 text-violet-200",
-  warn: "border-amber-500/30 bg-amber-500/10 text-amber-200",
+  warn: "border-amber-500/30 bg-amber-500/10 text-amber-100",
   bad: "border-red-500/30 bg-red-500/10 text-red-300",
 };
 const BAND_DOT: Record<"good" | "warn" | "bad", string> = { good: "#a78bfa", warn: "#e8b14c", bad: "#f2637e" };
@@ -178,7 +178,7 @@ export default function DashboardDetailPage() {
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }}>
       <SiteHeader subtitle={item ? item.name : "Dashboard detail"} />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-10">
-        <Link href="/" className="text-[13px] font-semibold text-violet-300 hover:text-violet-200">
+        <Link href="/" className="text-[13px] font-semibold text-violet-200 hover:text-violet-200">
           ← Fleet inventory
         </Link>
 
@@ -189,7 +189,7 @@ export default function DashboardDetailPage() {
           </div>
         ) : error ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <p className="text-sm text-white/60">Could not load this dashboard ({error}).</p>
+            <p className="text-sm text-white/75">Could not load this dashboard ({error}).</p>
             <button
               onClick={load}
               className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10"
@@ -202,7 +202,7 @@ export default function DashboardDetailPage() {
             <p className="text-lg font-bold text-white">No dashboard named “{slug}” in the fleet inventory.</p>
             <p className="mt-2 text-sm text-white/50">
               The slug may be wrong or the dashboard was removed. Check the{" "}
-              <Link href="/" className="text-violet-300 underline">
+              <Link href="/" className="text-violet-200 underline">
                 fleet inventory
               </Link>{" "}
               for the current list.
@@ -218,11 +218,11 @@ export default function DashboardDetailPage() {
                     {item.name}
                   </h1>
                   {item.url ? (
-                    <a href={item.url} target="_blank" rel="noopener" className="mt-1 inline-block font-mono text-[13px] text-violet-300 hover:text-violet-200">
+                    <a href={item.url} target="_blank" rel="noopener" className="mt-1 inline-block font-mono text-[13px] text-violet-200 hover:text-violet-200">
                       {item.url.replace("https://", "")} ↗
                     </a>
                   ) : (
-                    <p className="mt-1 text-[13px] text-white/40">No production URL on record.</p>
+                    <p className="mt-1 text-[13px] text-white/65">No production URL on record.</p>
                   )}
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {(item.domains || []).map((d) => (
@@ -239,7 +239,7 @@ export default function DashboardDetailPage() {
                       </span>
                     ))}
                     {(item.capabilities || []).map((c) => (
-                      <span key={c} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/60">
+                      <span key={c} className="rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-white/75">
                         {c}
                       </span>
                     ))}
@@ -258,7 +258,7 @@ export default function DashboardDetailPage() {
               <div className="flex items-center justify-between gap-3">
                 <h2 className="text-sm font-bold text-white">Live</h2>
                 {!liveHealth ? (
-                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-200">
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-100">
                     static snapshot — live probes offline
                   </span>
                 ) : null}
@@ -272,21 +272,21 @@ export default function DashboardDetailPage() {
                         {STATE_META[state].label}
                       </span>
                     </div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40">Current state</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Current state</div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
                     <div className="font-mono text-[14px] font-bold text-white">{item.live.lastStatus ?? "—"}</div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40">Last HTTP status</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Last HTTP status</div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
                     <div className="font-mono text-[14px] font-bold text-white">
                       {item.live.latencyMs != null ? item.live.latencyMs + " ms" : "—"}
                     </div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40">Latency</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Latency</div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
                     <div className="font-mono text-[14px] font-bold text-white">{fmtTime(item.live.checkedAt)}</div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/40">Last check</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Last check</div>
                   </div>
                 </div>
               ) : (
@@ -348,7 +348,7 @@ export default function DashboardDetailPage() {
               {hasImproveBrief ? (
                 <button
                   onClick={copyImprove}
-                  className="inline-flex min-h-[44px] items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-5 text-[13px] font-bold text-amber-200 hover:bg-amber-500/15"
+                  className="inline-flex min-h-[44px] items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-5 text-[13px] font-bold text-amber-100 hover:bg-amber-500/15"
                 >
                   Copy improve prompt
                 </button>
@@ -357,9 +357,9 @@ export default function DashboardDetailPage() {
 
             {/* Probe history */}
             <section aria-label="Probe history" className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-              <h2 className="text-sm font-bold text-white">Probe history <span className="font-mono text-white/40">(last {probes.length})</span></h2>
+              <h2 className="text-sm font-bold text-white">Probe history <span className="font-mono text-white/65">(last {probes.length})</span></h2>
               {!probesPersisted ? (
-                <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-200">
+                <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-100">
                   Probe persistence offline — history unavailable.
                 </p>
               ) : probes.length === 0 ? (
@@ -368,7 +368,7 @@ export default function DashboardDetailPage() {
                 <div className="mt-3 overflow-x-auto">
                   <table className="w-full min-w-[480px] text-left text-[12px]">
                     <thead>
-                      <tr className="border-b border-white/10 text-[10px] uppercase tracking-widest text-white/40">
+                      <tr className="border-b border-white/10 text-[10px] uppercase tracking-widest text-white/65">
                         <th className="py-2 pr-3 font-semibold">Result</th>
                         <th className="py-2 pr-3 font-semibold">HTTP</th>
                         <th className="py-2 pr-3 font-semibold">Latency</th>
@@ -387,7 +387,7 @@ export default function DashboardDetailPage() {
                           <td className="py-2 pr-3 font-mono text-white/70">{p.status ?? "—"}</td>
                           <td className="py-2 pr-3 font-mono text-white/70">{p.latency_ms != null ? p.latency_ms + " ms" : "—"}</td>
                           <td className="py-2 pr-3 font-mono text-white/50">{fmtTime(p.checked_at)}</td>
-                          <td className="max-w-[220px] truncate py-2 text-white/40" title={p.error || undefined}>{p.error || "—"}</td>
+                          <td className="max-w-[220px] truncate py-2 text-white/65" title={p.error || undefined}>{p.error || "—"}</td>
                         </tr>
                       ))}
                     </tbody>

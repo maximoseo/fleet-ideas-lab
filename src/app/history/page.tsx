@@ -155,7 +155,7 @@ export default function HistoryPage() {
       <div className="min-h-screen bg-[#0c0a14] text-white">
         <SiteHeader subtitle="All analyzed sites · compare · share" />
         <main className="mx-auto max-w-5xl px-6 py-8">
-          <div className="py-20 text-center text-sm text-white/40">Loading history…</div>
+          <div className="py-20 text-center text-sm text-white/65">Loading history…</div>
         </main>
       </div>
     );
@@ -185,7 +185,7 @@ export default function HistoryPage() {
           </button>
         </div>
         {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
-        <p className="mb-6 text-xs text-white/30">Keeps last 20 analyses (FIFO) · synced to your account when logged in.</p>
+        <p className="mb-6 text-xs text-white/60">Keeps last 20 analyses (FIFO) · synced to your account when logged in.</p>
 
         {/* Toolbar — hidden when there is nothing to act on */}
         {entries.length > 0 && (
@@ -203,11 +203,11 @@ export default function HistoryPage() {
               <span className="text-xs text-green-400">2 selected — see comparison below</span>
             )}
             {compareMode && selected.length < 2 && (
-              <span className="text-xs text-white/40">Select 2 sites to compare</span>
+              <span className="text-xs text-white/65">Select 2 sites to compare</span>
             )}
             <button
               onClick={handleClear}
-              className="ml-auto rounded-full bg-white/10 px-4 py-1.5 text-xs text-white/40 transition hover:bg-red-500/20 hover:text-red-400"
+              className="ml-auto rounded-full bg-white/10 px-4 py-1.5 text-xs text-white/65 transition hover:bg-red-500/20 hover:text-red-400"
             >
               Clear all
             </button>
@@ -217,7 +217,7 @@ export default function HistoryPage() {
         {/* Comparison view */}
         {compareMode && compareEntries.length === 2 && (
           <div className="mb-8 rounded-2xl border border-violet-500/30 bg-violet-500/5 p-5">
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-violet-300">Side-by-side comparison</h3>
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-violet-200">Side-by-side comparison</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               {compareEntries.map((e) => (
                 <div key={e.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -228,7 +228,7 @@ export default function HistoryPage() {
                     <div className="mb-3 flex h-32 w-full items-center justify-center rounded-lg bg-white/5 text-xl">🌐</div>
                   )}
                   <div className="mb-1 truncate text-sm font-bold">{e.title}</div>
-                  <div className="mb-2 truncate text-xs text-white/40" dir="ltr">
+                  <div className="mb-2 truncate text-xs text-white/65" dir="ltr">
                     {e.url}
                   </div>
                   <div className="mb-2 flex items-center gap-1.5">
@@ -237,7 +237,7 @@ export default function HistoryPage() {
                     ))}
                   </div>
                   <div className="flex items-center justify-between text-xs">
-                    <span className="text-white/40">{e.platform}</span>
+                    <span className="text-white/65">{e.platform}</span>
                     {e.slopScore !== null && e.slopScore !== undefined && (
                       <span
                         className={`rounded-full px-2 py-0.5 font-bold ${e.slopScore >= 80 ? "bg-green-500/15 text-green-400" : e.slopScore >= 60 ? "bg-yellow-500/15 text-yellow-400" : "bg-red-500/15 text-red-400"}`}
@@ -246,7 +246,7 @@ export default function HistoryPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-[10px] text-white/30">Fonts: {(e.fonts ?? []).slice(0, 3).join(", ") || "none"}</p>
+                  <p className="mt-1 text-[10px] text-white/60">Fonts: {(e.fonts ?? []).slice(0, 3).join(", ") || "none"}</p>
                 </div>
               ))}
             </div>
@@ -257,8 +257,8 @@ export default function HistoryPage() {
         {entries.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-4xl">🕘</p>
-            <p className="mt-3 text-sm font-medium text-white/60">No analyses yet</p>
-            <p className="mt-1 text-[13px] text-white/40">Paste a URL above — or analyze from Redesign / Audit / Mockup. The report lands here.</p>
+            <p className="mt-3 text-sm font-medium text-white/75">No analyses yet</p>
+            <p className="mt-1 text-[13px] text-white/65">Paste a URL above — or analyze from Redesign / Audit / Mockup. The report lands here.</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -278,11 +278,11 @@ export default function HistoryPage() {
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-semibold">{e.title}</div>
-                  <div className="truncate text-xs text-white/40" dir="ltr">
+                  <div className="truncate text-xs text-white/65" dir="ltr">
                     {e.url}
                   </div>
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/40">{e.platform}</span>
+                    <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/65">{e.platform}</span>
                     {e.slopScore !== null && e.slopScore !== undefined && (
                       <span
                         className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${e.slopScore >= 80 ? "bg-green-500/15 text-green-400" : e.slopScore >= 60 ? "bg-yellow-500/15 text-yellow-400" : "bg-red-500/15 text-red-400"}`}
@@ -290,7 +290,7 @@ export default function HistoryPage() {
                         {e.slopScore}
                       </span>
                     )}
-                    <span className="text-[10px] text-white/30">{timeAgo(e.created_at || e.analyzedAt || new Date().toISOString())}</span>
+                    <span className="text-[10px] text-white/60">{timeAgo(e.created_at || e.analyzedAt || new Date().toISOString())}</span>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1.5">
@@ -309,7 +309,7 @@ export default function HistoryPage() {
                       ev.stopPropagation();
                       shareEntry(e);
                     }}
-                    className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/20"
+                    className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/75 transition hover:bg-white/20"
                     title="Copy share link"
                   >
                     🔗
@@ -319,7 +319,7 @@ export default function HistoryPage() {
                       ev.stopPropagation();
                       handleRemove(e.id);
                     }}
-                    className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/40 transition hover:bg-red-500/20 hover:text-red-400"
+                    className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/65 transition hover:bg-red-500/20 hover:text-red-400"
                     title="Remove"
                   >
                     🗑

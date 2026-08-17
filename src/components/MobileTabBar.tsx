@@ -82,16 +82,16 @@ export default function MobileTabBar() {
           <button aria-label={t("action.close")} className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setMoreOpen(false)} />
           <div className="fil-panel absolute inset-x-0 bottom-0 rounded-t-2xl border-t px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-3 shadow-2xl">
             <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-white/20" />
-            <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40">{t("nav.more")}</p>
+            <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">{t("nav.more")}</p>
             <div className="grid grid-cols-1 gap-1">
               {MORE.map((m) => (
                 <Link key={m.href} href={m.href} {...(m.external ? { target: "_blank" as const, rel: "noopener" as const } : {})} className={`flex min-h-[48px] items-center justify-between rounded-xl px-4 text-[15px] font-medium transition ${isActive(m.href) ? "bg-violet-600 text-white" : "text-white/80 hover:bg-white/10"}`}>
                   <span>{t(m.key)} {m.external ? "↗" : ""}</span>
-                  <span className={`text-[11px] ${isActive(m.href) ? "text-white/80" : "text-white/35"}`}>{m.hint}</span>
+                  <span className={`text-[11px] ${isActive(m.href) ? "text-white/80" : "text-white/65"}`}>{m.hint}</span>
                 </Link>
               ))}
             </div>
-            <div className="mt-3 border-t border-white/10 pt-3 text-center text-[11px] text-white/30">Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session</div>
+            <div className="mt-3 border-t border-white/10 pt-3 text-center text-[11px] text-white/60">Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session</div>
           </div>
         </div>
       ) : null}
@@ -100,14 +100,14 @@ export default function MobileTabBar() {
           {TABS.map((tab) => {
             const active = isActive(tab.href);
             return (
-              <Link key={tab.href} href={tab.href} className={`flex min-h-[58px] flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition ${active ? "text-violet-300" : "text-white/45"}`} aria-current={active ? "page" : undefined}>
+              <Link key={tab.href} href={tab.href} className={`flex min-h-[58px] flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition ${active ? "text-violet-200" : "text-white/45"}`} aria-current={active ? "page" : undefined}>
                 {tab.icon(active)}
                 <span>{t(tab.key)}</span>
                 <span className={`h-0.5 w-6 rounded-full ${active ? "bg-violet-400" : "bg-transparent"}`} />
               </Link>
             );
           })}
-          <button type="button" onClick={() => setMoreOpen((v) => !v)} className={`flex min-h-[58px] flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition ${moreActive || moreOpen ? "text-violet-300" : "text-white/45"}`} aria-expanded={moreOpen}>
+          <button type="button" onClick={() => setMoreOpen((v) => !v)} className={`flex min-h-[58px] flex-col items-center justify-center gap-1 text-[10.5px] font-medium transition ${moreActive || moreOpen ? "text-violet-200" : "text-white/45"}`} aria-expanded={moreOpen}>
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={moreActive || moreOpen ? 2.2 : 1.7} strokeLinecap="round">
               <circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none" />
             </svg>

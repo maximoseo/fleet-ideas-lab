@@ -108,7 +108,7 @@ export function PrototypeFrame({
             className={
               measurement.overflows > 1
                 ? "rounded bg-red-500/15 text-red-300 border border-red-500/30 px-2 py-0.5"
-                : "rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/25 px-2 py-0.5"
+                : "rounded bg-emerald-500/10 text-emerald-200 border border-emerald-500/25 px-2 py-0.5"
             }
           >
             {measurement.overflows > 1
@@ -116,7 +116,7 @@ export function PrototypeFrame({
               : `Fits ${VIEWPORTS[viewport].label}`}
           </span>
           {measurement.brokenImages > 0 && (
-            <span className="rounded bg-amber-500/15 text-amber-300 border border-amber-500/30 px-2 py-0.5">
+            <span className="rounded bg-amber-500/15 text-amber-200 border border-amber-500/30 px-2 py-0.5">
               {measurement.brokenImages} broken image{measurement.brokenImages > 1 ? "s" : ""}
             </span>
           )}

@@ -28,7 +28,7 @@ function Swatch({ color, label }: { color: string; label: string }) {
       <span className="inline-block h-8 w-8 rounded-lg border border-white/20" style={{ background: color }} />
       <div>
         <div className="text-xs font-medium text-white/80">{label}</div>
-        <div className="text-xs text-white/40" dir="ltr">{color}</div>
+        <div className="text-xs text-white/65" dir="ltr">{color}</div>
       </div>
     </div>
   );
@@ -186,18 +186,18 @@ export default function GeneratePage() {
           <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
             {/* Left: visual preview */}
             <div className="space-y-6">
-              <button onClick={() => { setStep("input"); setData(null); }} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/60 transition hover:bg-white/20">
+              <button onClick={() => { setStep("input"); setData(null); }} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/20">
                 ← New site
               </button>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Color Palette</h3>
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/65">Color Palette</h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {Object.entries(data.tokens.colors).map(([key, val]) => (
                     <Swatch key={key} color={val} label={key} />
                   ))}
                 </div>
-                <h3 className="mb-3 mt-6 text-sm font-bold uppercase tracking-wider text-white/40">Dark Variant (HSL lightness -40)</h3>
+                <h3 className="mb-3 mt-6 text-sm font-bold uppercase tracking-wider text-white/65">Dark Variant (HSL lightness -40)</h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {Object.entries(data.darkVariant).map(([key, val]) => (
                     <Swatch key={key} color={val} label={key} />
@@ -206,18 +206,18 @@ export default function GeneratePage() {
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/40">Typography</h3>
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/65">Typography</h3>
                 <div className="space-y-3">
                   <div>
-                    <span className="text-xs text-white/40">Display</span>
+                    <span className="text-xs text-white/65">Display</span>
                     <p className="text-2xl font-bold" style={{ fontFamily: `${data.tokens.fonts.display}, sans-serif` }}>{data.tokens.fonts.display}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-white/40">Body</span>
+                    <span className="text-xs text-white/65">Body</span>
                     <p className="text-lg" style={{ fontFamily: `${data.tokens.fonts.body}, sans-serif` }}>{data.tokens.fonts.body}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-white/40">Mono</span>
+                    <span className="text-xs text-white/65">Mono</span>
                     <p className="font-mono text-sm" style={{ fontFamily: `${data.tokens.fonts.mono}, monospace` }}>{data.tokens.fonts.mono}</p>
                   </div>
                 </div>
@@ -225,24 +225,24 @@ export default function GeneratePage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/40">Spacing (baseUnit)</h3>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Spacing (baseUnit)</h3>
                   <div className="space-y-1.5">
                     {data.tokens.spacing.map((s, i) => (
                       <div key={i} className="flex items-center gap-2">
-                        <span className="w-16 text-xs text-white/40">space-{i + 1}</span>
+                        <span className="w-16 text-xs text-white/65">space-{i + 1}</span>
                         <div className="h-3 rounded-sm bg-violet-500/40" style={{ width: s }} />
-                        <span className="text-xs text-white/30" dir="ltr">{s}</span>
+                        <span className="text-xs text-white/60" dir="ltr">{s}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/40">Radius</h3>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Radius</h3>
                   <div className="flex flex-wrap gap-3">
                     {data.tokens.radius.map((r, i) => (
                       <div key={i} className="text-center">
                         <div className="mx-auto h-12 w-12 border-2 border-violet-400/50 bg-violet-500/10" style={{ borderRadius: r }} />
-                        <span className="mt-1 block text-xs text-white/30" dir="ltr">{r}</span>
+                        <span className="mt-1 block text-xs text-white/60" dir="ltr">{r}</span>
                       </div>
                     ))}
                   </div>
@@ -251,7 +251,7 @@ export default function GeneratePage() {
 
               {/* Shadows */}
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/40">Shadows</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Shadows</h3>
                 <div className="flex flex-wrap gap-3">
                   {data.tokens.shadows.map((s, i) => (
                     <div key={i} className="flex h-16 w-28 items-center justify-center rounded-lg bg-white text-xs font-medium text-black" style={{ boxShadow: s }}>
@@ -263,7 +263,7 @@ export default function GeneratePage() {
 
               {/* Raw detected */}
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/40">Raw Detected — {data.rawColors.length} colors · {data.rawFonts.length} fonts</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Raw Detected — {data.rawColors.length} colors · {data.rawFonts.length} fonts</h3>
                 <div className="mb-3 flex flex-wrap gap-1.5">
                   {data.rawColors.map((c) => (
                     <button key={c} onClick={() => navigator.clipboard.writeText(c)} title={`Click to copy ${c}`}
@@ -272,19 +272,19 @@ export default function GeneratePage() {
                       <span dir="ltr" className="text-white/70">{c}</span>
                     </button>
                   ))}
-                  {data.rawColors.length === 0 && <span className="text-xs text-white/30">No colors detected</span>}
+                  {data.rawColors.length === 0 && <span className="text-xs text-white/60">No colors detected</span>}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {data.rawFonts.map((f) => (
                     <span key={f} className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/70" style={{ fontFamily: `${f}, sans-serif` }}>{f}</span>
                   ))}
-                  {data.rawFonts.length === 0 && <span className="text-xs text-white/30">No fonts detected</span>}
+                  {data.rawFonts.length === 0 && <span className="text-xs text-white/60">No fonts detected</span>}
                 </div>
               </div>
 
               {/* Lovart hook */}
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/40">Lovart — Generate hero</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Lovart — Generate hero</h3>
                 <p className="mb-3 text-xs text-white/50">Per style — calls Lovart API if key is set, otherwise shows a placeholder.</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {lovartStyles.map((style) => (
@@ -297,7 +297,7 @@ export default function GeneratePage() {
                           <img src={lovartResult[style]} alt={`${style} hero`} className="h-24 w-full rounded object-cover" />
                         )
                       ) : (
-                        <div className="flex h-24 items-center justify-center rounded bg-white/5 text-xs text-white/30">No hero yet</div>
+                        <div className="flex h-24 items-center justify-center rounded bg-white/5 text-xs text-white/60">No hero yet</div>
                       )}
                       <button onClick={() => handleLovart(style)} disabled={lovartBusy === style}
                         className="mt-2 w-full rounded-lg bg-violet-600 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50">
@@ -338,7 +338,7 @@ export default function GeneratePage() {
                   className="mt-2 w-full rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 py-2.5 text-sm font-semibold text-white transition hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50">
                   {zipBusy ? "Building ZIP…" : "⬇ Download ZIP (5 files + README)"}
                 </button>
-                <p className="mt-2 text-center text-xs text-white/30">Bundles design-tokens.css, tailwind.config.ts, design.md, shadcn-theme.json, tokens.json + README</p>
+                <p className="mt-2 text-center text-xs text-white/60">Bundles design-tokens.css, tailwind.config.ts, design.md, shadcn-theme.json, tokens.json + README</p>
               </div>
             </div>
           </div>

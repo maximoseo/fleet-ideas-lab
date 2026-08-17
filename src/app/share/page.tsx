@@ -48,23 +48,23 @@ export default function SharePage() {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
             <h2 className="mb-1 text-lg font-bold">{data.title}</h2>
             <a href={data.url} target="_blank" rel="noopener noreferrer" dir="ltr"
-              className="text-sm text-violet-400 hover:text-violet-300">{data.url} ↗</a>
+              className="text-sm text-violet-400 hover:text-violet-200">{data.url} ↗</a>
 
             <div className="mt-4">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/40">Color Palette</h3>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Color Palette</h3>
               <div className="flex flex-wrap gap-2">
                 {data.colors.map(c => (
                   <div key={c} className="text-center">
                     <span className="inline-block h-12 w-12 rounded-lg border border-white/20" style={{ background: c }} />
-                    <span className="mt-1 block text-[10px] text-white/30" dir="ltr">{c}</span>
+                    <span className="mt-1 block text-[10px] text-white/60" dir="ltr">{c}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="mt-4">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/40">Fonts</h3>
-              <p className="text-sm text-white/60">{data.fonts.join(", ") || "None detected"}</p>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Fonts</h3>
+              <p className="text-sm text-white/75">{data.fonts.join(", ") || "None detected"}</p>
             </div>
 
             <div className="mt-4 flex items-center gap-2">

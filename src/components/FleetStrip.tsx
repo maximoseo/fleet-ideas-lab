@@ -98,7 +98,7 @@ export default function FleetStrip() {
           <p className="text-[12px] text-white/50">
             One segment per dashboard — height follows live health, worst first.
             {!liveHealth && !loading ? (
-              <span className="ml-1 font-semibold text-amber-300">static snapshot — live probes offline</span>
+              <span className="ml-1 font-semibold text-amber-200">static snapshot — live probes offline</span>
             ) : null}
           </p>
         </div>
@@ -114,7 +114,7 @@ export default function FleetStrip() {
               key={o.id}
               onClick={() => setSort(o.id)}
               aria-pressed={sort === o.id}
-              className={`min-h-[32px] rounded-full px-3 text-[12px] font-semibold transition ${sort === o.id ? "bg-violet-600 text-white" : "text-white/60 hover:text-white"}`}
+              className={`min-h-[32px] rounded-full px-3 text-[12px] font-semibold transition ${sort === o.id ? "bg-violet-600 text-white" : "text-white/75 hover:text-white"}`}
             >
               {o.label}
             </button>
@@ -125,27 +125,31 @@ export default function FleetStrip() {
       {loading ? (
         <div className="mt-4 h-14 animate-pulse rounded-xl border border-white/10 bg-white/[0.03]" />
       ) : error ? (
-        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/60">
+        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/75">
           Fleet strip could not load ({error}).
         </p>
       ) : rows.length === 0 ? (
-        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/60">
+        <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/75">
           No dashboards in the inventory yet.
         </p>
       ) : (
         <>
-          <div className="mt-4 flex items-end gap-[3px]" role="list">
+          {/*
+            An <a> cannot be a listitem — axe flags every bar (38 of them).
+            The link keeps its own role and the wrapper carries listitem, which
+            is what a screen reader needs to count the bars anyway.
+          */}
+          <ul className="mt-4 flex list-none items-end gap-[3px] p-0">
             {rows.map((r) => {
               const meta = BAND_META[r.band];
               const stateLabel = liveHealth ? (r.live ? r.live.state : "unknown") : r.health || "unknown";
               return (
+                <li key={r.slug} className="min-w-[6px] flex-1">
                 <Link
-                  key={r.slug}
-                  role="listitem"
                   href={`/dashboard/${r.slug}`}
                   aria-label={`${r.name}: ${stateLabel}`}
                   title={`${r.name} — ${stateLabel}`}
-                  className="min-w-[6px] flex-1 rounded-t-sm transition-transform hover:scale-y-110 focus-visible:scale-y-110"
+                  className="block w-full rounded-t-sm transition-transform hover:scale-y-110 focus-visible:scale-y-110"
                   style={{
                     height: meta.height,
                     transformOrigin: "bottom",
@@ -154,9 +158,10 @@ export default function FleetStrip() {
                       : "repeating-linear-gradient(45deg, rgba(140,130,171,0.35) 0 3px, transparent 3px 6px)",
                   }}
                 />
+                </li>
               );
             })}
-          </div>
+          </ul>
           <div className="mt-1 h-px w-full bg-white/10" aria-hidden />
 
           {/* Legend — counts per band + the rule in words; colour never alone (height + label pair with it) */}
@@ -179,7 +184,7 @@ export default function FleetStrip() {
                 </span>
               );
             })}
-            <span className="w-full text-white/40 sm:ml-auto sm:w-auto">
+            <span className="w-full text-white/65 sm:ml-auto sm:w-auto">
               Warm colours mean a dashboard wants attention. Cool means it does not.
             </span>
           </div>

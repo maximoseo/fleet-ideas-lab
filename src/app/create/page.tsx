@@ -115,14 +115,14 @@ export default function CreatePage() {
               ["⊘", "Gaps"],
               ["＋", "Create"],
             ].map(([icon, label]) => (
-              <span key={label} className={`flex h-[43px] w-full flex-col items-center justify-center rounded-md text-[9px] ${label === "Create" ? "bg-[#5965dc] font-bold text-white" : "text-white/40"}`}>
+              <span key={label} className={`flex h-[43px] w-full flex-col items-center justify-center rounded-md text-[9px] ${label === "Create" ? "bg-[#5965dc] font-bold text-white" : "text-white/65"}`}>
                 <span className="text-[15px] leading-3">{icon}</span>
                 <span>{label}</span>
               </span>
             ))}
           </nav>
           <div className="border-t border-white/5 px-2 py-3 flex flex-col items-center gap-2">
-            <span className="text-[10px] font-semibold text-white/40">EN</span>
+            <span className="text-[10px] font-semibold text-white/65">EN</span>
             <span className="h-8 w-8 rounded-full border border-white/10 bg-[#172236] grid place-items-center text-[10px] font-bold text-[#dce5ff]">OP</span>
           </div>
         </aside>
@@ -130,9 +130,9 @@ export default function CreatePage() {
         {/* Inbox / Inventory — 300px on xl, 324px on lg, full width on mobile */}
         <aside className="flex w-full shrink-0 flex-col border-b lg:border-b-0 lg:border-r border-white/10 bg-[#0e1421] lg:w-[324px] xl:w-[300px]">
           <div className="border-b border-white/5 px-4 pb-3 pt-4">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/30">Idea inbox</p>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/60">Idea inbox</p>
             <h2 className="mt-1 flex items-center gap-2 text-[18px] font-bold tracking-[-0.03em] text-white">Ideas <span className="rounded-full bg-[#1c2943] px-2 py-0.5 text-[11px] font-semibold text-[#b9c6df]">{counts.all}</span><span className="ml-auto flex items-center gap-1.5 text-[10px] font-semibold text-[#61d7e8]"><span className="h-1.5 w-1.5 rounded-full bg-[#61d7e8]" />Synced</span></h2>
-            <label className="mt-3 flex h-8 items-center rounded-md border border-white/10 bg-[#0a0f19] px-3 text-[12px] text-white/40 focus-within:border-[#7580f1]">
+            <label className="mt-3 flex h-8 items-center rounded-md border border-white/10 bg-[#0a0f19] px-3 text-[12px] text-white/65 focus-within:border-[#7580f1]">
               <span className="mr-2 text-[16px] leading-none">⌕</span>
               <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas…" className="min-w-0 flex-1 bg-transparent text-[12px] text-white outline-none placeholder:text-white/25" />
               <kbd className="rounded border border-white/10 px-1 py-0.5 text-[9px] text-white/25">/</kbd>
@@ -143,7 +143,7 @@ export default function CreatePage() {
                 ["high", `High ${counts.high}`],
                 ["fresh", `Fresh ${counts.fresh}`],
               ].map(([k, label]) => (
-                <button key={k} onClick={() => setFilter(k as typeof filter)} className={`rounded border px-2 py-1 text-[10px] font-semibold ${filter === k ? "border-[#7580f1] bg-[#5965dc26] text-white" : "border-white/10 text-white/40"}`}>{label}</button>
+                <button key={k} onClick={() => setFilter(k as typeof filter)} className={`rounded border px-2 py-1 text-[10px] font-semibold ${filter === k ? "border-[#7580f1] bg-[#5965dc26] text-white" : "border-white/10 text-white/65"}`}>{label}</button>
               ))}
             </div>
           </div>
@@ -153,23 +153,23 @@ export default function CreatePage() {
                 <span className="mt-1.5 mr-2.5 h-2 w-2 shrink-0 rounded-full" style={{ background: DOMAIN_COLOR[it.domain] || "#5965dc" }} />
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-[12px] font-bold leading-4">{it.title}</span>
-                  <span className={`mt-1 block text-[10px] leading-3 ${selected === it.id ? "text-[#d9ddff]" : "text-white/40"}`}>{DOMAIN_LABEL[it.domain]} · {it.effort} · {it.priority} · {it.impact}</span>
+                  <span className={`mt-1 block text-[10px] leading-3 ${selected === it.id ? "text-[#d9ddff]" : "text-white/65"}`}>{DOMAIN_LABEL[it.domain]} · {it.effort} · {it.priority} · {it.impact}</span>
                 </span>
                 <span className={`ml-2 text-[15px] leading-4 ${selected === it.id ? "opacity-100 text-white" : "opacity-0"}`}>✓</span>
               </button>
             ))}
-            {filtered.length === 0 ? <p className="px-3 py-6 text-center text-[11px] text-white/30">No ideas match this search.</p> : null}
+            {filtered.length === 0 ? <p className="px-3 py-6 text-center text-[11px] text-white/60">No ideas match this search.</p> : null}
           </div>
           <div className="border-t border-white/5 px-4 py-2">
             <div className="flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.15em] text-white/25"><span>Queue signal</span><span className="text-[#61d7e8]">stable</span></div>
-            <p className="mt-2 text-[11px] leading-4 text-white/40">{counts.high} high-priority ideas · {counts.fresh} fresh</p>
+            <p className="mt-2 text-[11px] leading-4 text-white/65">{counts.high} high-priority ideas · {counts.fresh} fresh</p>
           </div>
         </aside>
 
         {/* Detail workspace */}
         <section className="flex min-w-0 flex-1 flex-col bg-[#080b14]">
           <header className="flex h-[52px] shrink-0 items-center justify-between border-b border-white/5 px-6">
-            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.15em] text-white/30"><span className="font-semibold text-white/50">Create</span><span className="text-[#3d4b63]">/</span><span>Scaffold from idea</span></div>
+            <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.15em] text-white/60"><span className="font-semibold text-white/50">Create</span><span className="text-[#3d4b63]">/</span><span>Scaffold from idea</span></div>
             <span className="flex items-center gap-1.5 text-[10px] font-semibold text-[#61d7e8]"><span className="h-1.5 w-1.5 rounded-full bg-[#61d7e8]" />Workspace ready</span>
           </header>
           <div className="min-h-0 flex-1 overflow-y-auto">
@@ -177,19 +177,19 @@ export default function CreatePage() {
               <main className="flex w-full flex-1 flex-col">
                 {/* Workflow 01→06 */}
                 <div className="mb-5 flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-white/5 pb-3 text-[10px] font-semibold uppercase tracking-[0.12em]">
-                  <span className="rounded border border-[#3d8d9b] bg-[#61d7e81c] px-1.5 py-0.5 text-[#61d7e8]">01</span><span className="text-white/40">Choose idea</span><span className="px-1 text-[#42506a]">→</span>
+                  <span className="rounded border border-[#3d8d9b] bg-[#61d7e81c] px-1.5 py-0.5 text-[#61d7e8]">01</span><span className="text-white/65">Choose idea</span><span className="px-1 text-[#42506a]">→</span>
                   <span className="rounded border border-[#5965dc] bg-[#5965dc26] px-1.5 py-0.5 text-[#dce0ff]">02</span><span className="text-white">Review context</span><span className="px-1 text-[#42506a]">→</span>
                   <span className="text-white/25">03 Copy prompt</span><span className="px-1 text-[#42506a]">→</span><span className="text-white/25">04 Confirm slug</span><span className="px-1 text-[#42506a]">→</span><span className="text-white/25">05 Scaffold stub</span><span className="px-1 text-[#42506a]">→</span><span className="text-white/25">06 Open dashboard</span>
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#7f8cff]">
                   <span className="rounded border border-[#46529c] bg-[#171d49] px-1.5 py-0.5 text-[#aeb5ff]">{DOMAIN_LABEL[idea.domain]}</span>
-                  <span className="rounded border border-white/10 px-1.5 py-0.5 font-semibold tracking-normal text-white/40">{idea.effort}</span>
+                  <span className="rounded border border-white/10 px-1.5 py-0.5 font-semibold tracking-normal text-white/65">{idea.effort}</span>
                   <span className="rounded border border-[#8f6b3d] bg-[#241d17] px-1.5 py-0.5 font-semibold tracking-normal text-[#edbd6e]">{idea.priority}</span>
                   <span className="rounded bg-[#5965dc]/20 border border-[#5965dc]/30 px-1.5 py-0.5 text-[#aeb5ff] capitalize">{idea.impact}</span>
                 </div>
                 <h1 className="mt-3 max-w-[820px] text-[26px] font-bold leading-tight tracking-[-0.035em] text-white">{idea.title}</h1>
-                <p className="mt-2 max-w-[780px] text-[13px] leading-5 text-white/40">{idea.description}</p>
+                <p className="mt-2 max-w-[780px] text-[13px] leading-5 text-white/65">{idea.description}</p>
 
                 <div className="mt-5 flex items-center gap-3 rounded-md border border-[#6e5235] bg-[#2b211a] px-4 py-3 text-[12px] leading-5 text-[#f0d09a]">
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-[#d99a4a] text-[12px] font-bold text-[#f0c779]">!</span>
@@ -209,7 +209,7 @@ export default function CreatePage() {
                   <div className="flex flex-wrap items-end justify-between gap-2">
                     <div>
                       <h2 className="text-[14px] font-bold text-white">Slug</h2>
-                      <p className="mt-1 text-[11px] leading-4 text-white/30">Kebab-case · 3–48 chars · will create <code className="rounded bg-[#171f31] px-1.5 py-0.5 text-[10px] text-[#aebbd4]">/root/projects/{slug || "<slug>"}</code></p>
+                      <p className="mt-1 text-[11px] leading-4 text-white/60">Kebab-case · 3–48 chars · will create <code className="rounded bg-[#171f31] px-1.5 py-0.5 text-[10px] text-[#aebbd4]">/root/projects/{slug || "<slug>"}</code></p>
                     </div>
                     <span className={`text-[11px] font-semibold ${valid ? "text-[#5ed6a4]" : "text-[#d99a4a]"}`}>{valid ? "✓ Valid slug" : slugError}</span>
                   </div>
@@ -218,30 +218,30 @@ export default function CreatePage() {
                 </section>
 
                 <section className="mt-4 rounded-md border border-white/10 bg-[#0e1421] px-4 py-3">
-                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/40">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-white/65">
                     <span className="font-semibold text-white">Next steps after scaffold</span>
                     <code className="rounded bg-[#171f31] px-1.5 py-0.5 text-[10px] text-[#c2cce2]">cd /root/projects/{slug || "<slug>"} && npm install</code>
                   </div>
-                  <p className="mt-1.5 text-[10px] leading-4 text-white/20">Add to <code className="text-[#9eacc7]">src/lib/fleet.ts</code> when deployed via Vercel · wire vault data sources (no invented values). {idea.targetSlug ? <span className="text-white/30">→ target: {idea.targetSlug}</span> : null}</p>
+                  <p className="mt-1.5 text-[10px] leading-4 text-white/20">Add to <code className="text-[#9eacc7]">src/lib/fleet.ts</code> when deployed via Vercel · wire vault data sources (no invented values). {idea.targetSlug ? <span className="text-white/60">→ target: {idea.targetSlug}</span> : null}</p>
                 </section>
 
                 {result ? <div className={`mt-4 rounded-xl border px-4 py-3 text-sm ${result.ok ? "border-emerald-500/30 bg-emerald-500/15 text-emerald-100" : "border-red-500/30 bg-red-500/15 text-red-100"}`}>{result.msg}</div> : null}
               </main>
 
               <div className="sticky bottom-0 -mx-6 mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 bg-[#080b14] px-6 py-4">
-                <p className="text-[11px] leading-4 text-white/30">
+                <p className="text-[11px] leading-4 text-white/60">
                   Auth: requires valid <code className="text-[#bbc6dd]">dl_session</code>.<br />
                   <span className="text-white/20">If 401, log in at <code>/login</code> (Turnstile check).</span>
                 </p>
                 <div className="flex items-center gap-2">
                   <button onClick={scaffold} disabled={busy} className="rounded-md border border-[#7782ef] bg-[#5965dc] px-6 py-3 text-[13px] font-bold text-white shadow-[0_8px_18px_rgba(22,28,80,0.28)] hover:bg-[#7580f1] disabled:opacity-50"> {busy ? "Scaffolding…" : "Scaffold stub"} </button>
-                  <a href={idea.dashboardUrl || "#"} target={idea.dashboardUrl ? "_blank" : undefined} rel="noopener" className={`rounded-md border px-5 py-3 text-[13px] font-semibold ${idea.dashboardUrl ? "border-white/10 bg-[#121a2a] text-white/40 hover:border-[#42537a] hover:text-white" : "border-white/5 bg-white/5 text-white/20 pointer-events-none"}`}>Open dashboard ↗</a>
+                  <a href={idea.dashboardUrl || "#"} target={idea.dashboardUrl ? "_blank" : undefined} rel="noopener" className={`rounded-md border px-5 py-3 text-[13px] font-semibold ${idea.dashboardUrl ? "border-white/10 bg-[#121a2a] text-white/65 hover:border-[#42537a] hover:text-white" : "border-white/5 bg-white/5 text-white/20 pointer-events-none"}`}>Open dashboard ↗</a>
                 </div>
               </div>
             </div>
           </div>
           <footer className="shrink-0 border-t border-white/5 bg-[#0a0f19] px-6 py-2.5">
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] leading-4 text-white/40">
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[10px] leading-4 text-white/65">
               <button onClick={() => setTerminalOpen((v) => !v)} className="flex items-center gap-1.5 font-semibold text-white hover:text-[#c4caff]"><span>{terminalOpen ? "⌄" : "›"}</span> Terminal output</button>
               <span className="text-[#35425a]">·</span>
               <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-[#e9962f]" />Protected by Cloudflare Turnstile</span>

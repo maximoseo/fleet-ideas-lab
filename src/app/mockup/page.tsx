@@ -395,7 +395,7 @@ export default function MockupPage() {
           <div className="mx-auto max-w-xl py-20 text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-violet-500/30 border-t-violet-500" />
             <p className="text-lg font-semibold">Analyzing {url}…</p>
-            <p className="mt-1 text-sm text-white/40">Firecrawl branding + DOM fallback · Microlink screenshots · section extraction</p>
+            <p className="mt-1 text-sm text-white/65">Firecrawl branding + DOM fallback · Microlink screenshots · section extraction</p>
           </div>
         )}
 
@@ -403,7 +403,7 @@ export default function MockupPage() {
           <div>
             {/* Controls */}
             <div className="mb-6 flex flex-wrap items-center gap-3">
-              <button onClick={() => { setStep("input"); setData(null); }} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/60 transition hover:bg-white/20">New site</button>
+              <button onClick={() => { setStep("input"); setData(null); }} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/20">New site</button>
               <div className="flex gap-1.5">
                 {(["desktop", "mobile"] as const).map((vp) => (
                   <button key={vp} onClick={() => setViewport(vp)} className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition ${viewport === vp ? "bg-violet-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>{vp === "desktop" ? "🖥 Desktop" : "📱 Mobile"}</button>
@@ -418,7 +418,7 @@ export default function MockupPage() {
             </div>
 
             {/* PrototypeFrame-style viewport label */}
-            <div className="mb-3 flex items-center gap-2 text-xs text-white/30">
+            <div className="mb-3 flex items-center gap-2 text-xs text-white/60">
               <span className="rounded bg-white/10 px-2 py-0.5">{viewport === "desktop" ? "Desktop 1280" : "Mobile 390"}</span>
               <span>{data.title}</span>
               <span className="text-white/20">·</span>
@@ -430,7 +430,7 @@ export default function MockupPage() {
               <div className="mb-6 grid gap-4 md:grid-cols-2">
                 {data.screenshots.desktop && (
                   <div>
-                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">Original — Desktop</h3>
+                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/65">Original — Desktop</h3>
                     <div className="overflow-hidden rounded-xl border border-white/10 bg-white">
                       <img src={data.screenshots.desktop} alt="Original desktop" className="w-full object-contain object-top" style={{ maxHeight: 520 }} />
                     </div>
@@ -438,24 +438,24 @@ export default function MockupPage() {
                 )}
                 {data.screenshots.mobile && (
                   <div>
-                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/40">Original — Mobile</h3>
+                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/65">Original — Mobile</h3>
                     <div className="mx-auto overflow-hidden rounded-xl border border-white/10 bg-white" style={{ maxWidth: 390 }}>
                       <img src={data.screenshots.mobile} alt="Original mobile" className="w-full object-contain object-top" style={{ maxHeight: 520 }} />
                     </div>
                   </div>
                 )}
-                {!data.screenshots.desktop && !data.screenshots.mobile && <p className="text-sm text-white/40">No screenshots available for this URL.</p>}
+                {!data.screenshots.desktop && !data.screenshots.mobile && <p className="text-sm text-white/65">No screenshots available for this URL.</p>}
               </div>
             )}
 
             {/* Scrollable mockup — sections with PrototypeFrame scaling */}
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/40">{data.sectionCount} sections — &ldquo;{style.name}&rdquo; · {viewport === "mobile" ? "390px" : "1280px"}</h3>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/65">{data.sectionCount} sections — &ldquo;{style.name}&rdquo; · {viewport === "mobile" ? "390px" : "1280px"}</h3>
             <div className={viewport === "mobile" ? "mx-auto max-w-[390px] space-y-4" : "space-y-4"}>
               {data.sections.map((section, i) => (
                 <div key={i}>
                   <div className="mb-1.5 flex items-center gap-2">
-                    <span className="rounded-full bg-violet-500/20 px-2.5 py-0.5 text-xs font-medium text-violet-300">{section.label}</span>
-                    <span className="text-xs text-white/30">#{i + 1} · {section.type}</span>
+                    <span className="rounded-full bg-violet-500/20 px-2.5 py-0.5 text-xs font-medium text-violet-200">{section.label}</span>
+                    <span className="text-xs text-white/60">#{i + 1} · {section.type}</span>
                     {section.headings[0] && <span className="truncate text-xs text-white/20">&ldquo;{section.headings[0].slice(0, 50)}&rdquo;</span>}
                   </div>
                   <SectionMockup section={section} style={style} copy={data.copy} />
@@ -464,11 +464,11 @@ export default function MockupPage() {
             </div>
 
             {/* Component previews */}
-            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/40">Component previews — real copy · {style.name}</h3>
+            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/65">Component previews — real copy · {style.name}</h3>
             <ComponentPreviews style={style} copy={data.copy} sections={data.sections} />
 
             {/* Style comparison */}
-            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/40">All 5 styles — hero</h3>
+            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/65">All 5 styles — hero</h3>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {Object.values(STYLES).map((s) => {
                 const hero = data.sections.find((sec) => sec.type === "hero") || data.sections[0];

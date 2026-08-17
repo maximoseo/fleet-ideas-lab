@@ -182,7 +182,7 @@ export default function InspirationPage() {
               onKeyDown={(e) => e.key === "Enter" && addCollection()}
               placeholder="New collection…" dir="ltr"
               className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder-white/30 outline-none focus:border-violet-500" />
-            <button onClick={addCollection} className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/60 transition hover:bg-white/20">+</button>
+            <button onClick={addCollection} className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/75 transition hover:bg-white/20">+</button>
           </div>
         </div>
 
@@ -195,7 +195,7 @@ export default function InspirationPage() {
         {filtered.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-4xl">💡</p>
-            <p className="mt-3 text-sm text-white/40">
+            <p className="mt-3 text-sm text-white/65">
               {items.length === 0 ? "Add your first design reference above" : "No matches found"}
             </p>
           </div>
@@ -210,17 +210,17 @@ export default function InspirationPage() {
                   <div className="mb-3 flex h-36 items-center justify-center rounded-lg bg-white/5 text-3xl">🌐</div>
                 )}
                 <div className="mb-1 truncate text-sm font-semibold">{item.title}</div>
-                <div className="mb-2 truncate text-xs text-white/40" dir="ltr">{item.url}</div>
+                <div className="mb-2 truncate text-xs text-white/65" dir="ltr">{item.url}</div>
                 <div className="flex items-center gap-1.5">
                   {item.colors.slice(0, 5).map(c => (
                     <span key={c} className="inline-block h-4 w-4 rounded border border-white/20" style={{ background: c }} />
                   ))}
-                  <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/40">{item.platform}</span>
+                  <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/65">{item.platform}</span>
                 </div>
                 {item.tags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
                     {item.tags.map(t => (
-                      <span key={t} className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-300">{t}</span>
+                      <span key={t} className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] text-violet-200">{t}</span>
                     ))}
                   </div>
                 )}
@@ -238,9 +238,9 @@ export default function InspirationPage() {
                 <div>
                   <h3 className="text-lg font-bold">{selectedItem.title}</h3>
                   <a href={selectedItem.url} target="_blank" rel="noopener noreferrer" dir="ltr"
-                    className="text-sm text-violet-400 hover:text-violet-300">{selectedItem.url} ↗</a>
+                    className="text-sm text-violet-400 hover:text-violet-200">{selectedItem.url} ↗</a>
                 </div>
-                <button onClick={() => setSelectedItem(null)} className="rounded-lg px-3 py-1 text-white/40 hover:bg-white/10">✕</button>
+                <button onClick={() => setSelectedItem(null)} className="rounded-lg px-3 py-1 text-white/65 hover:bg-white/10">✕</button>
               </div>
 
               {selectedItem.screenshot && (
@@ -248,27 +248,27 @@ export default function InspirationPage() {
               )}
 
               <div className="mb-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/40">Palette</h4>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Palette</h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedItem.colors.map(c => (
                     <div key={c} className="text-center">
                       <span className="inline-block h-10 w-10 rounded-lg border border-white/20" style={{ background: c }} />
-                      <span className="mt-1 block text-[10px] text-white/30" dir="ltr">{c}</span>
+                      <span className="mt-1 block text-[10px] text-white/60" dir="ltr">{c}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div className="mb-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/40">Fonts</h4>
-                <p className="text-sm text-white/60">{selectedItem.fonts.join(", ") || "None detected"}</p>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Fonts</h4>
+                <p className="text-sm text-white/75">{selectedItem.fonts.join(", ") || "None detected"}</p>
               </div>
 
               <div className="mb-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/40">Tags</h4>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Tags</h4>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedItem.tags.map(t => (
-                    <span key={t} className="rounded-full bg-violet-500/15 px-2.5 py-1 text-xs text-violet-300">{t}</span>
+                    <span key={t} className="rounded-full bg-violet-500/15 px-2.5 py-1 text-xs text-violet-200">{t}</span>
                   ))}
                 </div>
               </div>

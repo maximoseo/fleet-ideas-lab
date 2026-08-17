@@ -18,7 +18,7 @@ function level(s: number) {
   if (s >= 70) return { label: "strong", cls: "bg-emerald-500 text-white", dot: "bg-emerald-400" };
   if (s >= 50) return { label: "ok", cls: "bg-amber-500 text-black", dot: "bg-amber-400" };
   if (s >= 30) return { label: "gap", cls: "bg-red-500 text-white", dot: "bg-red-400" };
-  return { label: "white-space", cls: "bg-white/10 text-white/60 border border-white/10", dot: "bg-white/20" };
+  return { label: "white-space", cls: "bg-white/10 text-white/75 border border-white/10", dot: "bg-white/20" };
 }
 
 export default function GapsPage() {
@@ -124,9 +124,9 @@ export default function GapsPage() {
             <div className="mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/10 p-5">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-bold uppercase tracking-widest text-violet-300">{DOMAIN_LABEL[cell.d]} × {CAP_LABEL[cell.c]}</div>
+                  <div className="text-[11px] font-bold uppercase tracking-widest text-violet-200">{DOMAIN_LABEL[cell.d]} × {CAP_LABEL[cell.c]}</div>
                   <div className="mt-1 text-sm font-semibold text-white">Score {s} · <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${lv.cls}`}>{lv.label}</span></div>
-                  <p className="mt-2 max-w-2xl text-[12px] leading-5 text-white/60">Why {s}? <span className="text-white/80">{projects.length === 0 ? "No dashboard currently covers this exact domain×capability — white-space opportunity." : `${projects.length} of ${FLEET_INVENTORY.filter((p) => p.domains[0] === cell.d).length || projects.length} dashboards in ${DOMAIN_LABEL[cell.d]} cover this pair (${Math.round(s)}% coverage).`}</span> Method: count of verified inventory entries whose primary domain = {DOMAIN_LABEL[cell.d]} and capabilities include {CAP_LABEL[cell.c]}. No invented metrics — vault sources flagged TBD.</p>
+                  <p className="mt-2 max-w-2xl text-[12px] leading-5 text-white/75">Why {s}? <span className="text-white/80">{projects.length === 0 ? "No dashboard currently covers this exact domain×capability — white-space opportunity." : `${projects.length} of ${FLEET_INVENTORY.filter((p) => p.domains[0] === cell.d).length || projects.length} dashboards in ${DOMAIN_LABEL[cell.d]} cover this pair (${Math.round(s)}% coverage).`}</span> Method: count of verified inventory entries whose primary domain = {DOMAIN_LABEL[cell.d]} and capabilities include {CAP_LABEL[cell.c]}. No invented metrics — vault sources flagged TBD.</p>
                 </div>
                 <button onClick={() => setCell(null)} className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white hover:bg-white/10">Close ✕</button>
               </div>
@@ -166,7 +166,7 @@ export default function GapsPage() {
                 <div key={key} className="rounded-xl border border-white/10 bg-black/20 p-4">
                   <div className="flex items-center gap-2">
                     <span className="h-2 w-2 rounded-full bg-white/40" />
-                    <span className="text-[11px] font-bold uppercase tracking-widest text-white/60">{DOMAIN_LABEL[w.d]} × {w.c}</span>
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-white/75">{DOMAIN_LABEL[w.d]} × {w.c}</span>
                     <span className="ml-auto rounded-full bg-white px-2 py-0.5 text-[11px] font-black text-[#0f0b1a]">{w.s}</span>
                   </div>
                   <div className="mt-2 text-[13px] font-semibold text-white">White-space · opportunity</div>
@@ -178,7 +178,7 @@ export default function GapsPage() {
           </div>
           <div className="mt-4 flex flex-wrap gap-2">
             {gaps.slice(0, 8).map((g) => (
-              <span key={`${g.d}-${g.c}-gap`} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60">{DOMAIN_LABEL[g.d]} × {g.c} · {g.s}</span>
+              <span key={`${g.d}-${g.c}-gap`} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/75">{DOMAIN_LABEL[g.d]} × {g.c} · {g.s}</span>
             ))}
           </div>
         </div>

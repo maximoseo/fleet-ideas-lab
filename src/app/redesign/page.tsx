@@ -369,7 +369,7 @@ export default function RedesignPage() {
                   className="min-h-[48px] flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-violet-500" />
                 <button onClick={analyze} className="min-h-[48px] rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">Analyse</button>
               </div>
-              <p className="mt-3 flex items-center gap-2 text-[12px] text-white/40">
+              <p className="mt-3 flex items-center gap-2 text-[12px] text-white/65">
                 <span aria-hidden>⏱</span> Takes 1–3 min · No login needed
               </p>
               {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
@@ -380,10 +380,10 @@ export default function RedesignPage() {
         {(step === "analyzing" || step === "generating") && (
           <div className="mx-auto max-w-xl py-20 text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-            <p className="mt-4 text-sm text-white/60">
+            <p className="mt-4 text-sm text-white/75">
               {step === "analyzing" ? "Reading the site…" : "Generating three prototypes…"}
             </p>
-            <p className="mt-1 text-xs text-white/35">Full-page generation takes 1–3 minutes.</p>
+            <p className="mt-1 text-xs text-white/65">Full-page generation takes 1–3 minutes.</p>
           </div>
         )}
 
@@ -401,20 +401,20 @@ export default function RedesignPage() {
                     </span>
                   ))}
                   <span className="rounded bg-white/5 px-2 py-1 text-white/50">{profile.platform.platform}</span>
-                  <span className={`rounded px-2 py-1 ${profile.source === "firecrawl" ? "bg-emerald-500/10 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
+                  <span className={`rounded px-2 py-1 ${profile.source === "firecrawl" ? "bg-emerald-500/10 text-emerald-200" : "bg-amber-500/15 text-amber-200"}`}>
                     {profile.source === "firecrawl" ? `extraction confidence ${profile.confidence.toFixed(2)}` : `low confidence (${profile.confidence.toFixed(2)}) — read from raw HTML`}
                   </span>
                   {builderDetection && (
-                    <span className="rounded bg-violet-500/15 px-2 py-1 text-violet-300 border border-violet-500/20">{builderDetection.label}</span>
+                    <span className="rounded bg-violet-500/15 px-2 py-1 text-violet-200 border border-violet-500/20">{builderDetection.label}</span>
                   )}
                 </div>
                 {profile.warnings.map((w) => (
-                  <p key={w} className="mt-2 max-w-2xl text-xs text-amber-300/90">{w}</p>
+                  <p key={w} className="mt-2 max-w-2xl text-xs text-amber-200/90">{w}</p>
                 ))}
                 {builderDetection?.hints.map((h) => (
-                  <p key={h} className="mt-1 max-w-2xl text-xs text-violet-300/70">· {h}</p>
+                  <p key={h} className="mt-1 max-w-2xl text-xs text-violet-200/70">· {h}</p>
                 ))}
-                <p className="mt-2 text-xs text-white/40">
+                <p className="mt-2 text-xs text-white/65">
                   Real content found: {profile.copy.headings.length} headings · {profile.copy.quotes.length} quotes · {profile.copy.prices.length} prices
                   {profile.copy.quotes.length === 0 && " — no testimonials will be shown, none will be invented"}
                 </p>
@@ -432,7 +432,7 @@ export default function RedesignPage() {
                   <input type="checkbox" checked={compare} onChange={(e) => setCompare(e.target.checked)} className="accent-violet-500" />
                   Show the current site beside it
                 </label>
-                <button onClick={() => setStep("input")} className="text-xs text-white/40 transition hover:text-white/70">← Analyse another site</button>
+                <button onClick={() => setStep("input")} className="text-xs text-white/65 transition hover:text-white/70">← Analyse another site</button>
               </div>
             </div>
 
@@ -445,7 +445,7 @@ export default function RedesignPage() {
                     <img src={profile.screenshots.desktop} alt={`Current design of ${profile.title}`}
                       className="w-full rounded-lg border border-white/10" />
                   ) : (
-                    <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center text-sm text-white/40">
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center text-sm text-white/65">
                       No screenshot available for the current site.
                     </div>
                   )}
@@ -484,7 +484,7 @@ export default function RedesignPage() {
 
                         {slot.prototype.warnings.length > 0 && (
                           <details className="mt-3">
-                            <summary className="cursor-pointer text-xs text-amber-300/80">{slot.prototype.warnings.length} note(s) from the automatic checks</summary>
+                            <summary className="cursor-pointer text-xs text-amber-200/80">{slot.prototype.warnings.length} note(s) from the automatic checks</summary>
                             <ul className="mt-2 space-y-1 text-xs text-white/50">
                               {slot.prototype.warnings.map((w) => <li key={w}>· {w}</li>)}
                             </ul>
@@ -513,7 +513,7 @@ export default function RedesignPage() {
                 {(doneCount > 0 || allFailed) && variations.length > 0 && (
                   <div className={`rounded-xl border p-4 ${allFailed ? "border-amber-500/40 bg-amber-500/5" : "border-white/10"}`}>
                     {allFailed && (
-                      <p className="mb-3 text-sm text-amber-300">
+                      <p className="mb-3 text-sm text-amber-200">
                         No prototype could be generated. The options below need no AI — they restyle the
                         existing page instead of redesigning it.
                       </p>
@@ -542,10 +542,10 @@ export default function RedesignPage() {
         {/* ── WordPress connect ── */}
         {step === "wp-connect" && (
           <div className="mx-auto max-w-xl">
-            <button onClick={() => setStep("prototypes")} className="mb-4 text-sm text-white/40 transition hover:text-white/70">← Back to prototypes</button>
+            <button onClick={() => setStep("prototypes")} className="mb-4 text-sm text-white/65 transition hover:text-white/70">← Back to prototypes</button>
             <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>Connect WordPress</h2>
             <p className="mb-6 text-sm text-white/50">
-              Create an <span className="text-violet-300">Application Password</span> in WP admin → Users → Profile. Credentials are used for this request only and are never stored.
+              Create an <span className="text-violet-200">Application Password</span> in WP admin → Users → Profile. Credentials are used for this request only and are never stored.
             </p>
             <div className="space-y-3">
               <input value={wpUrl} onChange={(e) => setWpUrl(e.target.value)} placeholder="Site URL (defaults to the analysed URL)" dir="ltr"
@@ -570,8 +570,8 @@ export default function RedesignPage() {
                     <p className="mt-1 text-white/50">
                       WordPress {wpStatus.wpVersion || ""} · {wpStatus.authenticated ? (wpStatus.canEdit ? "authenticated with edit rights" : "authenticated, limited rights") : "not authenticated"}
                     </p>
-                    {builderDetection && <p className="mt-1 text-xs text-violet-300">Builder: {builderDetection.label}</p>}
-                    <p className="mt-1 text-xs text-white/40">{wpStatus.pages?.length ?? 0} pages found (up to 100)</p>
+                    {builderDetection && <p className="mt-1 text-xs text-violet-200">Builder: {builderDetection.label}</p>}
+                    <p className="mt-1 text-xs text-white/65">{wpStatus.pages?.length ?? 0} pages found (up to 100)</p>
                     {wpStatus.authenticated && (wpStatus.pages?.length ?? 0) > 0 && (
                       <button onClick={() => setStep("wp-inject")} className="mt-3 w-full rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">
                         Choose the page →
@@ -592,12 +592,12 @@ export default function RedesignPage() {
         {/* ── push (preview + batch + theme + revisions) ── */}
         {step === "wp-inject" && (chosen || variation) && (
           <div className="mx-auto max-w-3xl">
-            <button onClick={() => setStep("wp-connect")} className="mb-4 text-sm text-white/40 transition hover:text-white/70">← Back</button>
+            <button onClick={() => setStep("wp-connect")} className="mb-4 text-sm text-white/65 transition hover:text-white/70">← Back</button>
             <h2 className="mb-1 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>
               Send “{chosen?.directionName || variation?.name}” to WordPress
             </h2>
             {builderDetection && (
-              <p className="mb-4 text-xs text-violet-300">Builder: {builderDetection.label} — selectors adapted for this stack.</p>
+              <p className="mb-4 text-xs text-violet-200">Builder: {builderDetection.label} — selectors adapted for this stack.</p>
             )}
 
             {/* ── Preview iframe before inject ── */}
@@ -611,7 +611,7 @@ export default function RedesignPage() {
                   </label>
                   <div className="flex gap-1 rounded bg-white/5 p-1">
                     {(Object.keys(VIEWPORTS) as Viewport[]).map((v) => (
-                      <button key={v} onClick={() => setViewport(v)} className={`rounded px-2 py-1 text-[11px] ${viewport === v ? "bg-violet-600 text-white" : "text-white/40"}`}>{VIEWPORTS[v].label}</button>
+                      <button key={v} onClick={() => setViewport(v)} className={`rounded px-2 py-1 text-[11px] ${viewport === v ? "bg-violet-600 text-white" : "text-white/65"}`}>{VIEWPORTS[v].label}</button>
                     ))}
                   </div>
                 </div>
@@ -650,27 +650,27 @@ export default function RedesignPage() {
                         </div>
                       </div>
                       <div className="mt-3 flex items-center gap-3">
-                        <span className="text-xs text-white/40">Original</span>
+                        <span className="text-xs text-white/65">Original</span>
                         <input type="range" min={0} max={100} value={comparePos} onChange={(e) => setComparePos(Number(e.target.value))} className="flex-1 accent-violet-500" />
-                        <span className="text-xs text-white/40">Preview</span>
+                        <span className="text-xs text-white/65">Preview</span>
                       </div>
-                      <p className="mt-2 text-xs text-white/40">This clones the live page HTML and applies the selected CSS inside the iframe — nothing is written to WordPress until you click inject.</p>
+                      <p className="mt-2 text-xs text-white/65">This clones the live page HTML and applies the selected CSS inside the iframe — nothing is written to WordPress until you click inject.</p>
                     </>
                   ) : (
                     <>
                       <PreviewIframe html={previewDoc} viewport={viewport} />
-                      <p className="mt-2 text-xs text-white/40">Prototype preview — this is the full generated document.</p>
+                      <p className="mt-2 text-xs text-white/65">Prototype preview — this is the full generated document.</p>
                     </>
                   )}
                 </>
               ) : (
-                <p className="text-sm text-white/40">Preview hidden. Toggle to see the styled page before injection.</p>
+                <p className="text-sm text-white/65">Preview hidden. Toggle to see the styled page before injection.</p>
               )}
             </div>
 
             {/* ── Target pages ── */}
             <div className="mb-4 flex items-center justify-between">
-              <label className="text-sm font-medium text-white/60">Target page{batchMode ? "s (batch)" : ""}</label>
+              <label className="text-sm font-medium text-white/75">Target page{batchMode ? "s (batch)" : ""}</label>
               <label className="flex items-center gap-2 text-xs text-white/50">
                 <input type="checkbox" checked={batchMode} onChange={(e) => { setBatchMode(e.target.checked); setBatchResult(null); }} className="accent-violet-500" />
                 Batch — select multiple pages
@@ -687,17 +687,17 @@ export default function RedesignPage() {
             ) : (
               <div className="mb-5 rounded-xl border border-white/10 bg-white/[0.02] p-3">
                 <div className="mb-2 flex gap-2">
-                  <button onClick={() => setSelectedPages((wpStatus?.pages || []).map((p) => p.id))} className="text-xs text-violet-300 hover:text-violet-200">Select all</button>
+                  <button onClick={() => setSelectedPages((wpStatus?.pages || []).map((p) => p.id))} className="text-xs text-violet-200 hover:text-violet-200">Select all</button>
                   <span className="text-xs text-white/20">·</span>
-                  <button onClick={() => setSelectedPages([])} className="text-xs text-white/40 hover:text-white/60">Clear</button>
-                  <span className="ml-auto text-xs text-white/40">{selectedPages.length} selected</span>
+                  <button onClick={() => setSelectedPages([])} className="text-xs text-white/65 hover:text-white/75">Clear</button>
+                  <span className="ml-auto text-xs text-white/65">{selectedPages.length} selected</span>
                 </div>
                 <div className="max-h-56 overflow-auto space-y-1">
                   {(wpStatus?.pages || []).map((p) => (
                     <label key={p.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-white/5">
                       <input type="checkbox" checked={selectedPages.includes(p.id)} onChange={(e) => setSelectedPages((prev) => e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id))} className="accent-violet-500" />
                       <span className="text-white/80">{p.title}</span>
-                      <span className="ml-auto text-xs text-white/30">#{p.id}</span>
+                      <span className="ml-auto text-xs text-white/60">#{p.id}</span>
                     </label>
                   ))}
                 </div>
@@ -719,11 +719,11 @@ export default function RedesignPage() {
 
             {/* Theme-level injection */}
             <div className="mb-6 rounded-xl border border-violet-500/20 bg-violet-500/[0.04] p-4">
-              <label className="flex items-center gap-2 text-sm font-semibold text-violet-300">
+              <label className="flex items-center gap-2 text-sm font-semibold text-violet-200">
                 <input type="checkbox" checked={themeMode} onChange={(e) => setThemeMode(e.target.checked)} className="accent-violet-500" />
                 Inject as theme Additional CSS (Customizer)
               </label>
-              <p className="mt-1 text-xs text-white/40">Uses WordPress Customizer <code className="text-violet-300">customize_save</code> → <code className="text-violet-300">additional CSS</code>. Applies to every page. Per-page draft is kept as fallback.</p>
+              <p className="mt-1 text-xs text-white/65">Uses WordPress Customizer <code className="text-violet-200">customize_save</code> → <code className="text-violet-200">additional CSS</code>. Applies to every page. Per-page draft is kept as fallback.</p>
               {themeMode && (
                 <button onClick={pushTheme} disabled={themeInjecting || (!variation && !chosen)}
                   className="mt-3 w-full rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:opacity-40">
@@ -733,7 +733,7 @@ export default function RedesignPage() {
               {themeResult && (
                 <div className={`mt-3 rounded-lg border p-3 text-xs ${themeResult.ok ? "border-green-500/30 bg-green-500/5 text-green-300" : "border-red-500/30 bg-red-500/5 text-red-300"}`}>
                   {themeResult.ok ? themeResult.message : themeResult.error}
-                  {themeResult.via && <span className="ml-2 text-white/40">via {themeResult.via}</span>}
+                  {themeResult.via && <span className="ml-2 text-white/65">via {themeResult.via}</span>}
                 </div>
               )}
             </div>
@@ -741,7 +741,7 @@ export default function RedesignPage() {
             {injectMode === "inject" && !batchMode && !themeMode && (
               <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
                 <p className="text-sm text-yellow-300">This changes what visitors see immediately.</p>
-                <label htmlFor="slug" className="mb-2 mt-3 block text-xs text-white/60">
+                <label htmlFor="slug" className="mb-2 mt-3 block text-xs text-white/75">
                   Type the target page&apos;s slug exactly to confirm. The server checks it against the page ID you selected.
                 </label>
                 <input id="slug" value={confirmSlug} onChange={(e) => setConfirmSlug(e.target.value)} placeholder="page-slug" dir="ltr"
@@ -758,11 +758,11 @@ export default function RedesignPage() {
                 </button>
                 {batchResult && (
                   <div className={`rounded-xl border p-4 text-sm ${batchResult.ok ? "border-green-500/30 bg-green-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-                    <p className={batchResult.ok ? "text-green-300" : "text-amber-300"}>{batchResult.message || (batchResult.ok ? "Batch done" : "Batch had failures")}</p>
+                    <p className={batchResult.ok ? "text-green-300" : "text-amber-200"}>{batchResult.message || (batchResult.ok ? "Batch done" : "Batch had failures")}</p>
                     {batchResult.results && (
-                      <ul className="mt-2 space-y-1 text-xs text-white/60">
+                      <ul className="mt-2 space-y-1 text-xs text-white/75">
                         {batchResult.results.map((r) => (
-                          <li key={r.pageId} className={r.ok ? "text-white/60" : "text-red-400"}>#{r.pageId} {r.ok ? "✓" : `✗ ${r.error}`} {r.draftEditUrl && <a href={r.draftEditUrl} target="_blank" rel="noopener noreferrer" className="ml-2 text-violet-300 underline">Edit</a>}</li>
+                          <li key={r.pageId} className={r.ok ? "text-white/75" : "text-red-400"}>#{r.pageId} {r.ok ? "✓" : `✗ ${r.error}`} {r.draftEditUrl && <a href={r.draftEditUrl} target="_blank" rel="noopener noreferrer" className="ml-2 text-violet-200 underline">Edit</a>}</li>
                         ))}
                       </ul>
                     )}
@@ -774,7 +774,7 @@ export default function RedesignPage() {
             {injectResult && injectResult.error && (
               <div className="mt-4 rounded-xl border border-red-500/30 bg-red-500/5 p-4 text-sm">
                 <p className="text-red-400">{injectResult.error}</p>
-                {injectResult.problems?.map((p) => <p key={p} className="mt-1 text-xs text-white/60">· {p}</p>)}
+                {injectResult.problems?.map((p) => <p key={p} className="mt-1 text-xs text-white/75">· {p}</p>)}
               </div>
             )}
 
@@ -782,19 +782,19 @@ export default function RedesignPage() {
             <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.02] p-4">
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-sm font-semibold text-white/70">Revisions</h3>
-                <button onClick={fetchRevisions} disabled={revisionsLoading} className="rounded bg-white/10 px-3 py-1.5 text-xs text-white/60 hover:bg-white/15 disabled:opacity-40">
+                <button onClick={fetchRevisions} disabled={revisionsLoading} className="rounded bg-white/10 px-3 py-1.5 text-xs text-white/75 hover:bg-white/15 disabled:opacity-40">
                   {revisionsLoading ? "Loading…" : "Load revisions"}
                 </button>
               </div>
               {revisions.length === 0 ? (
-                <p className="text-xs text-white/40">No revisions loaded. Click “Load revisions” to list WordPress revisions for the selected page. One-click restore below.</p>
+                <p className="text-xs text-white/65">No revisions loaded. Click “Load revisions” to list WordPress revisions for the selected page. One-click restore below.</p>
               ) : (
                 <ul className="space-y-2">
                   {revisions.map((r) => (
                     <li key={r.id} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
                       <div className="min-w-0 flex-1">
                         <div className="text-xs text-white/70">#{r.id} · {new Date(r.date).toLocaleString()}</div>
-                        {r.excerpt && <div className="truncate text-xs text-white/30">{r.excerpt}</div>}
+                        {r.excerpt && <div className="truncate text-xs text-white/60">{r.excerpt}</div>}
                       </div>
                       <button onClick={() => restoreRevision(r.id)} disabled={restoring === r.id} className="shrink-0 rounded bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40">
                         {restoring === r.id ? "Restoring…" : "Restore"}
@@ -813,7 +813,7 @@ export default function RedesignPage() {
             <h2 className="mt-3 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>
               {injectResult.mode === "draft" ? "Draft created" : injectResult.mode === "theme" ? "Theme CSS updated" : injectResult.mode === "restore" ? "Revision restored" : "Live page updated"}
             </h2>
-            <p className="mt-2 text-sm text-white/60">{injectResult.message}</p>
+            <p className="mt-2 text-sm text-white/75">{injectResult.message}</p>
             <div className="mt-6 space-y-3">
               {injectResult.draftEditUrl && (
                 <a href={injectResult.draftEditUrl} target="_blank" rel="noopener noreferrer" dir="ltr"
@@ -829,16 +829,16 @@ export default function RedesignPage() {
             {batchResult?.results && (
               <div className="mt-6 text-left rounded-xl border border-white/10 bg-white/[0.02] p-4">
                 <h4 className="text-sm font-semibold text-white/70">Batch results</h4>
-                <ul className="mt-2 space-y-1 text-xs text-white/60">
+                <ul className="mt-2 space-y-1 text-xs text-white/75">
                   {batchResult.results.map((r) => (
-                    <li key={r.pageId} className={r.ok ? "text-white/60" : "text-red-400"}>#{r.pageId} {r.ok ? "✓" : `✗ ${r.error}`}</li>
+                    <li key={r.pageId} className={r.ok ? "text-white/75" : "text-red-400"}>#{r.pageId} {r.ok ? "✓" : `✗ ${r.error}`}</li>
                   ))}
                 </ul>
               </div>
             )}
             {Boolean(injectResult.backup) && (
               <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-xs text-white/40 hover:text-white/60">Original content backup (JSON)</summary>
+                <summary className="cursor-pointer text-xs text-white/65 hover:text-white/75">Original content backup (JSON)</summary>
                 <pre dir="ltr" className="mt-2 max-h-48 overflow-auto rounded-lg bg-black/40 p-3 text-[10px] text-white/50">{JSON.stringify(injectResult.backup as object, null, 2)}</pre>
               </details>
             )}

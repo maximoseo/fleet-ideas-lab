@@ -121,7 +121,7 @@ export default function IdeaBoard() {
   if (error) {
     return (
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-        <p className="text-sm text-white/60">Pipeline board could not load ({error}).</p>
+        <p className="text-sm text-white/75">Pipeline board could not load ({error}).</p>
         <button
           onClick={load}
           className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10"
@@ -135,7 +135,7 @@ export default function IdeaBoard() {
   return (
     <div className="mt-6">
       {!persisted ? (
-        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-200">
+        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-100">
           Pipeline persistence offline — statuses are static
         </div>
       ) : null}
@@ -162,7 +162,7 @@ export default function IdeaBoard() {
               </header>
               <div className="flex flex-1 flex-col gap-2 p-2">
                 {cards.length === 0 ? (
-                  <p className="px-2 py-4 text-center text-[11px] text-white/30">No ideas {col.hint.toLowerCase()}</p>
+                  <p className="px-2 py-4 text-center text-[11px] text-white/60">No ideas {col.hint.toLowerCase()}</p>
                 ) : (
                   cards.map((idea) => (
                     <BoardCard

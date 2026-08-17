@@ -18,9 +18,9 @@ export default function TrustLine({ compact = false }: { compact?: boolean }) {
           Encrypted <span className="font-mono text-[11px]">dl_session</span>
         </span>
         <span className="text-white/25">·</span>
-        <span className="text-white/45">Versions via <span className="font-mono text-[11px] text-white/60">/api/app/version</span></span>
+        <span className="text-white/45">Versions via <span className="font-mono text-[11px] text-white/75">/api/app/version</span></span>
       </span>
-      {!compact ? <span className="text-[11px] text-white/30">MaximoSEO · Fleet Ideas Lab</span> : null}
+      {!compact ? <span className="text-[11px] text-white/60">MaximoSEO · Fleet Ideas Lab</span> : null}
     </div>
   );
 }

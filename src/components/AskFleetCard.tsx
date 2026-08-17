@@ -52,7 +52,7 @@ export default function AskFleetCard() {
         <span className="flex items-center gap-2 text-sm font-bold">
           <span aria-hidden>✨</span> Ask AI about the fleet
         </span>
-        <span className="text-white/40" aria-hidden>{open ? "−" : "+"}</span>
+        <span className="text-white/65" aria-hidden>{open ? "−" : "+"}</span>
       </button>
       {open ? (
         <div className="border-t border-white/10 p-4">
@@ -62,7 +62,7 @@ export default function AskFleetCard() {
             rows={2}
             maxLength={1000}
             placeholder="Ask about the fleet… / שאל על הצי…"
-            className="w-full rounded-lg border border-white/15 bg-black/30 p-3 text-sm text-white placeholder:text-white/30 focus:border-violet-400/60 focus:outline-none"
+            className="w-full rounded-lg border border-white/15 bg-black/30 p-3 text-sm text-white placeholder:text-white/60 focus:border-violet-400/60 focus:outline-none"
             onKeyDown={(e) => {
               if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) void ask();
             }}
@@ -75,7 +75,7 @@ export default function AskFleetCard() {
             >
               {busy ? "Thinking…" : "Ask"}
             </button>
-            <span className="text-[12px] text-white/35">Grounded in live fleet data · v0 · no per-token vendors</span>
+            <span className="text-[12px] text-white/65">Grounded in live fleet data · v0 · no per-token vendors</span>
           </div>
           {error ? (
             <div className="mt-3 rounded-lg border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">{error}</div>
@@ -85,7 +85,7 @@ export default function AskFleetCard() {
               <div className="whitespace-pre-wrap rounded-lg border border-white/10 bg-black/20 p-3 text-sm leading-relaxed text-white/85">
                 {result.answer}
               </div>
-              <div className="mt-1.5 font-mono text-[11px] text-white/35">
+              <div className="mt-1.5 font-mono text-[11px] text-white/65">
                 grounded: {result.grounded.dashboards} dashboards · {result.grounded.liveHealth} live health rows · {result.model}
               </div>
             </div>

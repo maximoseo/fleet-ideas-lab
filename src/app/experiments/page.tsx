@@ -21,9 +21,9 @@ type Filter = (typeof FILTERS)[number];
 
 const STATUS_STYLE: Record<string, string> = {
   live: "border-violet-400/40 bg-violet-500/15 text-violet-200",
-  draft: "border-white/15 bg-white/5 text-white/60",
-  removed: "border-white/10 bg-white/5 text-white/35",
-  replaced: "border-amber-400/40 bg-amber-500/10 text-amber-200",
+  draft: "border-white/15 bg-white/5 text-white/75",
+  removed: "border-white/10 bg-white/5 text-white/65",
+  replaced: "border-amber-400/40 bg-amber-500/10 text-amber-100",
 };
 
 export default function ExperimentsPage() {
@@ -90,7 +90,7 @@ export default function ExperimentsPage() {
         </p>
 
         {!persisted && (
-          <div className="mt-4 rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-200">
+          <div className="mt-4 rounded-lg border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100">
             Registry persistence offline — showing nothing. This is honest emptiness, not zero experiments.
           </div>
         )}
@@ -101,7 +101,7 @@ export default function ExperimentsPage() {
               key={f}
               onClick={() => setFilter(f)}
               className={`min-h-[36px] rounded-full border px-3 text-[13px] font-medium capitalize transition ${
-                filter === f ? "border-violet-400/60 bg-violet-600 text-white" : "border-white/15 bg-white/5 text-white/60 hover:bg-white/10"
+                filter === f ? "border-violet-400/60 bg-violet-600 text-white" : "border-white/15 bg-white/5 text-white/75 hover:bg-white/10"
               }`}
             >
               {f} {f !== "all" && counts[f] ? <span className="font-mono">· {counts[f]}</span> : null}
@@ -114,7 +114,7 @@ export default function ExperimentsPage() {
         <div className="mt-5 overflow-x-auto rounded-xl border border-white/10">
           <table className="w-full min-w-[760px] text-left text-sm">
             <thead>
-              <tr className="border-b border-white/10 bg-white/[0.03] text-[11px] uppercase tracking-wider text-white/40">
+              <tr className="border-b border-white/10 bg-white/[0.03] text-[11px] uppercase tracking-wider text-white/65">
                 <th className="px-4 py-3 font-semibold">Site</th>
                 <th className="px-4 py-3 font-semibold">Page</th>
                 <th className="px-4 py-3 font-semibold">Style</th>
@@ -128,12 +128,12 @@ export default function ExperimentsPage() {
               {visible.map((r) => (
                 <tr key={r.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.03]">
                   <td className="px-4 py-3 font-mono text-[13px] text-white/80">{r.site_url.replace(/^https?:\/\//, "")}</td>
-                  <td className="px-4 py-3 text-white/60">
+                  <td className="px-4 py-3 text-white/75">
                     <span className="font-mono">{r.page_id}</span>
-                    {r.page_slug ? <span className="ml-1 text-white/35">/{r.page_slug}</span> : null}
+                    {r.page_slug ? <span className="ml-1 text-white/65">/{r.page_slug}</span> : null}
                   </td>
-                  <td className="px-4 py-3 text-white/70">{r.style_name || <span className="font-mono text-white/40">{r.marker_id}</span>}</td>
-                  <td className="px-4 py-3 text-white/60">{r.mode}</td>
+                  <td className="px-4 py-3 text-white/70">{r.style_name || <span className="font-mono text-white/65">{r.marker_id}</span>}</td>
+                  <td className="px-4 py-3 text-white/75">{r.mode}</td>
                   <td className="px-4 py-3">
                     <span className={`inline-flex rounded border px-2 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[r.status] || STATUS_STYLE.draft}`}>
                       {r.status}
@@ -145,7 +145,7 @@ export default function ExperimentsPage() {
                       <button
                         onClick={() => void markRemoved(r)}
                         disabled={busyId === r.id}
-                        className="min-h-[32px] rounded border border-white/15 bg-white/5 px-2.5 text-[12px] text-white/60 hover:bg-white/10 disabled:opacity-40"
+                        className="min-h-[32px] rounded border border-white/15 bg-white/5 px-2.5 text-[12px] text-white/75 hover:bg-white/10 disabled:opacity-40"
                       >
                         {busyId === r.id ? "…" : "Mark removed"}
                       </button>
@@ -155,7 +155,7 @@ export default function ExperimentsPage() {
               ))}
               {rows && visible.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-white/40">
+                  <td colSpan={7} className="px-4 py-10 text-center text-white/65">
                     {rows.length === 0
                       ? "No injections recorded yet. The registry fills in the next time Fleet Ideas Lab injects into WordPress."
                       : `No ${filter} injections.`}
@@ -164,7 +164,7 @@ export default function ExperimentsPage() {
               ) : null}
               {!rows && !error ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-10 text-center text-white/40">Loading…</td>
+                  <td colSpan={7} className="px-4 py-10 text-center text-white/65">Loading…</td>
                 </tr>
               ) : null}
             </tbody>

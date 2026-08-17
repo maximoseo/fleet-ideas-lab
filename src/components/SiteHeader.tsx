@@ -78,7 +78,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
                 key={item.href}
                 href={item.href}
                 {...(item.external ? { target: "_blank" as const, rel: "noopener" } : {})}
-                className={`rounded-lg px-2.5 py-2 text-[12px] font-medium transition ${active ? "bg-white/10 text-white" : "text-white/40 hover:bg-white/10 hover:text-white/80"}`}
+                className={`rounded-lg px-2.5 py-2 text-[12px] font-medium transition ${active ? "bg-white/10 text-white" : "text-white/65 hover:bg-white/10 hover:text-white/80"}`}
               >
                 {t(item.key)}
                 {item.external ? " ↗" : ""}
@@ -91,7 +91,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
           <LangToggle />
           <ThemeToggle />
           <button onClick={() => setPaletteOpen(true)} className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] font-medium text-white/70 hover:bg-white/10" aria-label={t("action.commandPalette")}>
-            ⌘K <span className="hidden xl:inline text-white/40">{t("action.jump")}</span>
+            ⌘K <span className="hidden xl:inline text-white/65">{t("action.jump")}</span>
           </button>
           <Link
             href="/create"
@@ -101,7 +101,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
           </Link>
         </div>
 
-        <button onClick={() => setPaletteOpen(true)} className="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60" aria-label={t("action.search")}>⌘</button>
+        <button onClick={() => setPaletteOpen(true)} className="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/75" aria-label={t("action.search")}>⌘</button>
         <span className="lg:hidden"><ThemeToggle /></span>
         <span className="lg:hidden"><LangToggle /></span>
         {/* mobile quick nav */}
@@ -112,7 +112,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
               <Link
                 key={item.href}
                 href={item.href}
-                className={`rounded-full px-2.5 py-1.5 text-[12px] font-semibold transition ${active ? "bg-violet-600 text-white" : "text-white/60 hover:text-white"}`}
+                className={`rounded-full px-2.5 py-1.5 text-[12px] font-semibold transition ${active ? "bg-violet-600 text-white" : "text-white/75 hover:text-white"}`}
               >
                 {t(item.key)}
               </Link>

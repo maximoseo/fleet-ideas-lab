@@ -45,16 +45,16 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
     <div className="fixed inset-0 z-[80] flex items-start justify-center pt-[12vh] bg-black/60 p-4" onClick={onClose}>
       <div className="w-full max-w-2xl rounded-2xl border border-white/15 bg-[#0f0b1a] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
-          <span className="text-white/40">⌘K</span>
-          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Jump to dashboard / idea / gap — e.g. site-intel, anomaly, outreach×automation" className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none" />
-          <button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/60 hover:bg-white/10">Esc</button>
+          <span className="text-white/65">⌘K</span>
+          <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Jump to dashboard / idea / gap — e.g. site-intel, anomaly, outreach×automation" className="flex-1 bg-transparent text-sm text-white placeholder:text-white/60 focus:outline-none" />
+          <button onClick={onClose} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/75 hover:bg-white/10">Esc</button>
         </div>
         <div className="max-h-[56vh] overflow-auto p-2">
-          {filtered.length === 0 ? <div className="p-6 text-center text-sm text-white/40">No matches — try “seo”, “gap”, or a slug</div> : (
+          {filtered.length === 0 ? <div className="p-6 text-center text-sm text-white/65">No matches — try “seo”, “gap”, or a slug</div> : (
             <div className="space-y-1">
               {filtered.map((e) => (
                 <button key={e.id} onClick={() => { onClose(); router.push(e.href); }} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-white/[0.06] border border-transparent hover:border-white/10">
-                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${e.kind==="dashboard" ? "bg-violet-500/20 text-violet-200 border border-violet-500/20" : e.kind==="idea" ? (e.sub.includes("kind: new") || e.label.startsWith("Anomaly") ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300") : "bg-white/10 text-white/60"}`}>{e.kind}</span>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${e.kind==="dashboard" ? "bg-violet-500/20 text-violet-200 border border-violet-500/20" : e.kind==="idea" ? (e.sub.includes("kind: new") || e.label.startsWith("Anomaly") ? "bg-emerald-500/15 text-emerald-200" : "bg-amber-500/15 text-amber-200") : "bg-white/10 text-white/75"}`}>{e.kind}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-[13px] font-semibold text-white">{e.label}</span>
                     <span className="block truncate text-[11px] text-white/45">{e.sub}</span>
@@ -65,7 +65,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
             </div>
           )}
         </div>
-        <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] text-white/30">
+        <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] text-white/60">
           <span>{FLEET_COUNT} dashboards · 11 ideas · 40 gaps · recent + search</span>
           <span className="hidden sm:inline">Type to filter · Enter to jump</span>
         </div>
