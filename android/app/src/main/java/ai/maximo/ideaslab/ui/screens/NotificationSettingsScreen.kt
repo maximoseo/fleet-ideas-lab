@@ -16,7 +16,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavController
+import ai.maximo.ideaslab.data.ApiClient
 import ai.maximo.ideaslab.data.NotificationHelper
+import ai.maximo.ideaslab.data.SessionStore
 import ai.maximo.ideaslab.ui.components.FilBanner
 import ai.maximo.ideaslab.ui.components.FilBannerTone
 import ai.maximo.ideaslab.ui.components.FilCard
@@ -26,9 +29,14 @@ import ai.maximo.ideaslab.ui.components.SectionHeader
 import ai.maximo.ideaslab.ui.theme.FilDimens
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
+import kotlinx.coroutines.launch
 
 @Composable
-fun NotificationSettingsScreen() {
+fun NotificationSettingsScreen(
+    navController: NavController? = null,
+    api: ApiClient? = null,
+    sessionStore: SessionStore? = null,
+) {
     val p = FilTheme.palette
     val ctx = LocalContext.current
     val hasPermission = remember {
@@ -42,6 +50,7 @@ fun NotificationSettingsScreen() {
     val prefs = remember { ctx.getSharedPreferences("ideaslab_notif_prefs", 0) }
     var updatesEnabled by remember { mutableStateOf(prefs.getBoolean("updates_enabled", true)) }
     var ideasEnabled by remember { mutableStateOf(prefs.getBoolean("ideas_enabled", true)) }
+    val scope = rememberCoroutineScope()
 
     fun save() {
         prefs.edit().putBoolean("updates_enabled", updatesEnabled).putBoolean("ideas_enabled", ideasEnabled).apply()
@@ -130,6 +139,68 @@ fun NotificationSettingsScreen() {
             Spacer(Modifier.height(4.dp))
             Text("ideaslab_updates · HIGH · sound + heads-up", style = FilType.dataSmall, color = p.muted)
             Text("ideaslab_ideas · DEFAULT · quiet", style = FilType.dataSmall, color = p.muted)
+        }
+
+        // ── Account / logout ─────────────────────────────────────
+        var showLogoutConfirm by remember { mutableStateOf(false) }
+        var loggingOut by remember { mutableStateOf(false) }
+
+        fun doLogout() {
+            if (loggingOut) return
+            loggingOut = true
+            scope.launch {
+                try { api?.logout() } catch (_: Exception) {}
+                try { sessionStore?.clear() } catch (_: Exception) {}
+                loggingOut = false
+                Toast.makeText(ctx, "Logged out", Toast.LENGTH_SHORT).show()
+                // Clear back stack so back cannot return to authed screens
+                navController?.navigate("login") {
+                    popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                    launchSingleTop = true
+                }
+                // Fallback when no navController (preview) — no-op
+                if (navController == null) {
+                    Toast.makeText(ctx, "Session cleared", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        SectionHeader("Account")
+        FilCard {
+            Text("Signed in session: dl_session stored in EncryptedSharedPreferences + DataStore", style = FilType.label, color = p.muted)
+            Spacer(Modifier.height(10.dp))
+            Button(
+                onClick = { showLogoutConfirm = true },
+                enabled = !loggingOut && sessionStore != null,
+                modifier = Modifier.fillMaxWidth().heightIn(min = FilDimens.touch),
+                colors = ButtonDefaults.buttonColors(containerColor = p.bad, contentColor = p.onAccent),
+            ) { Text(if (loggingOut) "Logging out…" else "Logout  —  התנתק", style = FilType.chip) }
+            if (sessionStore == null) {
+                Spacer(Modifier.height(6.dp))
+                Text("Logout unavailable in preview", style = FilType.label, color = p.muted2)
+            }
+        }
+        Text("Logout clears dl_session locally and calls POST /api/auth/logout to clear the server cookie.", style = FilType.label, color = p.muted2)
+
+        if (showLogoutConfirm) {
+            AlertDialog(
+                onDismissRequest = { if (!loggingOut) showLogoutConfirm = false },
+                title = { Text("Log out?", style = FilType.cardTitle, color = p.text) },
+                text = { Text("This will clear your session (dl_session) and return you to the login screen. You will need to sign in again.", style = FilType.bodySmall, color = p.muted) },
+                confirmButton = {
+                    TextButton(onClick = { showLogoutConfirm = false; doLogout() }, enabled = !loggingOut) {
+                        Text("Logout", color = p.bad, style = FilType.chip)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showLogoutConfirm = false }, enabled = !loggingOut) {
+                        Text("Cancel", style = FilType.chip)
+                    }
+                },
+                containerColor = p.panel,
+                titleContentColor = p.text,
+                textContentColor = p.muted,
+            )
         }
     }
 }

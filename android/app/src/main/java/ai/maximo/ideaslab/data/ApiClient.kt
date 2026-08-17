@@ -103,6 +103,19 @@ class ApiClient(private val sessionStore: SessionStore) {
             }
         } catch (e: Exception) { ScaffoldResult(false, error=e.message ?: "Network error") }
     }
+    suspend fun logout(): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val token = sessionStore.getSession()
+            val req = Request.Builder()
+                .url("$base/api/auth/logout")
+                .apply { if (!token.isNullOrEmpty()) header("Cookie", "dl_session=$token") }
+                .post("".toRequestBody("application/json".toMediaType()))
+                .build()
+            // Best-effort: even if server is unreachable we still clear local session
+            try { client.newCall(req).execute().close() } catch (_: Exception) {}
+            true
+        } catch (_: Exception) { true }
+    }
     // Back-compat overload
     suspend fun scaffoldSimple(slug: String): ScaffoldResult = scaffold(slug)
 }
