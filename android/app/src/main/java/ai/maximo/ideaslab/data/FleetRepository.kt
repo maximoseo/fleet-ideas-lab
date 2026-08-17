@@ -30,12 +30,31 @@ data class FleetLiveHealth(
 
 enum class FleetSource { LIVE, CACHE, SNAPSHOT }
 
+/**
+ * The feed rejected this build's APP_TOKEN (401/403).
+ *
+ * Its own type so the UI can say "this app build is out of date — update"
+ * instead of the generic offline message. The token ships inside the APK, so
+ * a rotation on the server makes every older install look merely offline.
+ */
+class StaleAppTokenException :
+    Exception("This app build is out of date — update to keep live fleet data")
+
 data class FleetFeed(
     val sites: List<FleetSite>,
     val health: Map<String, FleetLiveHealth>,
     val source: FleetSource,
     val fetchedAtMillis: Long, // when the data came from the network (0 for the bundled snapshot)
     val error: String? = null,
+    /**
+     * The server rejected this build's APP_TOKEN.
+     *
+     * Distinct from ordinary offline: the data on screen is stale and staying
+     * stale until the app is updated, because the token baked into this APK is
+     * no longer the one production accepts. Falling back to the cache silently
+     * is how an out-of-date install looks healthy for weeks.
+     */
+    val staleToken: Boolean = false,
 )
 
 /**
@@ -74,6 +93,7 @@ class FleetRepository(private val context: Context) {
                 .build()
             client.newCall(req).execute().use { res ->
                 val txt = res.body?.string().orEmpty()
+                if (res.code == 401 || res.code == 403) throw StaleAppTokenException()
                 if (!res.isSuccessful) throw Exception("HTTP ${res.code}")
                 val parsed = parseFeed(txt)
                 val now = System.currentTimeMillis()
@@ -81,9 +101,10 @@ class FleetRepository(private val context: Context) {
                 parsed.copy(source = FleetSource.LIVE, fetchedAtMillis = now)
             }
         } catch (e: Exception) {
+            val stale = e is StaleAppTokenException
             val cached = readCache()
             if (cached != null) {
-                cached.copy(source = FleetSource.CACHE, error = e.message)
+                cached.copy(source = FleetSource.CACHE, error = e.message, staleToken = stale)
             } else {
                 FleetFeed(
                     sites = FleetData.sites,
@@ -91,6 +112,7 @@ class FleetRepository(private val context: Context) {
                     source = FleetSource.SNAPSHOT,
                     fetchedAtMillis = 0,
                     error = e.message,
+                    staleToken = stale,
                 )
             }
         }

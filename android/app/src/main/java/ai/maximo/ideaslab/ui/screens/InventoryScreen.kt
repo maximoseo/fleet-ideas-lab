@@ -72,9 +72,10 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
         refreshing = false
         if (reloadTick > 0) {
             val f = feed
-            val msg = when (f?.source) {
-                FleetSource.LIVE -> "Live sync · ${f.sites.size} sites"
-                FleetSource.CACHE -> "Offline · cached copy"
+            val msg = when {
+                f?.staleToken == true -> "App build out of date — update required"
+                f?.source == FleetSource.LIVE -> "Live sync · ${f.sites.size} sites"
+                f?.source == FleetSource.CACHE -> "Offline · cached copy"
                 else -> "Offline snapshot · bundled data"
             }
             Toast.makeText(ctx, msg, Toast.LENGTH_SHORT).show()
@@ -103,11 +104,12 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
     }
 
     val f = feed
-    val syncSubtitle = when (f?.source) {
-        FleetSource.LIVE -> "${f.sites.size} dashboards · live sync · updated ${relativeAge(f.fetchedAtMillis)}"
-        FleetSource.CACHE -> "${f.sites.size} dashboards · offline · cached ${relativeAge(f.fetchedAtMillis)}"
-        FleetSource.SNAPSHOT -> "${f.sites.size} dashboards · bundled snapshot"
-        null -> "Syncing fleet feed…"
+    val syncSubtitle = when {
+        f == null -> "Syncing fleet feed…"
+        f.staleToken -> "${f.sites.size} dashboards · update required · data frozen"
+        f.source == FleetSource.LIVE -> "${f.sites.size} dashboards · live sync · updated ${relativeAge(f.fetchedAtMillis)}"
+        f.source == FleetSource.CACHE -> "${f.sites.size} dashboards · offline · cached ${relativeAge(f.fetchedAtMillis)}"
+        else -> "${f.sites.size} dashboards · bundled snapshot"
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
@@ -130,10 +132,16 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
         // Honest offline indicator — amber, in words, never disguised as live.
         if (f != null && f.source != FleetSource.LIVE) {
             FilBanner(
-                text = if (f.source == FleetSource.CACHE) {
-                    "Offline — showing cached copy from ${relativeAge(f.fetchedAtMillis)}. Pull to retry."
-                } else {
-                    "Offline snapshot — bundled 2026-08-15, no live probe data. Pull to retry."
+                text = when {
+                    // Not "offline" — the network is fine and the server said no.
+                    // Pulling to refresh will never fix this; only an update will.
+                    f.staleToken ->
+                        "This app build is out of date. The server no longer accepts its access token, " +
+                            "so fleet health is frozen at the cached copy. Update the app from Settings."
+                    f.source == FleetSource.CACHE ->
+                        "Offline — showing cached copy from ${relativeAge(f.fetchedAtMillis)}. Pull to retry."
+                    else ->
+                        "Offline snapshot — bundled 2026-08-15, no live probe data. Pull to retry."
                 },
                 tone = FilBannerTone.WARN,
                 modifier = Modifier.padding(horizontal = FilDimens.screen),

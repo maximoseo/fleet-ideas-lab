@@ -12,8 +12,16 @@ import { authSecrets, passwordVersion, serverEnv } from './env';
  */
 
 const COOKIE = 'dl_session';
-/** Short session TTL: 7 days. */
-const MAX_AGE_SEC = 60 * 60 * 24 * 7;
+/**
+ * Session TTL: 30 days.
+ *
+ * Longer than the original 7 because expiry is not the real revocation
+ * mechanism here — the `pv` password-version tag is. Changing
+ * DASHBOARD_AUTH_PASSWORD invalidates every outstanding token immediately, on
+ * web and on the phone, so a short TTL bought re-typing a password rather than
+ * security. One operator, one device each.
+ */
+const MAX_AGE_SEC = 60 * 60 * 24 * 30;
 
 function signWith(payload: string, secret: string) {
   return createHmac('sha256', secret).update(payload).digest('base64url');

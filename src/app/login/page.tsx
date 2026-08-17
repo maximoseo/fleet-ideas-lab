@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, Suspense } from "react";
+import { useCallback, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Turnstile, type TurnstileHandle } from "@/components/Turnstile";
 
@@ -16,27 +16,37 @@ function LoginForm() {
   const [turnstileToken, setTurnstileToken] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [waitingForCheck, setWaitingForCheck] = useState(false);
   const turnstileRef = useRef<TurnstileHandle>(null);
+  /**
+   * Set when the operator pressed Sign in before the challenge finished. The
+   * old behaviour was to refuse with "wait a moment and try again", which put
+   * the burden of retrying on the person; now the click is remembered and the
+   * form submits itself the instant the token lands.
+   */
+  const pendingSubmit = useRef(false);
+  const credentials = useRef({ username: "", password: "" });
 
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    if (busy) return;
-    setError("");
-    // When no site key is configured (local dev) the widget cannot render, so the
-    // challenge requirement is relaxed client-side. The server still decides.
-    // Otherwise: no token means the widget is still loading or stale. Say so and
-    // re-arm it rather than silently refusing to submit.
-    if (SITE_KEY && !turnstileToken) {
-      setError("Security check still loading — wait a moment and try again.");
-      turnstileRef.current?.reset();
-      return;
+  const onToken = useCallback((token: string) => {
+    setTurnstileToken(token);
+    if (token && pendingSubmit.current) {
+      pendingSubmit.current = false;
+      setWaitingForCheck(false);
+      void send(token);
     }
+  // send is stable for the life of the component; it reads credentials from a ref.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function send(token: string) {
     setBusy(true);
+    setError("");
+    const { username: u, password: p } = credentials.current;
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, turnstileToken }),
+        body: JSON.stringify({ username: u, password: p, turnstileToken: token }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -57,6 +67,31 @@ function LoginForm() {
       turnstileRef.current?.reset();
       setBusy(false);
     }
+  }
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setError("");
+    credentials.current = { username, password };
+
+    // No site key means no widget can render (local dev). The server still
+    // decides — this only relaxes the client-side pre-check.
+    if (SITE_KEY && !turnstileToken) {
+      pendingSubmit.current = true;
+      setWaitingForCheck(true);
+      turnstileRef.current?.reset();
+      // A widget that never answers must not leave the button disabled with a
+      // reassuring message and no way forward.
+      window.setTimeout(() => {
+        if (!pendingSubmit.current) return;
+        pendingSubmit.current = false;
+        setWaitingForCheck(false);
+        setError("Security check did not complete. Reload the page and try again.");
+      }, 15_000);
+      return;
+    }
+    void send(turnstileToken);
   }
 
   return (
@@ -116,7 +151,7 @@ function LoginForm() {
               <Turnstile
                 ref={turnstileRef}
                 siteKey={SITE_KEY}
-                onToken={setTurnstileToken}
+                onToken={onToken}
                 theme="dark"
               />
             </div>
@@ -128,15 +163,21 @@ function LoginForm() {
             </p>
           )}
 
+          {waitingForCheck && !error && (
+            <p role="status" aria-live="polite" className="text-sm text-violet-200/70 text-center">
+              Finishing the security check — signing you in automatically.
+            </p>
+          )}
+
           {/* Never gate this button on the Turnstile token. When the widget misbehaves the
               form becomes permanently unclickable with nothing on screen to explain why;
               submitting without a token instead surfaces a real message. */}
           <button
             type="submit"
-            disabled={busy}
+            disabled={busy || waitingForCheck}
             className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-white transition"
           >
-            {busy ? "Signing in…" : "Sign in"}
+            {busy ? "Signing in…" : waitingForCheck ? "Checking…" : "Sign in"}
           </button>
         </form>
 

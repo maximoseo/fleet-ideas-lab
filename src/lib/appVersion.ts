@@ -8,14 +8,14 @@
  * app shipped 1.3.6).
  */
 export const APP_VERSION = {
-  versionCode: 32,
-  versionName: "1.3.6",
+  versionCode: 33,
+  versionName: "1.3.7",
   minSdk: 24,
   targetSdk: 36,
-  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.3.6/app-release.apk",
+  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.3.7/app-release.apk",
   fallbackUrl: "https://fleet-ideas-lab.maximo-seo.ai/api/app/download",
   changelog:
-    "1.3.6 Send Idea to Bot: send any idea directly to active live Telegram bots (@HermesAgent64SparkBot/@CodingAgent64Bot) via POST /api/fleet/notify — Web + Android picker, server builds brief + Telegram 4096 truncate (rail 68px + inbox 300px + detail 01→06) bound to 38 dashboards / 29 ideas pool with real POST /api/fleet/scaffold (4-arg) + terminal footer + in-app update via WorkManager/FileProvider (/api/app/download 302→GitHub).",
+    "1.3.7 Hardened release: R8 code and resource shrinking, a signed AAB alongside the APK, and an honest \"app build out of date\" banner when the server rejects this build's access token instead of quietly showing stale data as if it were offline. Web side: security headers, login throttling that survives serverless, robots noindex, 81 new tests and the lint gate switched back on.",
   mandatory: false,
-  releasedAt: "2026-08-17T19:30:00Z",
+  releasedAt: "2026-08-17T20:00:00Z",
 } as const;

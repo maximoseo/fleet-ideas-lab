@@ -28,8 +28,8 @@ android {
         applicationId = "ai.maximo.ideaslab"
         minSdk = 24
         targetSdk = 36
-        versionCode = 32
-        versionName = "1.3.6"
+        versionCode = 33
+        versionName = "1.3.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -51,7 +51,16 @@ android {
     buildTypes {
         release {
             if (hasReleaseKeystore) signingConfig = signingConfigs.getByName("release")
-            isMinifyEnabled = false
+            // R8 on. Keep rules live in proguard-rules.pro, including the Tink
+            // ones EncryptedSharedPreferences needs — without those the session
+            // store throws on first read and it looks like a broken login.
+            //
+            // Escape hatch: `-PnoMinify=true` builds an identical unminified
+            // APK. R8 failures only appear at runtime and this build machine
+            // has no emulator, so there has to be a one-flag way back.
+            val minify = !project.hasProperty("noMinify")
+            isMinifyEnabled = minify
+            isShrinkResources = minify
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {
@@ -107,6 +116,12 @@ implementation("androidx.core:core-ktx:1.12.0")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+
+    // JVM unit tests. android.jar stubs org.json and every method throws, so
+    // the real implementation has to be on the unit-test classpath or every
+    // parser test fails with "not mocked".
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20240303")
 }
 
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }
