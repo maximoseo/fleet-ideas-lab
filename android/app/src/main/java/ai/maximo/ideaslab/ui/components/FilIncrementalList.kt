@@ -1,6 +1,5 @@
 package ai.maximo.ideaslab.ui.components
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
@@ -46,7 +45,12 @@ class IncrementalWindow(
 
 @Composable
 fun rememberIncrementalWindow(
-    listState: LazyListState,
+    /**
+     * Index of the last visible item. A lambda rather than a LazyListState so
+     * the same helper serves a column and a grid — the inventory became a grid
+     * on tablets and the two state types share no supertype.
+     */
+    lastVisibleIndex: () -> Int,
     totalCount: Int,
     pageSize: Int = 12,
     initial: Int = 12,
@@ -58,15 +62,14 @@ fun rememberIncrementalWindow(
     // A fresh filter must not leave the user looking at a window into the old list.
     LaunchedEffect(resetKey, totalCount) { window.reset(initial) }
 
-    val nearEnd: State<Boolean> = remember(listState, window) {
+    val nearEnd: State<Boolean> = remember(window) {
         derivedStateOf {
-            val last = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             // Extend two rows before the end so the next page is already there.
-            last >= window.shown - 2
+            lastVisibleIndex() >= window.shown - 2
         }
     }
 
-    LaunchedEffect(window, listState) {
+    LaunchedEffect(window) {
         snapshotFlow { nearEnd.value }
             .distinctUntilChanged()
             .filter { it }

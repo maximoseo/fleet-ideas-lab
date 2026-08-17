@@ -54,6 +54,15 @@ fun FilCard(
     contentDescription: String? = null,
     /** Subtle start-edge state accent (e.g. health color on triage rows). */
     accent: Color? = null,
+    /**
+     * Raise this one card above the rest.
+     *
+     * Every card carried identical weight, so a screen of 38 pulled the eye
+     * nowhere — the thing that is broken looked exactly like the 37 that are
+     * fine. Emphasis is a brighter surface and a warmer border, and it is meant
+     * for ONE card at a time: mark half of them and it stops meaning anything.
+     */
+    emphasised: Boolean = false,
     padding: PaddingValues = PaddingValues(FilDimens.card),
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -61,8 +70,12 @@ fun FilCard(
     var m = modifier
         .fillMaxWidth()
         .clip(FilShape.card)
-        .background(p.panel)
-        .border(FilDimens.border, p.line, FilShape.card)
+        .background(if (emphasised) p.panel2 else p.panel)
+        .border(
+            if (emphasised) FilDimens.border * 2 else FilDimens.border,
+            if (emphasised) (accent ?: p.accent).copy(alpha = 0.55f) else p.line,
+            FilShape.card,
+        )
     if (onClick != null) m = m.clickable(onClick = onClick)
     if (contentDescription != null) m = m.semantics { this.contentDescription = contentDescription }
     if (accent == null) {

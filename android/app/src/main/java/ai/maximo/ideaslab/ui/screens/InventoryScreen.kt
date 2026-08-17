@@ -4,9 +4,11 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -47,6 +49,7 @@ import ai.maximo.ideaslab.ui.components.FilSearchField
 import ai.maximo.ideaslab.ui.components.FleetBar
 import ai.maximo.ideaslab.ui.components.SkeletonKind
 import ai.maximo.ideaslab.ui.components.filEntrance
+import ai.maximo.ideaslab.ui.components.rememberFilWidth
 import ai.maximo.ideaslab.ui.components.rememberIncrementalWindow
 import ai.maximo.ideaslab.ui.components.color
 import ai.maximo.ideaslab.ui.theme.FilDimens
@@ -99,7 +102,7 @@ fun InventoryScreen(
     }
     fun doReload() { if (!refreshing) reloadTick++ }
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
-    val listState = rememberLazyListState()
+    val listState = rememberLazyGridState()
 
     val baseSites = feed?.sites ?: emptyList()
     fun stateOf(site: FleetSite): FilState = FilState.of(feed?.health?.get(site.slug)?.state)
@@ -129,7 +132,7 @@ fun InventoryScreen(
     }
 
     val window = rememberIncrementalWindow(
-        listState = listState,
+        lastVisibleIndex = { listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0 },
         totalCount = sites.size,
         // Re-filtering or re-sorting must not leave a window into the old list.
         resetKey = "${worstFirst}|${shuffleSeed}|${sites.size}",
@@ -250,9 +253,12 @@ fun InventoryScreen(
         }
 
         Box(Modifier.fillMaxSize().pullRefresh(pullState)) {
-            LazyColumn(
+            val cols = rememberFilWidth().columns
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(cols),
                 state = listState,
                 verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap),
+                horizontalArrangement = Arrangement.spacedBy(FilDimens.cardGap),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     start = FilDimens.screen,
@@ -264,11 +270,11 @@ fun InventoryScreen(
                 if (feed == null) {
                     // Shaped like the row that is coming, so the list does not
                     // jump when the feed lands.
-                    item { FilListSkeleton(SkeletonKind.SITE, count = 4) }
+                    item(span = { GridItemSpan(maxLineSpan) }) { FilListSkeleton(SkeletonKind.SITE, count = 4) }
                 } else if (sites.isEmpty() && query.isNotBlank()) {
                     // A search that matched nothing is not a broken feed, and
                     // saying "the feed returned zero entries" here would be a lie.
-                    item {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         EmptyState(
                             title = "No dashboard matches \"${query.trim()}\"",
                             body = "Try the name, the slug, the domain, or a word from what it does.",
@@ -281,7 +287,7 @@ fun InventoryScreen(
                         }
                     }
                 } else if (sites.isEmpty()) {
-                    item {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         EmptyState(
                             title = stringResource(R.string.inventory_empty_title),
                             body = stringResource(R.string.inventory_empty_body),
@@ -298,6 +304,10 @@ fun InventoryScreen(
                             state = stateOf(site),
                             feed = feed,
                             modifier = Modifier.filEntrance(index),
+                            // Exactly one: the worst row when sorted worst-first
+                            // and it is genuinely not healthy. Marking more than
+                            // one would spend the emphasis and mean nothing.
+                            emphasised = worstFirst && index == 0 && stateOf(site) != FilState.HEALTHY,
                             onOpen = { onOpenDashboard(site.slug) },
                             onCopyImprove = {
                                 val brief = buildImprovePromptForProject(site)
@@ -307,9 +317,9 @@ fun InventoryScreen(
                         )
                     }
                     if (window.hasMore) {
-                        item { FilListSkeleton(SkeletonKind.SITE, count = 1) }
+                        item(span = { GridItemSpan(maxLineSpan) }) { FilListSkeleton(SkeletonKind.SITE, count = 1) }
                     }
-                    item {
+                    item(span = { GridItemSpan(maxLineSpan) }) {
                         Column(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("MaximoSEO · Fleet Ideas Lab · Versions via /api/app/version", style = FilType.label, color = p.muted2)
                             Spacer(Modifier.height(4.dp))
@@ -338,6 +348,7 @@ private fun InventoryRow(
     state: FilState,
     feed: FleetFeed?,
     modifier: Modifier = Modifier,
+    emphasised: Boolean = false,
     onOpen: () -> Unit = {},
     onCopyImprove: () -> Unit,
 ) {
@@ -356,6 +367,7 @@ private fun InventoryRow(
         modifier = modifier,
         onClick = onOpen,
         accent = stateColor,
+        emphasised = emphasised,
         contentDescription = "${site.name}, ${state.word}, checked ${if (checked.isEmpty()) "never" else checked}",
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {

@@ -8,14 +8,14 @@
  * app shipped 1.3.6).
  */
 export const APP_VERSION = {
-  versionCode: 35,
-  versionName: "1.4.0",
+  versionCode: 36,
+  versionName: "1.5.0",
   minSdk: 24,
   targetSdk: 36,
-  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.4.0/app-release.apk",
+  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.5.0/app-release.apk",
   fallbackUrl: "https://fleet-ideas-lab.maximo-seo.ai/api/app/download",
   changelog:
-    "1.4.0 Visual release. Fleet strip on Inventory — one bar per dashboard, worst first, hatched for unknown, with the colour rule written out. Health tracks replace score badges so you compare by position, not by decoding a colour. Skeletons shaped like the row that is coming, everywhere a list used to appear blank. Inventory renders a page at a time instead of mounting all 38 cards. Favourites no longer flashes \"no favourites\" before the store answers. One staggered entrance animation, skipped entirely if you have animations turned off in Android settings.",
+    "1.5.0 Hebrew, a detail screen, and two things the app used to state untruthfully. At large text the fleet strip legend silently dropped a whole band, so a fleet with unknown dashboards reported as if it had none. In Hebrew the health rail did not mirror, so a low score sat where a high one belongs. Both fixed and both now covered by tests that fail if they come back. New: full Hebrew interface, a per-dashboard detail screen with probe history and p50/p95 latency, search across the 38 dashboards, two-column layout on tablets and landscape, an offline queue for actions taken with no signal, and one emphasis level so the worst dashboard actually stands out.",
   mandatory: false,
-  releasedAt: "2026-08-17T21:15:00Z",
+  releasedAt: "2026-08-17T22:00:00Z",
 } as const;
