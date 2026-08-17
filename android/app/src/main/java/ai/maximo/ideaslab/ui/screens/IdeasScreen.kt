@@ -1,6 +1,7 @@
 package ai.maximo.ideaslab.ui.screens
 
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -46,6 +47,10 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
     var busySlug by remember { mutableStateOf<String?>(null) }
+    var notifyPicker by remember { mutableStateOf<ai.maximo.ideaslab.data.FleetIdea?>(null) }
+    var notifyBot by remember { mutableStateOf("coding") }
+    var notifyModePick by remember { mutableStateOf("build") }
+    var notifyingSlug by remember { mutableStateOf<String?>(null) }
     var refreshing by remember { mutableStateOf(false) }
     var expanded by remember { mutableStateOf<String?>(null) }
     var showOnlyFavorites by remember { mutableStateOf(false) }
@@ -378,6 +383,20 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 Text(if (busySlug==idea.slug) "…" else if (idea.kind == "new") "Create dashboard" else "Scaffold tab", style = FilType.chip)
                             }
                         }
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                notifyModePick = resolveMode(idea)
+                                notifyBot = "coding"
+                                notifyPicker = idea
+                            },
+                            modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+                            enabled = notifyingSlug != idea.slug,
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = p.accent),
+                            border = BorderStroke(1.dp, p.accent.copy(alpha = 0.35f)),
+                        ) {
+                            Text(if (notifyingSlug == idea.slug) "… Sending" else "\uD83D\uDCE8 Send to Bot", style = FilType.chip)
+                        }
                     }
                 }
                 item(key = "ideas-sentinel") {
@@ -390,6 +409,68 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                     }
                 }
             }
+        }
+        if (notifyPicker != null) {
+            val np = notifyPicker!!
+            AlertDialog(
+                onDismissRequest = { notifyPicker = null },
+                title = { Text("Send \"" + np.title + "\" to Telegram?") },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("Sends the full " + notifyModePick.uppercase() + " brief (4096 cap) via POST /api/fleet/notify to " + (if (notifyBot=="coding") "@CodingAgent64Bot" else "@HermesAgent64SparkBot") + " — you'll see it instantly at 6090160018.", style = MaterialTheme.typography.bodySmall, color = p.muted)
+                        FilInset(padding = PaddingValues(10.dp)) {
+                            Text(np.slug + " · gap " + np.gapScore + "% · " + np.evidence.take(100) + "…", style = FilType.dataSmall, color = p.muted2)
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("Bot:", style = FilType.label, color = p.muted)
+                            for (b in listOf("coding","spark")) {
+                                FilterChip(
+                                    selected = notifyBot==b,
+                                    onClick = { notifyBot=b },
+                                    label = { Text(if(b=="coding") "@CodingAgent64Bot" else "@HermesAgent64SparkBot", style = FilType.label) },
+                                    modifier = Modifier.heightIn(min = 32.dp),
+                                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = p.accentDeep, selectedLabelColor = p.onAccent),
+                                )
+                            }
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text("Mode:", style = FilType.label, color = p.muted)
+                            for (m in listOf("build","improve")) {
+                                FilterChip(
+                                    selected = notifyModePick==m,
+                                    onClick = { notifyModePick=m },
+                                    label = { Text(m.uppercase(), style = FilType.label) },
+                                    modifier = Modifier.heightIn(min = 32.dp),
+                                    colors = FilterChipDefaults.filterChipColors(selectedContainerColor = if(notifyModePick==m) p.accentDeep else p.panel3, selectedLabelColor = if(notifyModePick==m) p.onAccent else p.muted),
+                                )
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        val picked = np
+                        notifyPicker = null
+                        notifyingSlug = picked.slug
+                        scope.launch {
+                            try {
+                                val res = api.notifyIdea(picked.slug, picked.slug, notifyModePick, notifyBot)
+                                notifyingSlug = null
+                                if (res.ok) {
+                                    val bun = res.botUsername ?: if(notifyBot=="coding") "CodingAgent64Bot" else "HermesAgent64SparkBot"
+                                    Toast.makeText(ctx, "📨 Sent to @" + bun + (if(res.messageId!=null) " · msg " + res.messageId else ""), Toast.LENGTH_LONG).show()
+                                } else {
+                                    Toast.makeText(ctx, "✕ " + (res.error ?: "Failed"), Toast.LENGTH_LONG).show()
+                                }
+                            } catch (e: Exception) {
+                                notifyingSlug = null
+                                try { Toast.makeText(ctx, "✕ " + (e.message ?: "Failed"), Toast.LENGTH_LONG).show() } catch(_: Exception){}
+                            }
+                        }
+                    }) { Text("Send to @" + (if(notifyBot=="coding") "CodingAgent64Bot" else "HermesAgent64SparkBot")) }
+                },
+                dismissButton = { TextButton(onClick = { notifyPicker = null }) { Text("Cancel") } },
+            )
         }
         PullRefreshIndicator(refreshing = refreshing, state = pullState, modifier = Modifier.align(Alignment.TopCenter), backgroundColor = p.panel, contentColor = p.accent)
     }

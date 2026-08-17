@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit
 data class LoginResult(val ok: Boolean, val error: String? = null)
 data class AnalyzeResult(val ok: Boolean, val title: String = "", val error: String? = null)
 data class ScaffoldResult(val ok: Boolean, val message: String = "", val error: String? = null)
+data class NotifyResult(val ok: Boolean, val bot: String? = null, val messageId: Long? = null, val botUsername: String? = null, val error: String? = null)
 
 class ApiClient(private val sessionStore: SessionStore) {
     private val client = OkHttpClient.Builder()
@@ -103,6 +104,35 @@ class ApiClient(private val sessionStore: SessionStore) {
             }
         } catch (e: Exception) { ScaffoldResult(false, error=e.message ?: "Network error") }
     }
+    suspend fun notifyIdea(ideaSlug: String, ideaId: String? = null, mode: String = "build", bot: String = "coding"): NotifyResult = withContext(Dispatchers.IO) {
+        try {
+            val token = sessionStore.getSession() ?: return@withContext NotifyResult(false, error="Not authenticated — please login")
+            val jsonBody = JSONObject().apply {
+                put("ideaSlug", ideaSlug)
+                if (ideaId != null) put("ideaId", ideaId)
+                put("mode", mode)
+                put("bot", bot)
+            }
+            val body = jsonBody.toString().toRequestBody("application/json".toMediaType())
+            val req = Request.Builder()
+                .url("$base/api/fleet/notify")
+                .header("Cookie", "dl_session=$token")
+                .post(body)
+                .build()
+            val res = client.newCall(req).execute()
+            val txt2 = res.body?.string() ?: ""
+            val json = try { JSONObject(txt2) } catch(_: Exception) { JSONObject() }
+            if (res.isSuccessful) {
+                val b = json.optString("bot", bot)
+                val mid = if (json.has("message_id") && !json.isNull("message_id")) json.optLong("message_id") else null
+                val bun = json.optString("botUsername", if (b=="coding") "CodingAgent64Bot" else "HermesAgent64SparkBot")
+                NotifyResult(true, bot=b, messageId=mid, botUsername=bun)
+            } else {
+                NotifyResult(false, error=json.optString("error", "Notify failed (${res.code})"))
+            }
+        } catch (e: Exception) { NotifyResult(false, error=e.message ?: "Network error") }
+    }
+
     suspend fun logout(): Boolean = withContext(Dispatchers.IO) {
         try {
             val token = sessionStore.getSession()

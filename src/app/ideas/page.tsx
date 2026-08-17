@@ -30,6 +30,11 @@ export default function IdeasPage() {
   const [toast, setToast] = useState<string | null>(null);
   const [scaffolding, setScaffolding] = useState<string | null>(null);
   const [scaffoldResult, setScaffoldResult] = useState<string | null>(null);
+  const [notifying, setNotifying] = useState<string | null>(null);
+  const [notifyResult, setNotifyResult] = useState<string | null>(null);
+  const [notifyPicker, setNotifyPicker] = useState<FleetIdea | null>(null);
+  const [notifyBot, setNotifyBot] = useState<"spark" | "coding">("coding");
+  const [notifyMode, setNotifyMode] = useState<"build" | "improve">("build");
   const [favs, setFavs] = useState<Set<string>>(new Set());
   const [favOnly, setFavOnly] = useState(false);
   useEffect(() => { try { const raw = localStorage.getItem("fleet_favorites"); if (raw) setFavs(new Set(JSON.parse(raw) as string[])); } catch {} }, []);
@@ -114,6 +119,39 @@ export default function IdeasPage() {
     setToast("IMPROVE brief copied (" + idea.slug + " → " + (idea.targetSlug || idea.slug) + ") — also logged to History");
     setTimeout(() => setToast(null), 2600);
     try { await fetch("/api/fleet/history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "copy", slug: idea.slug, ideaId: idea.id, title: idea.title, targetSlug: idea.targetSlug, gapScore: idea.gapScore, meta: { mode: "improve" } }) }); } catch {}
+  }
+
+  async function openNotifyPicker(idea: FleetIdea) {
+    setNotifyMode(resolveMode(idea));
+    setNotifyBot("coding");
+    setNotifyPicker(idea);
+  }
+
+  async function doNotify() {
+    if (!notifyPicker) return;
+    const idea = notifyPicker;
+    setNotifying(idea.id);
+    setNotifyResult(null);
+    setNotifyPicker(null);
+    try {
+      const res = await fetch("/api/fleet/notify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ideaSlug: idea.slug, ideaId: idea.id, mode: notifyMode, bot: notifyBot }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed");
+      const botName = data.botUsername || (notifyBot === "coding" ? "CodingAgent64Bot" : "HermesAgent64SparkBot");
+      setNotifyResult("✓ Sent \"" + idea.slug + "\" (" + notifyMode.toUpperCase() + ") to @" + botName + (data.message_id ? " · msg " + data.message_id : "") + (data.truncated ? " · truncated to 4096" : ""));
+      setToast("📨 Sent to @" + botName + " — check Telegram 6090160018");
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed";
+      setNotifyResult("✕ " + msg);
+      setToast("✕ Send failed — " + msg);
+    } finally {
+      setNotifying(null);
+      setTimeout(() => { setNotifyResult(null); setToast(null); }, 6000);
+    }
   }
 
   async function doScaffold(idea: FleetIdea) {
@@ -298,6 +336,12 @@ export default function IdeasPage() {
             <a href="/history" className="inline-flex min-h-[36px] shrink-0 items-center rounded-full bg-white px-4 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">View in History →</a>
           </div>
         ) : null}
+        {notifyResult ? (
+          <div className={`flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 ${notifyResult.startsWith("✓") ? "border-sky-500/30 bg-sky-500/15 text-sky-100" : "border-red-500/30 bg-red-500/15 text-red-100"}`}>
+            <span className="flex-1 text-sm">{notifyResult}</span>
+            {notifyResult.startsWith("✓") ? <a href={notifyBot === "coding" ? "https://t.me/CodingAgent64Bot" : "https://t.me/HermesAgent64SparkBot"} target="_blank" rel="noopener" className="inline-flex min-h-[36px] shrink-0 items-center rounded-full bg-white px-4 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">Open in Telegram →</a> : null}
+          </div>
+        ) : null}
         <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] leading-4 text-white/35">
           On <span className="font-mono text-white/60">fleet-ideas-lab.vercel.app</span> scaffolds land in <span className="font-mono text-violet-200">/tmp/&lt;slug&gt;</span> (ephemeral — Vercel sandbox). On Hostinger <span className="font-mono text-white/60">srv1813877</span> they persist at <span className="font-mono text-violet-200">/root/projects/&lt;slug&gt;</span>. History keeps a trace either way — see <a href="/history" className="text-violet-300 underline">History</a>.
         </div>
@@ -366,6 +410,10 @@ export default function IdeasPage() {
                   {scaffolding === idea.id ? "\u2026" : idea.kind === "enhancement" ? "Scaffold tab \u2192 " + (idea.targetSlug || "") : "Create dashboard"}
                 </button>
               </div>
+              <div className="mt-2 grid grid-cols-2 gap-2">
+                <button onClick={() => openNotifyPicker(idea)} disabled={notifying === idea.id} className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-sky-500/30 bg-sky-500/15 px-2 text-[11px] font-bold text-sky-200 hover:bg-sky-500/25 disabled:opacity-50">{notifying === idea.id ? "… Sending" : "📨 Send to Bot"}</button>
+                <button disabled className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/5 bg-white/[0.02] px-2 text-[10px] font-medium text-white/25">{idea.slug.slice(0, 18)}</button>
+              </div>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 <button onClick={() => copyPrompt(idea)} title={resolveMode(idea) === "improve" ? "Copy IMPROVE brief (Markdown) — optimize existing " + (idea.targetSlug || idea.slug) : "Copy BUILD brief (Markdown) — new dashboard " + idea.slug} className={`inline-flex min-h-[36px] items-center justify-center rounded-full border px-2 text-[11px] font-bold ${resolveMode(idea)==="improve" ? "border-amber-500/30 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20" : "border-violet-500/30 bg-violet-600 text-white hover:bg-violet-500"}`}>{resolveMode(idea)==="improve" ? "Copy IMPROVE" : "Copy BUILD"} · Auto</button>
                 <button onClick={() => copyBuildPrompt(idea)} title="Copy BUILD brief — brand-new dashboard/APK spec" className="inline-flex min-h-[36px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-2 text-[11px] font-semibold text-white/70 hover:bg-white/10 hover:text-white">Copy BUILD</button>
@@ -394,6 +442,34 @@ export default function IdeasPage() {
         {toast ? (
           <div className="fixed bottom-20 lg:bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0f0b1a] shadow-xl">
             {toast}
+          </div>
+        ) : null}
+        {/* Send to Bot picker */}
+        {notifyPicker ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setNotifyPicker(null)}>
+            <div className="w-full max-w-lg rounded-2xl border border-sky-500/30 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="inline-flex rounded-full bg-sky-500/15 border border-sky-500/30 px-3 py-1 text-[11px] font-bold text-sky-200">📨 SEND TO BOT</div>
+              <h3 className="mt-3 text-lg font-bold text-white">Send &quot;{notifyPicker.title}&quot; to Telegram?</h3>
+              <p className="mt-2 text-sm leading-5 text-white/60">This sends the full {notifyMode.toUpperCase()} brief (up to 4096 chars) directly to the live bot via <span className="font-mono text-sky-200">POST /api/fleet/notify</span>. You&apos;ll see it instantly in Telegram at <span className="font-mono text-white/80">6090160018</span>.</p>
+              <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-[11px] leading-4 text-white/50">
+                <div>Slug: <span className="font-mono text-white/70">{notifyPicker.slug}</span> · Gap {notifyPicker.gapScore}% · {notifyPicker.evidence.slice(0, 100)}…</div>
+                <div className="mt-1">Widgets: {notifyPicker.widgets.join(" · ")}</div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className="text-[11px] font-bold text-white/60">Bot:</span>
+                {(["coding", "spark"] as const).map((b) => (
+                  <button key={b} onClick={() => setNotifyBot(b)} className={`rounded-full px-3 py-1.5 text-xs font-bold border ${notifyBot===b ? "bg-sky-500 text-white border-sky-500" : "bg-white/5 text-white/60 border-white/10 hover:text-white"}`}>{b==="coding" ? "@CodingAgent64Bot" : "@HermesAgent64SparkBot"}</button>
+                ))}
+                <span className="ml-2 text-[11px] font-bold text-white/60">Mode:</span>
+                {(["build", "improve"] as const).map((m) => (
+                  <button key={m} onClick={() => setNotifyMode(m)} className={`rounded-full px-3 py-1.5 text-xs font-bold border capitalize ${notifyMode===m ? "bg-violet-600 text-white border-violet-600" : "bg-white/5 text-white/60 border-white/10 hover:text-white"}`}>{m}</button>
+                ))}
+              </div>
+              <div className="mt-5 flex gap-3">
+                <button onClick={() => setNotifyPicker(null)} className="flex-1 rounded-full border border-white/15 bg-white/5 py-3 text-sm font-semibold text-white hover:bg-white/10">Cancel</button>
+                <button onClick={doNotify} className="flex-1 rounded-full bg-sky-500 py-3 text-sm font-bold text-white hover:bg-sky-600">Send to @{notifyBot==="coding" ? "CodingAgent64Bot" : "HermesAgent64SparkBot"}</button>
+              </div>
+            </div>
           </div>
         ) : null}
         {/* Scaffold confirmation — distinct for new vs enhancement */}
