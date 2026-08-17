@@ -209,7 +209,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                             selected = showOnlyFavorites,
                             onClick = { showOnlyFavorites = !showOnlyFavorites },
                             label = { Text("★ ${favSet.size}", style = FilType.chip) },
-                            modifier = Modifier.heightIn(min = 40.dp),
+                            modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                             colors = FilterChipDefaults.filterChipColors(
                                 selectedContainerColor = p.accentDeep, selectedLabelColor = p.onAccent,
                                 containerColor = p.panel2, labelColor = p.muted,
@@ -232,7 +232,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 selected = briefMode == m,
                                 onClick = { briefMode = m },
                                 label = { Text(label, style = FilType.label) },
-                                modifier = Modifier.heightIn(min = 32.dp),
+                                modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = if (briefMode == m) p.accentDeep else p.panel3,
                                     selectedLabelColor = if (briefMode == m) p.onAccent else p.muted,
@@ -250,7 +250,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                         enabled = !refreshing,
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.panel3, contentColor = p.text),
-                        modifier = Modifier.heightIn(min = 40.dp),
+                        modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                     ) { Text(if (refreshing) "↻ Reloading…" else "↻ Reload", style = FilType.chip) }
                 }
             }
@@ -293,7 +293,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 colors = ButtonDefaults.filledTonalButtonColors(
                                     containerColor = if (isFav) p.accent.copy(alpha = 0.25f) else p.panel3,
                                 ),
-                                modifier = Modifier.heightIn(min = 32.dp),
+                                modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                             ) {
                                 Text(if (isFav) "★" else "☆", style = FilType.chip, color = if (isFav) p.accent else p.muted)
                             }
@@ -318,7 +318,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                         Spacer(Modifier.height(6.dp))
                         Text(idea.prompt, style = FilType.bodySmall, color = p.muted, maxLines = if (isOpen) Int.MAX_VALUE else 3, overflow = TextOverflow.Ellipsis)
                         Spacer(Modifier.height(8.dp))
-                        OutlinedButton(onClick = { expanded = if (isOpen) null else idea.slug }, modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp)) {
+                        OutlinedButton(onClick = { expanded = if (isOpen) null else idea.slug }, modifier = Modifier.fillMaxWidth().heightIn(min = FilDimens.touchSmall)) {
                             Text(if (isOpen) "Hide brief ▲" else "Professional brief ▼", style = FilType.chip)
                         }
                         if (isOpen && brief != null) {
@@ -392,7 +392,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                 notifyBot = "coding"
                                 notifyPicker = idea
                             },
-                            modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = FilDimens.touchSmall),
                             enabled = notifyingSlug != idea.slug,
                             colors = ButtonDefaults.outlinedButtonColors(contentColor = p.accent),
                             border = BorderStroke(1.dp, p.accent.copy(alpha = 0.35f)),
@@ -432,7 +432,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                     selected = notifyBot==b,
                                     onClick = { notifyBot=b },
                                     label = { Text(if(b=="coding") "@CodingAgent64Bot" else "@HermesAgent64SparkBot", style = FilType.label) },
-                                    modifier = Modifier.heightIn(min = 32.dp),
+                                    modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                                     colors = FilterChipDefaults.filterChipColors(selectedContainerColor = p.accentDeep, selectedLabelColor = p.onAccent),
                                 )
                             }
@@ -444,7 +444,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                                     selected = notifyModePick==m,
                                     onClick = { notifyModePick=m },
                                     label = { Text(m.uppercase(), style = FilType.label) },
-                                    modifier = Modifier.heightIn(min = 32.dp),
+                                    modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                                     colors = FilterChipDefaults.filterChipColors(selectedContainerColor = if(notifyModePick==m) p.accentDeep else p.panel3, selectedLabelColor = if(notifyModePick==m) p.onAccent else p.muted),
                                 )
                             }

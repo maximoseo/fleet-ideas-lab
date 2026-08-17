@@ -158,6 +158,12 @@ object FilDimens {
     val chipRadius = 999.dp
     /** Inset panel radius (nested surfaces). */
     val insetRadius = 8.dp
+    /**
+     * Secondary control height. Still a finger target, so still 44dp — the
+     * "compact" 32dp and 36dp variants that used to be scattered through the
+     * screens were below the floor and the difference was purely visual.
+     */
+    val touchSmall = 44.dp
     /** Card / panel hairline border. */
     val border = 1.dp
     /** Minimum touch target. */

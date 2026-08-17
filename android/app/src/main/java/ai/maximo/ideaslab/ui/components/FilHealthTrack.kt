@@ -18,6 +18,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -56,6 +58,7 @@ fun FilHealthTrack(
         else -> FilState.DOWN
     }
     val unknownColor = p.unknown
+    val layoutDirection = LocalLayoutDirection.current
     val markerColor = when (state) {
         FilState.HEALTHY -> p.healthy
         FilState.DEGRADED -> p.warn
@@ -82,9 +85,18 @@ fun FilHealthTrack(
                 val clamped = value.coerceIn(0, 100)
                 // 3dp marker, inset so it never clips at either end.
                 val travel = maxWidth - 3.dp
+                // Mirror in right-to-left. "Further along the rail" has to mean
+                // "further from the START edge"; without this a Hebrew reader
+                // sees a low score sitting where a high one belongs, and the
+                // rail states the opposite of the number beside it.
+                val fraction = if (layoutDirection == LayoutDirection.Rtl) {
+                    1f - (clamped / 100f)
+                } else {
+                    clamped / 100f
+                }
                 Box(
                     Modifier
-                        .offset(x = travel * (clamped / 100f))
+                        .offset(x = travel * fraction)
                         .width(3.dp)
                         .fillMaxHeight()
                         .background(markerColor),

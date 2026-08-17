@@ -73,11 +73,11 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
                 },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = onBrowseIdeas, modifier = Modifier.heightIn(min = 40.dp)) { Text("Browse Ideas →", style = FilType.chip) }
+                OutlinedButton(onClick = onBrowseIdeas, modifier = Modifier.heightIn(min = FilDimens.touchSmall)) { Text("Browse Ideas →", style = FilType.chip) }
                 if (list.isNotEmpty() && favoritesStore != null) {
                     OutlinedButton(
                         onClick = { scope.launch { favSet.forEach { favoritesStore.toggleFavorite(it) } } },
-                        modifier = Modifier.heightIn(min = 40.dp),
+                        modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                     ) { Text("Clear all ★", style = FilType.chip) }
                 }
             }
@@ -110,7 +110,7 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
                             Spacer(Modifier.height(6.dp))
                             Text(idea.prompt, style = FilType.bodySmall, color = p.muted, maxLines = if (expanded) Int.MAX_VALUE else 2, overflow = TextOverflow.Ellipsis)
                             Spacer(Modifier.height(8.dp))
-                            OutlinedButton(onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp)) {
+                            OutlinedButton(onClick = { expanded = !expanded }, modifier = Modifier.fillMaxWidth().heightIn(min = FilDimens.touchSmall)) {
                                 Text(if (expanded) "Hide brief ▲" else "Professional brief ▼", style = FilType.chip)
                             }
                             if (expanded) {

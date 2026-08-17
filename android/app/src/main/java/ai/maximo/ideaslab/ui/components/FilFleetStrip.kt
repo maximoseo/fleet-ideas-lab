@@ -4,6 +4,8 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -63,6 +65,7 @@ private fun FilState.rank(): Int = when (this) {
     FilState.HEALTHY -> 3
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun FilFleetStrip(
     bars: List<FleetBar>,
@@ -120,10 +123,16 @@ fun FilFleetStrip(
         Spacer(Modifier.height(8.dp))
 
         // Legend: counts per band AND the rule in words.
-        Row(
+        //
+        // FlowRow, not Row. Rendered at fontScale 2.0 the fixed row pushed the
+        // Unknown band off the end, so a fleet WITH unknown dashboards reported
+        // as if it had none — the legend is what makes the strip honest, and it
+        // was the part that broke. A band may now wrap to a second line; it may
+        // never disappear.
+        FlowRow(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             LegendDot(p.healthy, "Healthy", counts[FilState.HEALTHY] ?: 0)
             LegendDot(p.warn, "Degraded", counts[FilState.DEGRADED] ?: 0)
@@ -146,7 +155,7 @@ private fun LegendDot(color: Color, word: String, count: Int, hatched: Boolean =
         Box(Modifier.size(9.dp).clip(CircleShape)) {
             if (hatched) HatchedStub(color) else Box(Modifier.fillMaxSize().background(color))
         }
-        Text(word, style = FilType.label, color = p.muted)
+        Text(word, style = FilType.label, color = p.muted, softWrap = false)
         // Counts are data: mono, so the figures line up between bands.
         Text("$count", style = FilType.dataSmall, color = p.text)
     }

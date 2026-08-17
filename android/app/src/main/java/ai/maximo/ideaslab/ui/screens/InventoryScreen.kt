@@ -208,19 +208,19 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                 selected = worstFirst,
                 onClick = { worstFirst = !worstFirst },
                 label = { Text(if (worstFirst) "Worst first" else "A–Z", style = FilType.chip) },
-                modifier = Modifier.heightIn(min = 36.dp),
+                modifier = Modifier.heightIn(min = FilDimens.touchSmall),
             )
             FilledTonalButton(
                 onClick = { shuffleSeed++ },
                 enabled = !worstFirst,
-                modifier = Modifier.heightIn(min = 36.dp),
+                modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
             ) { Text("Find more ↻", style = FilType.chip) }
             Spacer(Modifier.weight(1f))
             FilledTonalButton(
                 onClick = { doReload() },
                 enabled = !refreshing,
-                modifier = Modifier.heightIn(min = 36.dp),
+                modifier = Modifier.heightIn(min = FilDimens.touchSmall),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
             ) { Text(if (refreshing) "↻ Syncing" else "↻ Reload", style = FilType.chip) }
         }
@@ -339,7 +339,7 @@ private fun InventoryRow(
         Spacer(Modifier.height(8.dp))
         OutlinedButton(
             onClick = onCopyImprove,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 40.dp),
+            modifier = Modifier.fillMaxWidth().heightIn(min = FilDimens.touchSmall),
             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 4.dp),
         ) {
             Text("Copy IMPROVE brief", style = FilType.chip)
