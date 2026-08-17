@@ -8,13 +8,19 @@ const rubik = Rubik({ subsets: ["hebrew"], variable: "--font-rubik" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Design Lab — MaximoSEO",
-  description: "Analyze any website, generate design systems, detect AI slop, and inject premium designs into WordPress. Style Arena, Mockup Generator, Slop Detector, and more.",
-  keywords: ["design", "AI", "slop detector", "design system", "WordPress", "UI/UX"],
+  title: "Fleet Ideas Lab — MaximoSEO",
+  description: "Fleet gap radar & idea engine — 38 verified dashboards, 29 ideas (11 curated + 18 pooled), plain-English explainers, BUILD vs IMPROVE briefs and one-click scaffold.",
+  keywords: ["fleet", "idea engine", "gap radar", "dashboard scaffold", "build brief", "improve brief", "MaximoSEO"],
+  themeColor: "#7C3AED",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
-    title: "Design Lab — MaximoSEO",
-    description: "Analyze any website and generate premium design improvements.",
+    title: "Fleet Ideas Lab — MaximoSEO",
+    description: "Fleet gap radar & idea engine — 38 verified dashboards, 29 ideas, plain-English explainers, BUILD vs IMPROVE briefs and one-click scaffold.",
     type: "website",
+    url: "https://fleet-ideas-lab.maximo-seo.ai",
   },
 };
 
