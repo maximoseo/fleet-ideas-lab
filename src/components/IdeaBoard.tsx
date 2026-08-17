@@ -64,6 +64,7 @@ export default function IdeaBoard() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount; load() sets its own loading flag
     load();
   }, [load]);
 

@@ -63,6 +63,7 @@ export default function AuditPage() {
       const reopenId = params.get("reopen");
       const entry = getReopenEntry();
       if (entry && (!reopenId || entry.id === reopenId) && entry.html) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating a reopened analysis from sessionStorage — browser-only, runs once on mount
         setUrl(entry.url);
         setSiteTitle(entry.title);
         try {

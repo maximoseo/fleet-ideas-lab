@@ -28,11 +28,14 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run typecheck
-      # Lint is non-blocking for now: 21 pre-existing errors (react-hooks
-      # set-state-in-effect, no-explicit-any, unescaped entities) across the
-      # legacy pages. Tracked debt — clean up, then remove continue-on-error.
+      # Lint is a real gate again as of 2026-08-17. The 28 errors are gone:
+      # most were fixed, and the twelve remaining react-hooks
+      # set-state-in-effect sites carry a targeted disable naming the reason.
+      # New errors fail the build.
       - run: npm run lint
-        continue-on-error: true
+      - run: npm test
+      # The served /api/app/version must match the Gradle build and the APK URL.
+      - run: npm run check:version
       - run: npm run build
       - name: Boot production server
         run: |

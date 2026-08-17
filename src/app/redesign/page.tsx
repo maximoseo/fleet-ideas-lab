@@ -168,6 +168,7 @@ export default function RedesignPage() {
       if (entry && (!reopenId || entry.id === reopenId) && entry.profile) {
         const payload = entry as unknown as AnalyzeResponse;
         if (payload.profile) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating a reopened profile from sessionStorage — browser-only, runs once on mount
           setUrl(entry.url);
           const fake = {
             url: entry.url,

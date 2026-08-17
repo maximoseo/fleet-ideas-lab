@@ -6,7 +6,7 @@ import SiteHeader from "@/components/SiteHeader";
 import FleetStrip from "@/components/FleetStrip";
 import AskFleetCard from "@/components/AskFleetCard";
 import { STYLES } from "@/lib/styles";
-import { FLEET_PROJECTS, FLEET_IDEAS, FLEET_COUNT, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, GAP_SCORES, gapLevel, type FleetDomain, type Capability } from "@/lib/fleet";
+import { FLEET_PROJECTS, FLEET_IDEAS, FLEET_COUNT, DOMAIN_LABEL, DOMAIN_COLOR, healthLevel, HEALTH_COLOR, statusLabel, statusExplainer, GAP_SCORES, gapLevel, type FleetDomain, type Capability, type FleetStatus } from "@/lib/fleet";
 import { buildImprovePromptForProject } from "@/lib/agentPrompt";
 import TrustLine from "@/components/TrustLine";
 
@@ -95,6 +95,7 @@ export default function InventoryPage() {
   }, []);
 
   const [mounted, setMounted] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- mounted flag guards a hydration-sensitive render; there is no server value to read
   useEffect(() => setMounted(true), []);
 
   return (
@@ -183,7 +184,7 @@ export default function InventoryPage() {
                   <div className="flex items-center gap-2">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ background: DOMAIN_COLOR[p.domain] }} />
                     <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: DOMAIN_COLOR[p.domain] }}>{DOMAIN_LABEL[p.domain]}</span>
-                    <button onClick={() => setExpanded(expanded === p.slug ? null : p.slug)} title={statusExplainer(p.status as any, p.lastDeploy.slice(0,10))} className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${p.status === "live" ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/20" : p.status === "beta" ? "bg-blue-500/15 text-blue-300 border-blue-500/20" : p.status === "build" ? "bg-amber-500/15 text-amber-300 border border-amber-500/20" : "bg-white/10 text-white/60 border-white/10"}`}>{statusLabel(p.status as any)} ▾</button>
+                    <button onClick={() => setExpanded(expanded === p.slug ? null : p.slug)} title={statusExplainer(p.status as FleetStatus, p.lastDeploy.slice(0,10))} className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide border ${p.status === "live" ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/20" : p.status === "beta" ? "bg-blue-500/15 text-blue-300 border-blue-500/20" : p.status === "build" ? "bg-amber-500/15 text-amber-300 border border-amber-500/20" : "bg-white/10 text-white/60 border-white/10"}`}>{statusLabel(p.status as FleetStatus)} ▾</button>
                   </div>
                   <span className="text-[11px] text-white/35">{formatDate(p.lastDeploy)}</span>
                 </div>
@@ -222,8 +223,8 @@ export default function InventoryPage() {
                 </div>
                 {expanded === p.slug ? (
                   <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-3 text-[11px] leading-4 text-white/60">
-                    <div className="font-semibold text-white/80">Why {statusLabel(p.status as any)}?</div>
-                    <div className="mt-1">{statusExplainer(p.status as any, p.lastDeploy.slice(0,10))} · alias <span className="font-mono text-white/70">{p.url.replace("https://","")}</span></div>
+                    <div className="font-semibold text-white/80">Why {statusLabel(p.status as FleetStatus)}?</div>
+                    <div className="mt-1">{statusExplainer(p.status as FleetStatus, p.lastDeploy.slice(0,10))} · alias <span className="font-mono text-white/70">{p.url.replace("https://","")}</span></div>
                     <div className="mt-2 flex flex-wrap gap-1">
                       {p.capabilities.map((c) => <span key={c} className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/60">{c}</span>)}
                     </div>

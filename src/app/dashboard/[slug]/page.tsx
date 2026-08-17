@@ -124,6 +124,7 @@ export default function DashboardDetailPage() {
   }, [slug]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch-on-mount for the route's slug; load() sets its own loading flag
     if (slug) load();
   }, [slug, load]);
 

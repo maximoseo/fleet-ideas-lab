@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
 
 /**
  * Chrome i18n — dictionary pattern. Translates CHROME strings only
@@ -68,15 +68,21 @@ export function currentLang(): Lang {
   return document.documentElement.lang === "he" ? "he" : "en";
 }
 
-/** Reactive lang hook — re-renders subscribed components on toggle. */
+function subscribeLang(onChange: () => void) {
+  window.addEventListener("fil-lang", onChange);
+  return () => window.removeEventListener("fil-lang", onChange);
+}
+
+/**
+ * Reactive lang hook — re-renders subscribed components on toggle.
+ *
+ * useSyncExternalStore rather than useState + useEffect: the language is
+ * browser state written by the before-paint bootstrap in layout.tsx, and
+ * setting it from an effect meant one render at the wrong language before the
+ * correct one, visible as an LTR flash on a Hebrew page load.
+ */
 export function useLang() {
-  const [lang, setLangState] = useState<Lang>("en");
-  useEffect(() => {
-    setLangState(currentLang());
-    const onChange = () => setLangState(currentLang());
-    window.addEventListener("fil-lang", onChange);
-    return () => window.removeEventListener("fil-lang", onChange);
-  }, []);
+  const lang = useSyncExternalStore<Lang>(subscribeLang, currentLang, () => "en");
   const t = useCallback((key: I18nKey) => translate(lang, key), [lang]);
   return { lang, t, setLang: applyLang };
 }

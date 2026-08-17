@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useState, useMemo } from "react";
+import { useState, useMemo } from "react";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import TrustLine from "@/components/TrustLine";
 import { STYLES } from "@/lib/styles";
 import { FLEET_IDEAS, DOMAIN_LABEL, DOMAIN_COLOR, type FleetIdea } from "@/lib/fleet";
 import { buildAgentPrompt, buildImprovePrompt } from "@/lib/agentPrompt";
+import { usePersistedSet } from "@/lib/usePersistedSet";
 
 const VIOLET = STYLES.violet;
 
@@ -15,23 +16,14 @@ function badgeEffort(e: string) {
 }
 
 export default function FavoritesPage() {
-  const [favs, setFavs] = useState<Set<string>>(new Set());
+  // Shared store — the Ideas page writes the same key, and this page used to
+  // hydrate from an effect, which made the list flash empty on every visit.
+  const { value: favs, remove: removeFav, clear: clearAll } = usePersistedSet("fleet_favorites");
   const [toast, setToast] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [scaffolding, setScaffolding] = useState<string | null>(null);
   const [scaffoldResult, setScaffoldResult] = useState<string | null>(null);
   const [confirmIdea, setConfirmIdea] = useState<FleetIdea | null>(null);
-
-  useEffect(() => {
-    try { const raw = localStorage.getItem("fleet_favorites"); if (raw) setFavs(new Set(JSON.parse(raw) as string[])); } catch {}
-  }, []);
-
-  function removeFav(slug: string) {
-    setFavs((prev) => { const next = new Set(prev); next.delete(slug); try { localStorage.setItem("fleet_favorites", JSON.stringify([...next])); } catch {} return next; });
-  }
-  function clearAll() {
-    setFavs(new Set()); try { localStorage.removeItem("fleet_favorites"); } catch {}
-  }
 
   const list = useMemo(() => FLEET_IDEAS.filter((it) => favs.has(it.slug)), [favs]);
   const newCount = list.filter((x) => x.kind === "new").length;

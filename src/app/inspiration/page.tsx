@@ -97,6 +97,7 @@ export default function InspirationPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating saved items from localStorage — browser-only, runs once on mount
     setItems(loadItems());
     setCollections(loadCollections());
   }, []);

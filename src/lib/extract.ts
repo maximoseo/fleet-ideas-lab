@@ -487,7 +487,11 @@ export function extractColorsFromHtml(html: string): string[] {
 
 export function extractFontsFromHtml(html: string): string[] {
   const fonts = new Set<string>();
-  for (const m of html.matchAll(/font-family\s*:\s*([^;}"']+)/g)) {
+  // The quote characters must NOT be excluded here. Any family name with a
+  // space is quoted in real CSS (`font-family:"Helvetica Neue",sans-serif`),
+  // and excluding the quote made the capture start on an excluded character,
+  // so the whole declaration failed to match and the font vanished silently.
+  for (const m of html.matchAll(/font-family\s*:\s*([^;}]+)/g)) {
     const family = m[1].split(",")[0].trim().replace(/['"]/g, "");
     if (family && !family.startsWith("var(") && family.length < 40) fonts.add(family);
   }

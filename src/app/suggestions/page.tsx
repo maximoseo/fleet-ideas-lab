@@ -106,7 +106,7 @@ export default function SuggestionsPage() {
           <div className="mx-auto max-w-xl">
             <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>Get design suggestions</h2>
             <p className="mb-6 text-sm text-white/50">
-              We analyze the site's typography, colors, layout, CTAs, mobile UX, and accessibility — then give you a prioritized list of concrete improvements ranked by impact.
+              We analyze the site&apos;s typography, colors, layout, CTAs, mobile UX, and accessibility — then give you a prioritized list of concrete improvements ranked by impact.
             </p>
             <div className="flex gap-2">
               <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && analyze()}

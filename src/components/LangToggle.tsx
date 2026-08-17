@@ -1,25 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { applyLang, currentLang, type Lang } from "@/components/i18n";
+import { applyLang, useLang } from "@/components/i18n";
 
 /**
  * EN/HE chrome-language toggle. Reads the before-paint value from
  * document.documentElement.lang (set by the inline script in layout.tsx),
  * persists via applyLang → localStorage "fil-lang". Hebrew switches the
  * document to dir=rtl; dashboard names and data stay English by design.
+ *
+ * The language now comes from the shared useLang() store instead of a local
+ * copy hydrated in an effect — one source, no first-render flash.
  */
 export default function LangToggle() {
-  const [lang, setLang] = useState<Lang>("en");
-
-  useEffect(() => {
-    setLang(currentLang());
-    const onChange = () => setLang(currentLang());
-    window.addEventListener("fil-lang", onChange);
-    return () => window.removeEventListener("fil-lang", onChange);
-  }, []);
-
+  const { lang } = useLang();
   const he = lang === "he";
+
   return (
     <button
       type="button"

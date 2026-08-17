@@ -8,6 +8,7 @@ import IdeaBoard from "@/components/IdeaBoard";
 import { STYLES } from "@/lib/styles";
 import { FLEET_IDEAS, FLEET_GENERATED_POOL, FLEET_COUNT, DOMAIN_LABEL, DOMAIN_COLOR, type FleetDomain, type Effort, type Priority, type Impact, type IdeaStatus, type FleetIdea } from "@/lib/fleet";
 import { buildAgentPrompt, buildImprovePrompt } from "@/lib/agentPrompt";
+import { usePersistedSet } from "@/lib/usePersistedSet";
 
 const VIOLET = STYLES.violet;
 
@@ -35,15 +36,15 @@ export default function IdeasPage() {
   const [notifyPicker, setNotifyPicker] = useState<FleetIdea | null>(null);
   const [notifyBot, setNotifyBot] = useState<"spark" | "coding">("coding");
   const [notifyMode, setNotifyMode] = useState<"build" | "improve">("build");
-  const [favs, setFavs] = useState<Set<string>>(new Set());
+  // Same store the Favorites page reads — see usePersistedSet.
+  const { value: favs, toggle: toggleFav } = usePersistedSet("fleet_favorites");
   const [favOnly, setFavOnly] = useState(false);
-  useEffect(() => { try { const raw = localStorage.getItem("fleet_favorites"); if (raw) setFavs(new Set(JSON.parse(raw) as string[])); } catch {} }, []);
-  function toggleFav(slug: string) { setFavs((prev) => { const next = new Set(prev); if (next.has(slug)) next.delete(slug); else next.add(slug); try { localStorage.setItem("fleet_favorites", JSON.stringify([...next])); } catch {} return next; }); }
 
   const [confirmIdea, setConfirmIdea] = useState<FleetIdea | null>(null);
   const [view, setView] = useState<"list" | "board">("list");
   const [shuffleSeed, setShuffleSeed] = useState(0);
   const [seenIds, setSeenIds] = useState<Set<string>>(() => new Set(FLEET_IDEAS.map((x)=>x.id)));
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- merging previously seen idea ids from localStorage — browser-only, runs once on mount
   useEffect(()=>{ try{ const raw=localStorage.getItem("fleet_seen_ideas"); if(raw){ const arr=JSON.parse(raw) as string[]; if(arr.length>0) setSeenIds((prev)=>{ const m=new Set(prev); arr.forEach((id:string)=>m.add(id)); return m;}); } }catch{} },[]);
   useEffect(()=>{ try{ localStorage.setItem("fleet_seen_ideas", JSON.stringify([...seenIds])); }catch{} },[seenIds]);
   const [reloading, setReloading] = useState(false);
@@ -79,6 +80,7 @@ export default function IdeasPage() {
     if (q.trim().length === 0) return;
     const unseenHits = (filtered as FleetIdea[]).filter((it: FleetIdea) => !seenIds.has(it.id));
     if (unseenHits.length === 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- marks search hits as seen; deriving this instead needs the feed rewrite tracked for the refactor wave
     setSeenIds((prev) => {
       const next = new Set(prev);
       unseenHits.forEach((it: FleetIdea) => next.add(it.id));
@@ -238,6 +240,7 @@ export default function IdeasPage() {
       if (candidates.length <= take) setEndOfFeed(true);
     }, 450);
   }, [loadingMore, endOfFeed, reloading, seenIds, domain, effort, impact, kind, q, favOnly]);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- resets the end-of-feed flag when filters change; same feed rewrite
   useEffect(()=>{ setEndOfFeed(false); },[domain, effort, impact, kind, q, favOnly]);
   useEffect(()=>{
     const el=sentinelRef.current; if(!el) return;

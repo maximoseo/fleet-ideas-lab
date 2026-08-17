@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import {useState} from "react";
 import { useLang, type I18nKey } from "@/components/i18n";
 
 const TABS: ReadonlyArray<{ href: string; key: I18nKey; icon: (a: boolean) => React.ReactNode }> = [
@@ -63,8 +63,14 @@ const MORE: ReadonlyArray<{ href: string; key: I18nKey; hint: string; external?:
 export default function MobileTabBar() {
   const pathname = usePathname();
   const { t } = useLang();
-  const [moreOpen, setMoreOpen] = useState(false);
-  useEffect(() => { setMoreOpen(false); }, [pathname]);
+  // Derived, not reset from an effect: the sheet belongs to the route it was
+  // opened on, so a navigation closes it without a second render pass.
+  const [openedOn, setOpenedOn] = useState<string | null>(null);
+  const moreOpen = openedOn === pathname;
+  const setMoreOpen = (open: boolean | ((v: boolean) => boolean)) => {
+    const next = typeof open === "function" ? open(moreOpen) : open;
+    setOpenedOn(next ? pathname : null);
+  };
   if (pathname === "/login") return null;
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const moreActive = MORE.some((m) => isActive(m.href));

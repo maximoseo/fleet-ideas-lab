@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 
 interface SharedData {
   url: string;
@@ -17,6 +18,7 @@ export default function SharePage() {
   useEffect(() => {
     try {
       const hash = window.location.hash.slice(1);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- the shared payload lives in location.hash, which the server never sees
       if (!hash) { setError("No shared data found"); return; }
       const parsed = JSON.parse(decodeURIComponent(atob(hash)));
       setData(parsed);
@@ -30,7 +32,7 @@ export default function SharePage() {
       <header className="border-b border-white/10 px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
           <h1 className="text-xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>🔗 Shared Analysis</h1>
-          <a href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/70 transition hover:bg-white/20">← Fleet Ideas Lab</a>
+          <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/70 transition hover:bg-white/20">← Fleet Ideas Lab</Link>
         </div>
       </header>
 

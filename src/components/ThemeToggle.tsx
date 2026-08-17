@@ -1,30 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 type Theme = "dark" | "light";
+
+const THEME_EVENT = "fil-theme";
+
+function subscribeTheme(onChange: () => void) {
+  window.addEventListener(THEME_EVENT, onChange);
+  window.addEventListener("storage", onChange);
+  return () => {
+    window.removeEventListener(THEME_EVENT, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+
+function readTheme(): Theme {
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
 
 /**
  * Sun/moon theme toggle. Reads the before-paint value from
  * document.documentElement.dataset.theme (set by the inline script in
  * layout.tsx), persists to localStorage "fil-theme".
+ *
+ * The value comes from useSyncExternalStore rather than a state copy hydrated
+ * in an effect. The old version always rendered "dark" first and corrected
+ * itself after mount, so a light-theme user saw the wrong icon on every page
+ * and aria-pressed was wrong for one frame.
  */
 export default function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme>("dark");
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
-    setMounted(true);
-  }, []);
+  const theme = useSyncExternalStore<Theme>(subscribeTheme, readTheme, () => "dark");
 
   function toggle() {
     const next: Theme = theme === "light" ? "dark" : "light";
-    setTheme(next);
     document.documentElement.dataset.theme = next;
     try {
       localStorage.setItem("fil-theme", next);
     } catch {}
+    window.dispatchEvent(new Event(THEME_EVENT));
   }
 
   return (
@@ -32,7 +46,7 @@ export default function ThemeToggle() {
       type="button"
       onClick={toggle}
       aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
-      aria-pressed={mounted && theme === "light"}
+      aria-pressed={theme === "light"}
       className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/60 hover:bg-white/10 hover:text-white"
     >
       {theme === "light" ? (

@@ -120,8 +120,6 @@ export default function GapsPage() {
           const s = GAP_SCORES[cell.d][cell.c];
           const lv = level(s);
           const projects = gapProjects(cell.d, cell.c);
-          const total = FLEET_INVENTORY.filter((p) => (p.domains.includes(cell.d as any) || p.domains.some((x) => ( { geo: "local", whm: "technical", reporting: "analytics", "client-ops": "automation", competitor: "outreach" } as any)[x] === cell.d)) || (cell.d as string) === (p as any).domain).length || FLEET_INVENTORY.filter((pp) => true).length;
-          // Simpler: count via GAP_SCORES derived already — show projects that cover this pair
           return (
             <div className="mt-6 rounded-2xl border border-violet-500/30 bg-violet-500/10 p-5">
               <div className="flex items-start justify-between gap-3">

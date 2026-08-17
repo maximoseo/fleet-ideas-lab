@@ -38,6 +38,7 @@ export default function HistoryPage() {
   useEffect(() => {
     let cancelled = false;
     // immediate local for snappy UI
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydrating history from localStorage — browser-only, runs once on mount
     setEntries(loadHistory());
     setHydrated(true);
     void loadHistoryMerged().then((merged) => {
