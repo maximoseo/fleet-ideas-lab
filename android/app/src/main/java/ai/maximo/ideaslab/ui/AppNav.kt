@@ -101,8 +101,9 @@ private fun BottomBar(nav: NavHostController, route: String) {
         containerColor = p.panel,
         contentColor = p.text,
         tonalElevation = 0.dp,
+        // Let NavigationBar handle gesture/3-button insets itself — fixed height(80.dp) was cutting it on phones
+        windowInsets = WindowInsets.navigationBars,
         modifier = Modifier
-            .height(80.dp)
             .border(BorderStroke(1.dp, p.line), shape = androidx.compose.foundation.shape.RoundedCornerShape(0.dp)),
     ) {
         PrimaryTabs.forEach { item ->
