@@ -112,7 +112,7 @@ export async function POST(req: NextRequest) {
     // single run would exhaust the hourly cap by checking on itself.
     const isStart = typeof body.chatId !== "string" || !body.chatId;
     if (isStart) {
-      limit = generationRateLimit(user.username);
+      limit = await generationRateLimit(user.username);
       if (!limit.allowed) {
         return NextResponse.json(
           { error: "Generation limit reached for this hour.", retryAfter: limit.retryAfter },

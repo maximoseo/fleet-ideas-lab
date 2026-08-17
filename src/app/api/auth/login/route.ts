@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authCookieOptions, createSessionToken, sessionUsername, validateCredentials } from '@/lib/auth';
-import { checkThrottle, clientKey, recordFailure, recordSuccess } from '@/lib/rateLimit';
+import { appChannelRateLimit, checkThrottle, clientKey, recordFailure, recordSuccess } from '@/lib/rateLimit';
 import { appTokenMatches } from '@/lib/appToken';
 
 export const runtime = 'nodejs';
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
     const turnstileToken = String(body.turnstileToken || '');
     const key = clientKey(req, username);
 
-    const lockedSec = checkThrottle(key);
+    const lockedSec = await checkThrottle(key);
     if (lockedSec > 0) {
       audit('auth.login.throttled', { username, key });
       return noStore(
@@ -87,6 +87,22 @@ export async function POST(req: Request) {
     const appToken = String(body.appToken || '');
     const isTrustedApp = appTokenMatches(appToken);
 
+    // The app channel skips the captcha, so it gets its own global ceiling —
+    // see appChannelRateLimit(). Without it, a token lifted out of the public
+    // APK buys unlimited password guesses from rotating IPs.
+    if (isTrustedApp) {
+      const appLimit = await appChannelRateLimit();
+      if (!appLimit.allowed) {
+        audit('auth.login.appchannel_throttled', { username, key });
+        return noStore(
+          NextResponse.json(
+            { error: 'Too many attempts. Try again later.' },
+            { status: 429, headers: { 'Retry-After': String(appLimit.retryAfter) } },
+          ),
+        );
+      }
+    }
+
     const ip = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for');
     const challengeOk = isTrustedApp ? true : await verifyTurnstile(turnstileToken, ip);
     if (!challengeOk) {
@@ -99,7 +115,7 @@ export async function POST(req: Request) {
     }
 
     if (!validateCredentials(username, password)) {
-      const lockSec = recordFailure(key);
+      const lockSec = await recordFailure(key);
       audit('auth.login.failure', { username, key });
       if (lockSec > 0) {
         return noStore(
@@ -112,7 +128,7 @@ export async function POST(req: Request) {
       return noStore(NextResponse.json({ error: 'Invalid credentials' }, { status: 401 }));
     }
 
-    recordSuccess(key);
+    await recordSuccess(key);
     const user = sessionUsername(username);
     audit('auth.login.success', { username, key });
 
