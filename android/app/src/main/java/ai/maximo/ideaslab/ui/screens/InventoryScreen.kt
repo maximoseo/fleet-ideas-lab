@@ -43,6 +43,7 @@ import ai.maximo.ideaslab.ui.components.HealthChip
 import ai.maximo.ideaslab.ui.components.FilFleetStrip
 import ai.maximo.ideaslab.ui.components.LoadingShimmer
 import ai.maximo.ideaslab.ui.components.FilListSkeleton
+import ai.maximo.ideaslab.ui.components.FilSearchField
 import ai.maximo.ideaslab.ui.components.FleetBar
 import ai.maximo.ideaslab.ui.components.SkeletonKind
 import ai.maximo.ideaslab.ui.components.filEntrance
@@ -63,9 +64,14 @@ private fun FilState.rank(): Int = when (this) {
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun InventoryScreen(navController: NavController? = null, onNotifications: () -> Unit = {}) {
+fun InventoryScreen(
+    navController: NavController? = null,
+    onNotifications: () -> Unit = {},
+    onOpenDashboard: (String) -> Unit = {},
+) {
     val p = FilTheme.palette
     var shuffleSeed by remember { mutableStateOf(0) }
+    var query by remember { mutableStateOf("") }
     var worstFirst by remember { mutableStateOf(true) }
     var paletteOpen by remember { mutableStateOf(false) }
     val ctx = LocalContext.current
@@ -101,11 +107,19 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
     val counts = remember(baseSites, feed) {
         baseSites.groupingBy { stateOf(it) }.eachCount()
     }
-    val sites = remember(baseSites, feed, worstFirst, shuffleSeed) {
+    // Search across everything a person might remember about a dashboard: its
+    // name, its slug, its domain and what it does in plain English.
+    val searched = remember(baseSites, query) {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) baseSites else baseSites.filter {
+            "${it.name} ${it.slug} ${it.domain} ${it.stack} ${it.plainExplainer}".lowercase().contains(q)
+        }
+    }
+    val sites = remember(searched, feed, worstFirst, shuffleSeed) {
         val sorted = if (worstFirst) {
-            baseSites.sortedWith(compareBy({ stateOf(it).rank() }, { it.name.lowercase() }))
+            searched.sortedWith(compareBy({ stateOf(it).rank() }, { it.name.lowercase() }))
         } else {
-            val byName = baseSites.sortedBy { it.name.lowercase() }
+            val byName = searched.sortedBy { it.name.lowercase() }
             if (shuffleSeed == 0 || byName.isEmpty()) byName else {
                 val k = shuffleSeed % byName.size
                 byName.drop(k) + byName.take(k)
@@ -186,6 +200,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                     )
                 },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = FilDimens.screen),
+                onBarClick = onOpenDashboard,
             )
             Spacer(Modifier.height(4.dp))
         } else if (f == null) {
@@ -198,6 +213,14 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
             ) { LoadingShimmer(Modifier.fillMaxSize()) }
             Spacer(Modifier.height(8.dp))
         }
+
+        // Search — 38 dashboards with no way to jump to one was the gap.
+        FilSearchField(
+            value = query,
+            onValueChange = { query = it },
+            placeholder = stringResource(R.string.inventory_search_hint),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = FilDimens.screen),
+        )
 
         // Controls: triage sort + shuffle + manual reload.
         Row(
@@ -242,6 +265,21 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                     // Shaped like the row that is coming, so the list does not
                     // jump when the feed lands.
                     item { FilListSkeleton(SkeletonKind.SITE, count = 4) }
+                } else if (sites.isEmpty() && query.isNotBlank()) {
+                    // A search that matched nothing is not a broken feed, and
+                    // saying "the feed returned zero entries" here would be a lie.
+                    item {
+                        EmptyState(
+                            title = "No dashboard matches \"${query.trim()}\"",
+                            body = "Try the name, the slug, the domain, or a word from what it does.",
+                            glyph = "⌕",
+                        ) {
+                            FilledTonalButton(
+                                onClick = { query = "" },
+                                modifier = Modifier.heightIn(min = FilDimens.touchSmall),
+                            ) { Text(stringResource(R.string.action_clear), style = FilType.chip) }
+                        }
+                    }
                 } else if (sites.isEmpty()) {
                     item {
                         EmptyState(
@@ -260,6 +298,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                             state = stateOf(site),
                             feed = feed,
                             modifier = Modifier.filEntrance(index),
+                            onOpen = { onOpenDashboard(site.slug) },
                             onCopyImprove = {
                                 val brief = buildImprovePromptForProject(site)
                                 clipboardImprove.setText(AnnotatedString(brief))
@@ -299,6 +338,7 @@ private fun InventoryRow(
     state: FilState,
     feed: FleetFeed?,
     modifier: Modifier = Modifier,
+    onOpen: () -> Unit = {},
     onCopyImprove: () -> Unit,
 ) {
     val p = FilTheme.palette
@@ -314,6 +354,7 @@ private fun InventoryRow(
     }
     FilCard(
         modifier = modifier,
+        onClick = onOpen,
         accent = stateColor,
         contentDescription = "${site.name}, ${state.word}, checked ${if (checked.isEmpty()) "never" else checked}",
     ) {
@@ -349,9 +390,18 @@ private fun InventoryRow(
 }
 
 @Composable
-fun InventoryScreenWithUpdate(navController: NavController, api: ai.maximo.ideaslab.data.ApiClient, onNotifications: () -> Unit = {}) {
+fun InventoryScreenWithUpdate(
+    navController: NavController,
+    api: ai.maximo.ideaslab.data.ApiClient,
+    onNotifications: () -> Unit = {},
+    onOpenDashboard: (String) -> Unit = {},
+) {
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         UpdateBanner()
-        InventoryScreen(navController = navController, onNotifications = onNotifications)
+        InventoryScreen(
+            navController = navController,
+            onNotifications = onNotifications,
+            onOpenDashboard = onOpenDashboard,
+        )
     }
 }

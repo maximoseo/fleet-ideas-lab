@@ -52,7 +52,7 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
                 TopAppBar(
                     title = { Text("Fleet Ideas Lab", style = FilType.cardTitle, color = p.text) },
                     actions = {
-                        IconButton(onClick = { navController.navigate("notifications") }, modifier = Modifier.size(44.dp)) {
+                        IconButton(onClick = { navController.navigate("settings") }, modifier = Modifier.size(44.dp)) {
                             Icon(Icons.Filled.Notifications, contentDescription = "Notifications", tint = p.muted, modifier = Modifier.size(22.dp))
                         }
                         IconButton(onClick = { navController.navigate("settings") }, modifier = Modifier.size(44.dp)) {
@@ -79,16 +79,33 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
                     navController.navigate(afterLogin ?: "inventory") { popUpTo("login") { inclusive = true } }
                 }
             }
-            composable("inventory") { InventoryScreenWithUpdate(navController, api, onNotifications = { navController.navigate("notifications") }) }
-            composable("ideas") { IdeasScreen(api, favoritesStore = favoritesStore, seenStore = seenStore, onNotifications = { navController.navigate("notifications") }) }
+            composable("inventory") {
+                InventoryScreenWithUpdate(
+                    navController, api,
+                    onNotifications = { navController.navigate("settings") },
+                    onOpenDashboard = { slug -> navController.navigate("dashboard/$slug") },
+                )
+            }
+            composable("ideas") { IdeasScreen(api, favoritesStore = favoritesStore, seenStore = seenStore, onNotifications = { navController.navigate("settings") }) }
             composable("favorites") { FavoritesScreen(favoritesStore = favoritesStore, onBrowseIdeas = { navController.navigate("ideas") }) }
             composable("gaps") { GapsScreen() }
             composable("create") { CreateScreen(api) }
             composable("update") { UpdateScreen() }
             composable("settings") { SettingsScreen(navController = navController, api = api, sessionStore = sessionStore) }
             // Legacy route — kept for deep links / old bell buttons; now delegates to Settings so nothing breaks
+            // "notifications" used to render SettingsScreen too — the bell and the
+            // gear were the same destination wearing two icons. Kept as an alias
+            // so existing deep links and back stacks do not 404, but nothing in
+            // the UI points here any more.
             composable("notifications") { SettingsScreen(navController = navController, api = api, sessionStore = sessionStore) }
-            composable("schema-studio") { SchemaStudioScreen(onNotifications = { navController.navigate("notifications") }) }
+            composable("dashboard/{slug}") { entry ->
+                DashboardDetailScreen(
+                    slug = entry.arguments?.getString("slug").orEmpty(),
+                    api = api,
+                    onBack = { navController.popBackStack() },
+                )
+            }
+            composable("schema-studio") { SchemaStudioScreen(onNotifications = { navController.navigate("settings") }) }
             composable("fleet-history") { FleetHistoryScreen(api) }
         }
     }

@@ -1,6 +1,21 @@
 package ai.maximo.ideaslab.data
 
-data class FleetSite(val slug: String, val name: String, val domain: String, val status: String, val stack: String, val plainExplainer: String = "")
+/**
+ * A dashboard in the fleet.
+ *
+ * `url` defaults to empty because the BUNDLED snapshot in this file has never
+ * carried one — but the live feed does send it, and until now parseFeed threw
+ * it away, which is precisely why tapping a dashboard could not open it.
+ */
+data class FleetSite(
+    val slug: String,
+    val name: String,
+    val domain: String,
+    val status: String,
+    val stack: String,
+    val plainExplainer: String = "",
+    val url: String = "",
+)
 data class FleetIdea(val slug: String, val title: String, val category: String, val impact: String, val prompt: String, val kind: String = "new", val gapScore: Int = 0, val evidence: String = "", val targetSlug: String = "")
 data class GapCell(val site: String, val gap: String, val level: Int)
 

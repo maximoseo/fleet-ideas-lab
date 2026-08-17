@@ -13,6 +13,23 @@ import java.util.concurrent.TimeUnit
 data class LoginResult(val ok: Boolean, val error: String? = null)
 data class AnalyzeResult(val ok: Boolean, val title: String = "", val error: String? = null)
 data class ScaffoldResult(val ok: Boolean, val message: String = "", val error: String? = null)
+/** One probe row, newest first, as served by GET /api/fleet/probe-history. */
+data class ProbeRow(val checkedAt: String, val ok: Boolean, val status: Int, val latencyMs: Long, val error: String?)
+
+/** p50 / p95 / max over a window. p95 is the number that says "getting slower". */
+data class LatencyStats(val probes: Int, val p50: Int?, val p95: Int?, val max: Int?)
+
+data class ProbeHistory(
+    val probes: List<ProbeRow>,
+    val state: String?,
+    val consecutiveFailures: Int,
+    val lastOkAt: String?,
+    val last24h: LatencyStats?,
+    val last7d: LatencyStats?,
+    val persisted: Boolean,
+    val error: String? = null,
+)
+
 data class NotifyResult(val ok: Boolean, val bot: String? = null, val messageId: Long? = null, val botUsername: String? = null, val error: String? = null)
 
 class ApiClient(private val sessionStore: SessionStore) {
@@ -147,5 +164,64 @@ class ApiClient(private val sessionStore: SessionStore) {
         } catch (_: Exception) { true }
     }
     // Back-compat overload
+
+    /**
+     * Probe history + latency percentiles for one dashboard.
+     *
+     * The backend has served p50/p95 since 2026-08-17 and nothing consumed it.
+     * An average hides the tail a person actually notices; "usually 150ms,
+     * sometimes 3s" and "always 400ms" are different problems.
+     */
+    suspend fun probeHistory(slug: String): ProbeHistory = withContext(Dispatchers.IO) {
+        try {
+            val token = sessionStore.getSession()
+                ?: return@withContext ProbeHistory(emptyList(), null, 0, null, null, null, false, "Not authenticated")
+            val req = Request.Builder()
+                .url("$base/api/fleet/probe-history?slug=" + java.net.URLEncoder.encode(slug, "UTF-8"))
+                .header("Cookie", "dl_session=$token")
+                .get().build()
+            val res = client.newCall(req).execute()
+            val txt = res.body?.string() ?: ""
+            if (!res.isSuccessful) {
+                return@withContext ProbeHistory(emptyList(), null, 0, null, null, null, false, "HTTP ${res.code}")
+            }
+            val root = JSONObject(txt)
+            val arr = root.optJSONArray("probes")
+            val rows = buildList {
+                for (i in 0 until (arr?.length() ?: 0)) {
+                    val o = arr!!.getJSONObject(i)
+                    add(
+                        ProbeRow(
+                            checkedAt = o.optString("checked_at"),
+                            ok = o.optBoolean("ok"),
+                            status = o.optInt("status"),
+                            latencyMs = o.optLong("latency_ms"),
+                            error = o.optString("error").ifBlank { null },
+                        )
+                    )
+                }
+            }
+            val health = root.optJSONObject("health")
+            val latency = root.optJSONObject("latency")
+            fun stats(key: String): LatencyStats? {
+                val o = latency?.optJSONObject(key) ?: return null
+                // A missing percentile is null, not zero — zero is a claim.
+                fun intOrNull(k: String) = if (o.isNull(k)) null else o.optInt(k)
+                return LatencyStats(o.optInt("probes"), intOrNull("p50_ms"), intOrNull("p95_ms"), intOrNull("max_ms"))
+            }
+            ProbeHistory(
+                probes = rows,
+                state = health?.optString("state")?.ifBlank { null },
+                consecutiveFailures = health?.optInt("consecutive_failures") ?: 0,
+                lastOkAt = health?.optString("last_ok_at")?.ifBlank { null },
+                last24h = stats("last24h"),
+                last7d = stats("last7d"),
+                persisted = root.optBoolean("persisted"),
+            )
+        } catch (e: Exception) {
+            ProbeHistory(emptyList(), null, 0, null, null, null, false, e.message ?: "Network error")
+        }
+    }
+
     suspend fun scaffoldSimple(slug: String): ScaffoldResult = scaffold(slug)
 }

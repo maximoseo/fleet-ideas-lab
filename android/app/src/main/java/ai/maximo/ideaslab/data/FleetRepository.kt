@@ -159,6 +159,8 @@ class FleetRepository(private val context: Context) {
                         (0 until c.length()).joinToString(" + ") { c.optString(it) }
                     }?.ifBlank { "dashboard" } ?: "dashboard",
                     plainExplainer = o.optString("plainExplainer"),
+                    // The feed has always sent this and the app always dropped it.
+                    url = o.optString("url"),
                 )
             )
             val live = o.optJSONObject("live")
