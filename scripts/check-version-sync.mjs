@@ -51,8 +51,14 @@ if (!apkUrl.includes(`/v${tsName}/`)) {
 // /api/app/download must not keep its own copy of the URL. It did twice, and
 // once it pointed at a build whose signing key is lost.
 const download = readFileSync(join(ROOT, "src", "app", "api", "app", "download", "route.ts"), "utf8");
-if (/https:\/\/github\.com\/[^"']*app-release\.apk/.test(download)) {
+if (/https:\/\/github\.com\/[^"']*\.(apk|aab)/.test(download)) {
   console.error("FAIL /api/app/download hardcodes an APK URL; import APP_VERSION instead");
+  failures++;
+}
+// Absence of a literal is not enough — a local constant or a template would
+// pass that check and drift exactly the same way. Require the shared source.
+if (!/APP_VERSION\.apkUrl/.test(download)) {
+  console.error("FAIL /api/app/download must redirect to APP_VERSION.apkUrl");
   failures++;
 }
 

@@ -115,7 +115,8 @@ Bump the version in **both** places — `android/app/build.gradle.kts` and `src/
 Then publish, so `/api/app/download` and the in-app updater resolve:
 
 ```bash
-gh release create v<version> \
+VERSION=1.3.7          # must match build.gradle.kts and appVersion.ts
+gh release create "v$VERSION" \
   android/app/build/outputs/apk/release/app-release.apk \
   android/app/build/outputs/bundle/release/app-release.aab
 ```

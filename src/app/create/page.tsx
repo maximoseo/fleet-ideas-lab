@@ -58,7 +58,15 @@ export default function CreatePage() {
   }
 
   async function copyPrompt() {
-    try { await navigator.clipboard.writeText(idea.prompt); } catch {}
+    // Swallowing the rejection and then reporting success is worse than the
+    // failure: the operator walks away believing they have the brief.
+    try {
+      await navigator.clipboard.writeText(idea.prompt);
+    } catch {
+      setResult({ ok: false, msg: "Could not copy — clipboard access was refused" });
+      setTimeout(() => setResult(null), 2600);
+      return;
+    }
     setResult({ ok: true, msg: "Prompt copied" });
     setTerminalMsg(`Prompt copied — ${idea.slug}`);
     setTerminalOpen(true);

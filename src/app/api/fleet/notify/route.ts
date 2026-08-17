@@ -30,8 +30,9 @@ function resolveToken(bot: string): string | null {
  * of failing. A messaging destination is not something to guess at — an
  * unconfigured server should refuse, loudly.
  */
-function resolveChatId(explicit?: string): string | null {
-  const raw = (explicit || process.env.TELEGRAM_NOTIFY64_CHAT || "").trim();
+function resolveChatId(explicit?: unknown): string | null {
+  if (explicit !== undefined && typeof explicit !== "string") return null;
+  const raw = ((explicit as string | undefined) || process.env.TELEGRAM_NOTIFY64_CHAT || "").trim();
   // A comma-separated list is allowed; the first entry wins.
   return raw.split(",")[0].trim() || null;
 }
@@ -57,10 +58,23 @@ export async function POST(req: NextRequest) {
     chatId?: string;
   };
 
-  const ideaSlug = (b.ideaSlug || "").trim();
-  const ideaId = (b.ideaId || "").trim();
-  const mode = (b.mode || "build").trim().toLowerCase() === "improve" ? "improve" : "build";
-  const bot = (b.bot || "spark").trim().toLowerCase() === "coding" ? "coding" : "spark";
+  // JSON gives no type guarantees. A number or an object here used to reach
+  // .trim() and throw a 500 out of a request that was simply malformed.
+  const asString = (v: unknown): string | null =>
+    v === undefined || v === null ? "" : typeof v === "string" ? v : null;
+
+  const rawSlug = asString(b.ideaSlug);
+  const rawId = asString(b.ideaId);
+  const rawMode = asString(b.mode);
+  const rawBot = asString(b.bot);
+  if (rawSlug === null || rawId === null || rawMode === null || rawBot === null) {
+    return NextResponse.json({ error: "ideaSlug, ideaId, mode and bot must be strings" }, { status: 400 });
+  }
+
+  const ideaSlug = rawSlug.trim();
+  const ideaId = rawId.trim();
+  const mode = (rawMode || "build").trim().toLowerCase() === "improve" ? "improve" : "build";
+  const bot = (rawBot || "spark").trim().toLowerCase() === "coding" ? "coding" : "spark";
 
   if (!ideaSlug && !ideaId) {
     return NextResponse.json({ error: "ideaSlug or ideaId required" }, { status: 400 });
@@ -94,7 +108,9 @@ export async function POST(req: NextRequest) {
   try {
     brief = mode === "improve" ? buildImprovePrompt(idea) : buildAgentPrompt(idea);
   } catch (e) {
-    return NextResponse.json({ error: `Failed to build brief: ${String(e)}` }, { status: 500 });
+    // The exception text can carry internal paths; log it, do not return it.
+    reportError(e, { route: "/api/fleet/notify", meta: { stage: "build-brief", idea: idea.slug } });
+    return NextResponse.json({ error: "Failed to build brief" }, { status: 500 });
   }
 
   // Header for Telegram so the chat is instantly recognizable
@@ -146,11 +162,13 @@ export async function POST(req: NextRequest) {
 
   const j = tgJson as { ok?: boolean; result?: { message_id?: number }; description?: string; error_code?: number };
   if (!tgRes.ok || j.ok === false) {
-    console.error("[fleet-notify] telegram error", { bot, idea: idea.slug, mode, status: tgRes.status, body: j });
-    return NextResponse.json(
-      { error: j.description || `Telegram error (${tgRes.status})`, telegram: j },
-      { status: 502 }
-    );
+    // The upstream body can echo the bot token and chat metadata. It belongs
+    // in the redacted server log, never in the response.
+    reportError(new Error(j.description || `Telegram HTTP ${tgRes.status}`), {
+      route: "/api/fleet/notify",
+      meta: { bot, idea: idea.slug, mode, status: tgRes.status, code: j.error_code ?? null },
+    });
+    return NextResponse.json({ error: "Telegram rejected the message" }, { status: 502 });
   }
 
   const messageId = j.result?.message_id ?? null;

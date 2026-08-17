@@ -67,6 +67,9 @@ export default function MobileTabBar() {
   // opened on, so a navigation closes it without a second render pass.
   const [openedOn, setOpenedOn] = useState<string | null>(null);
   const moreOpen = openedOn === pathname;
+  // Navigating away clears the marker outright. Keeping it meant that coming
+  // back to the same route with the browser Back button re-opened the sheet.
+  if (openedOn !== null && openedOn !== pathname) setOpenedOn(null);
   const setMoreOpen = (open: boolean | ((v: boolean) => boolean)) => {
     const next = typeof open === "function" ? open(moreOpen) : open;
     setOpenedOn(next ? pathname : null);

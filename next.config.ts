@@ -24,7 +24,11 @@ import type { NextConfig } from "next";
  */
 const CSP = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  // cdn.tailwindcss.com is required by the static prototype documents under
+  // /prototypes. Without it those pages render as unstyled HTML — which is
+  // exactly what happened when this policy first shipped, and it was not
+  // visible from the pages I had been testing.
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://cdn.tailwindcss.com",
   "style-src 'self' 'unsafe-inline'",
   // Screenshots come from client sites, Microlink and Lovart — arbitrary https hosts.
   "img-src 'self' data: blob: https:",

@@ -51,6 +51,7 @@ export default function IdeasPage() {
   const [pullY, setPullY] = useState(0);
   const [expanded, setExpanded] = useState<string | null>(null);
   const pullStart = useRef<number | null>(null);
+  const notifyInFlight = useRef(false);
 
   const ALL_POOL: FleetIdea[] = useMemo(()=> [...FLEET_IDEAS, ...FLEET_GENERATED_POOL], []);
   const unseenLeft = useMemo(() => ALL_POOL.filter((it) => !seenIds.has(it.id)).length, [ALL_POOL, seenIds]);
@@ -131,6 +132,10 @@ export default function IdeasPage() {
 
   async function doNotify() {
     if (!notifyPicker) return;
+    // A double tap used to fire two POSTs: setNotifying is async, so the guard
+    // has to be the ref, not the state.
+    if (notifyInFlight.current) return;
+    notifyInFlight.current = true;
     const idea = notifyPicker;
     setNotifying(idea.id);
     setNotifyResult(null);
@@ -151,6 +156,7 @@ export default function IdeasPage() {
       setNotifyResult("✕ " + msg);
       setToast("✕ Send failed — " + msg);
     } finally {
+      notifyInFlight.current = false;
       setNotifying(null);
       setTimeout(() => { setNotifyResult(null); setToast(null); }, 6000);
     }

@@ -31,15 +31,25 @@ class SessionStore(private val context: Context) {
     }
 
     /** Credentials for biometric re-login — encrypted at rest (AES256-GCM, Keystore-backed). */
+    /**
+     * Only called when biometric unlock is on. Keeping a password on disk for
+     * a user who never opted into biometrics buys nothing and stores a
+     * credential they did not ask us to keep.
+     */
     suspend fun saveCredentials(username: String, password: String) {
         encPrefs.edit().putString("saved_username", username).putString("saved_password", password).apply()
+    }
+    /** Drop stored credentials without ending the current session. */
+    fun clearSavedCredentials() {
+        encPrefs.edit().remove("saved_username").remove("saved_password").apply()
     }
     fun getSavedUsername(): String? = encPrefs.getString("saved_username", null)
     fun getSavedPassword(): String? = encPrefs.getString("saved_password", null)
 
     suspend fun clear() {
         context.dataStore.edit { it.remove(KEY_SESSION); it.remove(KEY_USERNAME) }
-        encPrefs.edit().remove("dl_session").remove("saved_password").apply()
+        // The username is as much a stored credential as the password.
+        encPrefs.edit().remove("dl_session").remove("saved_password").remove("saved_username").apply()
     }
     suspend fun getSession(): String? {
         val ds = context.dataStore.data.map { it[KEY_SESSION] }.first()

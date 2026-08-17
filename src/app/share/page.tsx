@@ -11,6 +11,17 @@ interface SharedData {
   platform: string;
 }
 
+/** Only http(s) may become a clickable href — the payload is attacker-writable. */
+function isSafeHttpUrl(raw: unknown): boolean {
+  if (typeof raw !== "string" || !raw) return false;
+  try {
+    const u = new URL(raw);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 export default function SharePage() {
   const [data, setData] = useState<SharedData | null>(null);
   const [error, setError] = useState("");
@@ -47,8 +58,17 @@ export default function SharePage() {
         {data && (
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
             <h2 className="mb-1 text-lg font-bold">{data.title}</h2>
-            <a href={data.url} target="_blank" rel="noopener noreferrer" dir="ltr"
-              className="text-sm text-violet-400 hover:text-violet-200">{data.url} ↗</a>
+            {/*
+              The whole payload comes out of location.hash, which anyone can
+              write. An unchecked href there means a javascript: URL one click
+              away from running in this origin. Render a link only for http(s).
+            */}
+            {isSafeHttpUrl(data.url) ? (
+              <a href={data.url} target="_blank" rel="noopener noreferrer" dir="ltr"
+                className="text-sm text-violet-400 hover:text-violet-200">{data.url} ↗</a>
+            ) : (
+              <span dir="ltr" className="text-sm text-white/65">{data.url}</span>
+            )}
 
             <div className="mt-4">
               <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Color Palette</h3>

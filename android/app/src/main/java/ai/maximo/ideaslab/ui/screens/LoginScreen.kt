@@ -117,12 +117,17 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
             val res = api.login(username.trim(), password, turnstileToken)
             busy = false
             if (res.ok) {
-                // Persist credentials (encrypted) so biometric unlock can
-                // re-login silently after the session expires.
-                try { sessionStore.saveCredentials(username.trim(), password) } catch(_: Exception){}
-                // Offer to enable biometric for next time if available and not yet enabled
-                if (biometricAvailable && !biometricEnabledStored) {
-                    try { sessionStore.setBiometric(true) } catch(_: Exception){}
+                // Persist credentials (encrypted) ONLY when biometric unlock is
+                // in play — that is the single feature that needs them. Storing
+                // a password for a device with no biometrics keeps a credential
+                // the user never asked us to keep, and buys nothing.
+                if (biometricAvailable) {
+                    try { sessionStore.saveCredentials(username.trim(), password) } catch(_: Exception){}
+                    if (!biometricEnabledStored) {
+                        try { sessionStore.setBiometric(true) } catch(_: Exception){}
+                    }
+                } else {
+                    try { sessionStore.clearSavedCredentials() } catch(_: Exception){}
                 }
                 onSuccess()
             } else error = res.error ?: "Sign in failed"
