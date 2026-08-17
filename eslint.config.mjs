@@ -12,6 +12,10 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // The Android module is Kotlin and its build output is not ours: the
+    // Roborazzi HTML report vendors a minified materialize.js, which this
+    // config happily linted and failed on. "build/**" only matches the root.
+    "android/**",
   ]),
 ]);
 
