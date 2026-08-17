@@ -1,18 +1,17 @@
 import { NextResponse } from "next/server";
+import { APP_VERSION } from "@/lib/appVersion";
 
 export const runtime = "nodejs";
 
 /**
- * Must track the `apkUrl` in `/api/app/version`.
+ * Stable download URL — redirects to the current GitHub Release artifact.
  *
- * This pointed at v1.1.4 while the version endpoint already served v1.2.0. That is worse
- * than a stale link: the v1.1.4 signing key was lost, so anyone who took this fallback
- * installed an app that can never be updated in place and has to be uninstalled first.
+ * This route used to hold its own copy of the APK URL, and that copy drifted
+ * twice. Once it pointed at v1.1.4 whose signing key is lost, so anyone taking
+ * the fallback installed an app that can never be updated in place. It drifted
+ * again at 1.3.7, which is why it now reads the single source in
+ * `src/lib/appVersion.ts` and cannot go stale on its own.
  */
-const APK_URL =
-  "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.3.6/app-release.apk";
-
 export async function GET() {
-  // Redirect to the GitHub Release artifact — Vercel keeps the stable /api/app/download URL
-  return NextResponse.redirect(APK_URL, 302);
+  return NextResponse.redirect(APP_VERSION.apkUrl, 302);
 }

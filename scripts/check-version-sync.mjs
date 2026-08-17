@@ -48,5 +48,13 @@ if (!apkUrl.includes(`/v${tsName}/`)) {
   failures++;
 }
 
+// /api/app/download must not keep its own copy of the URL. It did twice, and
+// once it pointed at a build whose signing key is lost.
+const download = readFileSync(join(ROOT, "src", "app", "api", "app", "download", "route.ts"), "utf8");
+if (/https:\/\/github\.com\/[^"']*app-release\.apk/.test(download)) {
+  console.error("FAIL /api/app/download hardcodes an APK URL; import APP_VERSION instead");
+  failures++;
+}
+
 if (failures) process.exit(1);
 console.log(`version sync OK — ${tsName} (${tsCode})`);
