@@ -133,7 +133,7 @@ export default function GapsPage() {
               {projects.length > 0 ? (
                 <div className="mt-4 flex flex-wrap gap-2">
                   {projects.slice(0, 8).map((p) => (
-                    <a key={p.slug} href={p.url} target="_blank" rel="noopener" className="rounded-full border border-white/15 bg-white px-3 py-1.5 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">{p.name} ↗</a>
+                    <a key={p.slug} href={p.url} target="_blank" rel="noopener noreferrer" className="rounded-full border border-white/15 bg-white px-3 py-1.5 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">{p.name} ↗</a>
                   ))}
                 </div>
               ) : (

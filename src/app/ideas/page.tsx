@@ -342,7 +342,7 @@ export default function IdeasPage() {
         {notifyResult ? (
           <div className={`flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3 ${notifyResult.startsWith("✓") ? "border-sky-500/30 bg-sky-500/15 text-sky-100" : "border-red-500/30 bg-red-500/15 text-red-100"}`}>
             <span className="flex-1 text-sm">{notifyResult}</span>
-            {notifyResult.startsWith("✓") ? <a href={notifyBot === "coding" ? "https://t.me/CodingAgent64Bot" : "https://t.me/HermesAgent64SparkBot"} target="_blank" rel="noopener" className="inline-flex min-h-[36px] shrink-0 items-center rounded-full bg-white px-4 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">Open in Telegram →</a> : null}
+            {notifyResult.startsWith("✓") ? <a href={notifyBot === "coding" ? "https://t.me/CodingAgent64Bot" : "https://t.me/HermesAgent64SparkBot"} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[36px] shrink-0 items-center rounded-full bg-white px-4 text-xs font-semibold text-[#0f0b1a] hover:bg-white/90">Open in Telegram →</a> : null}
           </div>
         ) : null}
         <div className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] leading-4 text-white/65">
@@ -406,7 +406,7 @@ export default function IdeasPage() {
 
               <div className="mt-4 grid grid-cols-2 gap-2">
                 {idea.dashboardUrl ? (
-                  <a href={idea.dashboardUrl} target="_blank" rel="noopener" className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[#0f0b1a] hover:bg-white/90 text-center leading-tight px-2">Open \u2197</a>
+                  <a href={idea.dashboardUrl} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[40px] items-center justify-center rounded-full bg-white text-[12px] font-semibold text-[#0f0b1a] hover:bg-white/90 text-center leading-tight px-2">Open \u2197</a>
                 ) : (
                   <span className="inline-flex min-h-[40px] items-center justify-center rounded-full border border-white/10 bg-white/5 text-[11px] font-semibold text-white/65">No URL</span>
                 )}

@@ -8,8 +8,12 @@ import { redact, reportError, withErrorReporting } from "./observability";
  */
 describe("redact", () => {
   it("removes bearer tokens and long key-shaped strings", () => {
-    const out = redact("failed with Authorization: Bearer abcdefghijklmnopqrstuvwxyz0123456789");
-    expect(out).not.toContain("abcdefghijklmnopqrstuvwxyz0123456789");
+    // Built at runtime from harmless parts. A literal token-shaped string here
+    // trips every secret scanner forever, and a scanner that cries wolf on its
+    // own test fixtures gets ignored.
+    const fake = ["NOT", "A", "REAL", "TOKEN"].join("_") + "_0123456789012345";
+    const out = redact(`failed with Authorization: Bearer ${fake}`);
+    expect(out).not.toContain(fake);
     expect(out).toContain("[redacted]");
   });
 

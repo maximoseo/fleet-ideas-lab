@@ -85,7 +85,7 @@ export default function MobileTabBar() {
             <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/65">{t("nav.more")}</p>
             <div className="grid grid-cols-1 gap-1">
               {MORE.map((m) => (
-                <Link key={m.href} href={m.href} {...(m.external ? { target: "_blank" as const, rel: "noopener" as const } : {})} className={`flex min-h-[48px] items-center justify-between rounded-xl px-4 text-[15px] font-medium transition ${isActive(m.href) ? "bg-violet-600 text-white" : "text-white/80 hover:bg-white/10"}`}>
+                <Link key={m.href} href={m.href} {...(m.external ? { target: "_blank" as const, rel: "noopener noreferrer" as const } : {})} className={`flex min-h-[48px] items-center justify-between rounded-xl px-4 text-[15px] font-medium transition ${isActive(m.href) ? "bg-violet-600 text-white" : "text-white/80 hover:bg-white/10"}`}>
                   <span>{t(m.key)} {m.external ? "↗" : ""}</span>
                   <span className={`text-[11px] ${isActive(m.href) ? "text-white/80" : "text-white/65"}`}>{m.hint}</span>
                 </Link>

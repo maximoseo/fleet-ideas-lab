@@ -218,7 +218,7 @@ export default function DashboardDetailPage() {
                     {item.name}
                   </h1>
                   {item.url ? (
-                    <a href={item.url} target="_blank" rel="noopener" className="mt-1 inline-block font-mono text-[13px] text-violet-200 hover:text-violet-200">
+                    <a href={item.url} target="_blank" rel="noopener noreferrer" className="mt-1 inline-block font-mono text-[13px] text-violet-200 hover:text-violet-200">
                       {item.url.replace("https://", "")} ↗
                     </a>
                   ) : (
@@ -333,7 +333,7 @@ export default function DashboardDetailPage() {
             {/* Quick actions */}
             <div className="mt-5 flex flex-wrap gap-2">
               {item.url ? (
-                <a href={item.url} target="_blank" rel="noopener" className="inline-flex min-h-[44px] items-center rounded-full bg-white px-5 text-[13px] font-semibold text-[#0f0b1a] hover:bg-white/90">
+                <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center rounded-full bg-white px-5 text-[13px] font-semibold text-[#0f0b1a] hover:bg-white/90">
                   Open site ↗
                 </a>
               ) : null}

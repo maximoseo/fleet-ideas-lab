@@ -77,7 +77,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
               <Link
                 key={item.href}
                 href={item.href}
-                {...(item.external ? { target: "_blank" as const, rel: "noopener" } : {})}
+                {...(item.external ? { target: "_blank" as const, rel: "noopener noreferrer" } : {})}
                 className={`rounded-lg px-2.5 py-2 text-[12px] font-medium transition ${active ? "bg-white/10 text-white" : "text-white/65 hover:bg-white/10 hover:text-white/80"}`}
               >
                 {t(item.key)}

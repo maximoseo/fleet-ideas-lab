@@ -17,12 +17,23 @@
  *  3. Fire and forget. No awaiting a network call on the request path.
  */
 
+/**
+ * Every pattern here is linear-time on purpose. A redactor that can be made to
+ * hang on a hostile error message is a denial of service in the error path,
+ * which is exactly where you least want one — so no nested quantifiers, no
+ * optional group wrapping a repeated class, and each alternation is anchored
+ * by a literal.
+ */
 const SECRET_PATTERNS: RegExp[] = [
-  // Bearer/API tokens, Supabase keys, our own fil_ tokens, anything key-shaped.
-  /\b(bearer\s+)?[A-Za-z0-9_-]{32,}\b/gi,
-  /\bfil_[A-Za-z0-9_-]+/gi,
-  /\beyJ[A-Za-z0-9_.-]+/g, // JWTs
-  /(password|token|secret|apikey|api_key)["'\s:=]+[^\s"',}]+/gi,
+  // Anything key-shaped: 32+ chars of token alphabet. "Bearer " is left in
+  // place; it is the value after it that matters.
+  /[A-Za-z0-9_-]{32,}/g,
+  // Our own app tokens, which are shorter than the rule above.
+  /fil_[A-Za-z0-9_-]{8,}/g,
+  // JWTs.
+  /eyJ[A-Za-z0-9_.-]{8,}/g,
+  // Labelled secrets: one separator run, then the value up to a delimiter.
+  /(password|token|secret|apikey|api_key)[\s:=]{0,3}["']?[^\s"',}]{1,200}/gi,
 ];
 
 /** Strip anything key-shaped before a message reaches a log. */

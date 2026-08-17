@@ -213,7 +213,7 @@ export default function InventoryPage() {
                   <HealthBar h={p.health} />
                 </div>
                 <div className="mt-4 flex gap-2">
-                  <a href={p.url} target="_blank" rel="noopener" className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-full bg-white text-[13px] font-semibold text-[#0f0b1a] hover:bg-white/90">Open ↗</a>
+                  <a href={p.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-full bg-white text-[13px] font-semibold text-[#0f0b1a] hover:bg-white/90">Open ↗</a>
                   <Link href={`/gaps`} className="inline-flex min-h-[32px] items-center justify-center rounded-full border border-white/15 bg-white/5 px-3 text-[12px] font-semibold text-white hover:bg-white/10">Gaps</Link>
                   <button onClick={async () => { const brief = buildImprovePromptForProject(p as unknown as never); await navigator.clipboard.writeText(brief); setInvToast("IMPROVE brief copied (" + p.slug + ")"); setTimeout(() => setInvToast(null), 2600); try { await fetch("/api/fleet/history", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ kind: "copy", slug: p.slug + "-improve", title: "Improve " + p.name, targetSlug: p.slug, gapScore: p.health, meta: { mode: "improve", source: "inventory-card" } }) }); } catch {} }} className="inline-flex min-h-[32px] items-center justify-center rounded-full border border-amber-500/20 bg-amber-500/10 px-3 text-[11px] font-bold text-amber-100 hover:bg-amber-500/15">Copy IMPROVE</button>
                 </div>

@@ -235,7 +235,7 @@ export default function CreatePage() {
                 </p>
                 <div className="flex items-center gap-2">
                   <button onClick={scaffold} disabled={busy} className="rounded-md border border-[#7782ef] bg-[#5965dc] px-6 py-3 text-[13px] font-bold text-white shadow-[0_8px_18px_rgba(22,28,80,0.28)] hover:bg-[#7580f1] disabled:opacity-50"> {busy ? "Scaffolding…" : "Scaffold stub"} </button>
-                  <a href={idea.dashboardUrl || "#"} target={idea.dashboardUrl ? "_blank" : undefined} rel="noopener" className={`rounded-md border px-5 py-3 text-[13px] font-semibold ${idea.dashboardUrl ? "border-white/10 bg-[#121a2a] text-white/65 hover:border-[#42537a] hover:text-white" : "border-white/5 bg-white/5 text-white/20 pointer-events-none"}`}>Open dashboard ↗</a>
+                  <a href={idea.dashboardUrl || "#"} target={idea.dashboardUrl ? "_blank" : undefined} rel="noopener noreferrer" className={`rounded-md border px-5 py-3 text-[13px] font-semibold ${idea.dashboardUrl ? "border-white/10 bg-[#121a2a] text-white/65 hover:border-[#42537a] hover:text-white" : "border-white/5 bg-white/5 text-white/20 pointer-events-none"}`}>Open dashboard ↗</a>
                 </div>
               </div>
             </div>
