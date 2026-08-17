@@ -47,6 +47,7 @@ export default function IdeasPage() {
   const pullStart = useRef<number | null>(null);
 
   const ALL_POOL: FleetIdea[] = useMemo(()=> [...FLEET_IDEAS, ...FLEET_GENERATED_POOL], []);
+  const unseenLeft = useMemo(() => ALL_POOL.filter((it) => !seenIds.has(it.id)).length, [ALL_POOL, seenIds]);
   const searchRef = useRef<HTMLInputElement | null>(null);
   const filtered = useMemo(() => {
     const searching = q.trim().length > 0;
@@ -252,7 +253,7 @@ export default function IdeasPage() {
             ))}
             <span className="px-2 text-[10px] text-violet-200/40">BUILD: new dashboard · IMPROVE: optimize existing</span>
           </div>
-        <div className="mt-5 space-y-3">
+        <div className="sticky top-[56px] z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mt-5 space-y-3 backdrop-blur-xl bg-[#0f0b1a]/85 border-y border-white/5">
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setFavOnly((v) => !v)} className={`min-h-[32px] rounded-full px-3 text-[12px] font-bold transition border ${favOnly ? "bg-amber-500 text-black border-amber-500" : "bg-white/[0.04] text-white/60 border-white/10 hover:text-white"}`}>\u2605 {favs.size}{favOnly ? " \u00b7 Favorites" : ""}</button>
             <div className="flex flex-wrap gap-1.5 rounded-full border border-white/10 bg-white/[0.04] p-1">
@@ -284,7 +285,7 @@ export default function IdeasPage() {
             </div>
             <div className="ml-auto flex items-center gap-2 w-full sm:w-auto">
               <input ref={searchRef} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search ideas, problem, solution…" className="w-full sm:w-64 rounded-full border border-white/10 bg-white/[0.06] px-4 py-2.5 text-sm text-white placeholder:text-white/30 focus:border-violet-500 focus:outline-none" />
-              <span className="hidden sm:inline text-xs text-white/40">{filtered.length} / {FLEET_IDEAS.length}</span>
+              <span className="hidden sm:inline text-xs text-white/40">{filtered.length} shown · {ALL_POOL.length - unseenLeft} seen · {unseenLeft} unseen left</span>
             </div>
           </div>
         </div>
@@ -305,9 +306,9 @@ export default function IdeasPage() {
 
         {view === "list" ? (
         <>
-        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((idea) => (
-            <div key={idea.id} className="flex flex-col rounded-2xl border p-4 sm:p-5 hover:shadow-lg hover:shadow-violet-500/10 transition" style={{ background: VIOLET.surface, borderColor: VIOLET.border }}>
+            <div key={idea.id} className="flex flex-col rounded-2xl border p-4 sm:p-4 xl:p-3 hover:shadow-lg hover:shadow-violet-500/10 transition" style={{ background: VIOLET.surface, borderColor: VIOLET.border }}>
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full" style={{ background: DOMAIN_COLOR[idea.domain] }} />
                 <span className="text-[11px] font-bold uppercase tracking-widest" style={{ color: DOMAIN_COLOR[idea.domain] }}>{DOMAIN_LABEL[idea.domain]}</span>
@@ -374,9 +375,12 @@ export default function IdeasPage() {
             </div>
           ))}
         </div>
-        <div ref={sentinelRef} className="flex justify-center py-6">{
-          loadingMore ? <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200"><span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-transparent" /> Loading more ideas\u2026</span> : endOfFeed && filtered.length>0 ? <span className="text-xs text-white/30">You\u2019ve seen all ideas for this filter \u2014 try Clear or different domain</span> : null
-        }</div>
+        <div ref={sentinelRef} className="flex flex-col items-center gap-3 py-6">
+          {loadingMore ? <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/20 bg-violet-500/10 px-4 py-2 text-xs font-semibold text-violet-200"><span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-transparent" /> Loading more ideas\u2026</span> : null}
+          {!loadingMore && !endOfFeed && filtered.length>0 && unseenLeft>0 ? <button onClick={loadMore} className="inline-flex min-h-[40px] items-center rounded-full border border-violet-500/30 bg-white px-5 text-sm font-semibold text-[#0f0b1a] hover:bg-white/90">Load more — 3 more · {unseenLeft} unseen left</button> : null}
+          {endOfFeed && filtered.length>0 ? <span className="text-xs text-white/30">You\u2019ve seen all {filtered.length} for this filter — <button onClick={() => { setDomain("all"); setEffort("all" as unknown as Effort); setImpact("all" as unknown as Impact); setStatus("all" as unknown as IdeaStatus); setKind("all"); setFavOnly(false); setQ(""); }} className="underline text-violet-300">Clear filters</button> or change domain</span> : null}
+          {!loadingMore && !endOfFeed && filtered.length>0 && unseenLeft===0 ? <span className="text-xs text-white/30">All {ALL_POOL.length} ideas are already shown — pull to reshuffle or Clear filters</span> : null}
+        </div>
 
         {filtered.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">

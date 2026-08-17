@@ -28,8 +28,8 @@ android {
         applicationId = "ai.maximo.ideaslab"
         minSdk = 24
         targetSdk = 36
-        versionCode = 22
-        versionName = "1.2.6"
+        versionCode = 23
+        versionName = "1.2.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
