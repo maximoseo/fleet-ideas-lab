@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
@@ -27,6 +28,7 @@ import ai.maximo.ideaslab.ui.components.FilInset
 import ai.maximo.ideaslab.ui.components.FilScreenHeader
 import ai.maximo.ideaslab.ui.components.SectionHeader
 import ai.maximo.ideaslab.ui.theme.FilDimens
+import ai.maximo.ideaslab.R
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
 import kotlinx.coroutines.launch
@@ -90,7 +92,7 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap),
     ) {
         FilScreenHeader(
-            title = "Settings",
+            title = stringResource(R.string.settings_title),
             subtitle = "Account, notifications, and app — like most apps, logout lives here at the bottom.",
         )
 

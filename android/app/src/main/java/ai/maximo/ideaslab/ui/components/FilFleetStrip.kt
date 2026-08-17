@@ -29,7 +29,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import ai.maximo.ideaslab.R
 import ai.maximo.ideaslab.ui.theme.FilDimens
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
@@ -97,9 +99,14 @@ fun FilFleetStrip(
                     FilState.UNKNOWN -> p.unknown
                 }
                 val label = if (bar.state == FilState.UNKNOWN) {
-                    "${bar.name}: unknown, no probe data"
+                    stringResource(R.string.strip_bar_label_unknown, bar.name)
                 } else {
-                    "${bar.name}: ${bar.state.word}, health ${bar.health}"
+                    stringResource(
+                        R.string.strip_bar_label,
+                        bar.name,
+                        stringResource(bar.state.labelRes()),
+                        bar.health,
+                    )
                 }
                 Box(
                     Modifier
@@ -134,14 +141,16 @@ fun FilFleetStrip(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            LegendDot(p.healthy, "Healthy", counts[FilState.HEALTHY] ?: 0)
-            LegendDot(p.warn, "Degraded", counts[FilState.DEGRADED] ?: 0)
-            LegendDot(p.bad, "Down", counts[FilState.DOWN] ?: 0)
-            LegendDot(p.unknown, "Unknown", counts[FilState.UNKNOWN] ?: 0, hatched = true)
+            LegendDot(p.healthy, stringResource(R.string.strip_legend_healthy), counts[FilState.HEALTHY] ?: 0)
+            LegendDot(p.warn, stringResource(R.string.strip_legend_degraded), counts[FilState.DEGRADED] ?: 0)
+            LegendDot(p.bad, stringResource(R.string.strip_legend_down), counts[FilState.DOWN] ?: 0)
+            LegendDot(p.unknown, stringResource(R.string.strip_legend_unknown), counts[FilState.UNKNOWN] ?: 0, hatched = true)
         }
         Spacer(Modifier.height(6.dp))
         Text(
-            "Warm colours mean a dashboard wants attention. Cool means it does not.",
+            // Hebrew carries its own punctuation; a hardcoded English literal
+            // rendered ".not" in an RTL layout.
+            stringResource(R.string.strip_colour_rule),
             style = FilType.label,
             color = p.muted,
         )

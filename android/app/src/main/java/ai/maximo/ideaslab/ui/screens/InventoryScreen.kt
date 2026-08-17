@@ -16,6 +16,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -25,6 +26,7 @@ import androidx.navigation.NavController
 import ai.maximo.ideaslab.data.FleetFeed
 import ai.maximo.ideaslab.data.FleetRepository
 import ai.maximo.ideaslab.data.FleetSite
+import ai.maximo.ideaslab.R
 import ai.maximo.ideaslab.data.FleetSource
 import ai.maximo.ideaslab.data.buildImprovePromptForProject
 import ai.maximo.ideaslab.data.relativeAge
@@ -121,16 +123,18 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
 
     val f = feed
     val syncSubtitle = when {
-        f == null -> "Syncing fleet feed…"
-        f.staleToken -> "${f.sites.size} dashboards · update required · data frozen"
-        f.source == FleetSource.LIVE -> "${f.sites.size} dashboards · live sync · updated ${relativeAge(f.fetchedAtMillis)}"
-        f.source == FleetSource.CACHE -> "${f.sites.size} dashboards · offline · cached ${relativeAge(f.fetchedAtMillis)}"
-        else -> "${f.sites.size} dashboards · bundled snapshot"
+        f == null -> stringResource(R.string.inventory_syncing)
+        f.staleToken -> stringResource(R.string.inventory_stale_token, f.sites.size)
+        f.source == FleetSource.LIVE ->
+            stringResource(R.string.inventory_live, f.sites.size, relativeAge(f.fetchedAtMillis))
+        f.source == FleetSource.CACHE ->
+            stringResource(R.string.inventory_cached, f.sites.size, relativeAge(f.fetchedAtMillis))
+        else -> stringResource(R.string.inventory_snapshot, f.sites.size)
     }
 
     Column(Modifier.fillMaxSize().statusBarsPadding()) {
         FilScreenHeader(
-            title = "Fleet Inventory",
+            title = stringResource(R.string.inventory_title),
             subtitle = syncSubtitle,
             modifier = Modifier.padding(horizontal = FilDimens.screen),
             actions = {
@@ -151,13 +155,10 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                 text = when {
                     // Not "offline" — the network is fine and the server said no.
                     // Pulling to refresh will never fix this; only an update will.
-                    f.staleToken ->
-                        "This app build is out of date. The server no longer accepts its access token, " +
-                            "so fleet health is frozen at the cached copy. Update the app from Settings."
+                    f.staleToken -> stringResource(R.string.banner_stale_token)
                     f.source == FleetSource.CACHE ->
-                        "Offline — showing cached copy from ${relativeAge(f.fetchedAtMillis)}. Pull to retry."
-                    else ->
-                        "Offline snapshot — bundled 2026-08-15, no live probe data. Pull to retry."
+                        stringResource(R.string.banner_offline, relativeAge(f.fetchedAtMillis))
+                    else -> stringResource(R.string.banner_snapshot)
                 },
                 tone = FilBannerTone.WARN,
                 modifier = Modifier.padding(horizontal = FilDimens.screen),
@@ -207,7 +208,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
             FilterChip(
                 selected = worstFirst,
                 onClick = { worstFirst = !worstFirst },
-                label = { Text(if (worstFirst) "Worst first" else "A–Z", style = FilType.chip) },
+                label = { Text(if (worstFirst) stringResource(R.string.inventory_sort_worst) else stringResource(R.string.inventory_sort_alpha), style = FilType.chip) },
                 modifier = Modifier.heightIn(min = FilDimens.touchSmall),
             )
             FilledTonalButton(
@@ -244,8 +245,8 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                 } else if (sites.isEmpty()) {
                     item {
                         EmptyState(
-                            title = "No dashboards in this feed",
-                            body = "The fleet feed returned zero entries. Pull to retry — if it persists, the feed itself is empty.",
+                            title = stringResource(R.string.inventory_empty_title),
+                            body = stringResource(R.string.inventory_empty_body),
                             glyph = "◇",
                         )
                     }

@@ -1,0 +1,105 @@
+<resources>
+    <!--
+      Hebrew.
+
+      The folder is values-iw, NOT values-he. Hebrew's ISO code changed from
+      "iw" to "he" in 1989 but Android still resolves the legacy code, and a
+      values-he folder is silently ignored on older devices — the app simply
+      falls back to English with no error anywhere. This is the single most
+      common way an Android Hebrew translation ships and does nothing.
+
+      Dashboard names, slugs and probe values stay English on purpose: they are
+      identifiers, and translating them would make the app and the web console
+      disagree about what a thing is called.
+    -->
+    <string name="app_name">Ideas Lab</string>
+
+    <!-- ניווט -->
+    <string name="nav_inventory">מלאי</string>
+    <string name="nav_ideas">רעיונות</string>
+    <string name="nav_favorites">מועדפים</string>
+    <string name="nav_gaps">פערים</string>
+    <string name="nav_create">יצירה</string>
+    <string name="nav_settings">הגדרות</string>
+    <string name="nav_notifications">התראות</string>
+    <string name="nav_history">היסטוריה</string>
+    <string name="nav_update">עדכון</string>
+
+    <!-- מצבי בריאות -->
+    <string name="state_healthy">תקין</string>
+    <string name="state_degraded">מדרדר</string>
+    <string name="state_down">מושבת</string>
+    <string name="state_unknown">לא ידוע</string>
+
+    <!-- רצועת הצי -->
+    <string name="strip_title">רצועת הצי</string>
+    <string name="strip_legend_healthy">תקין</string>
+    <string name="strip_legend_degraded">מדרדר</string>
+    <string name="strip_legend_down">מושבת</string>
+    <string name="strip_legend_unknown">לא ידוע</string>
+    <string name="strip_colour_rule">צבעים חמים אומרים שדשבורד דורש תשומת לב. צבעים קרים אומרים שלא.</string>
+    <string name="strip_bar_label">%1$s: %2$s, בריאות %3$d</string>
+    <string name="strip_bar_label_unknown">%1$s: לא ידוע, אין נתוני בדיקה</string>
+
+    <!-- מלאי -->
+    <string name="inventory_title">מלאי הצי</string>
+    <string name="inventory_syncing">מסנכרן את הצי…</string>
+    <string name="inventory_live">%1$d דשבורדים · סנכרון חי · עודכן %2$s</string>
+    <string name="inventory_cached">%1$d דשבורדים · לא מקוון · מהמטמון %2$s</string>
+    <string name="inventory_snapshot">%1$d דשבורדים · תמונת מצב מקומית</string>
+    <string name="inventory_stale_token">%1$d דשבורדים · נדרש עדכון · הנתונים קפואים</string>
+    <string name="inventory_empty_title">אין דשבורדים בפיד</string>
+    <string name="inventory_empty_body">הפיד החזיר אפס רשומות. משכו לרענון — אם זה נמשך, הפיד עצמו ריק.</string>
+    <string name="inventory_sort_worst">הגרוע קודם</string>
+    <string name="inventory_sort_alpha">א–ת</string>
+    <string name="inventory_search_hint">חיפוש דשבורד</string>
+
+    <!-- באנרים -->
+    <string name="banner_offline">לא מקוון — מוצג עותק מהמטמון מלפני %1$s. משכו לניסיון חוזר.</string>
+    <string name="banner_snapshot">תמונת מצב מקומית — אין נתוני בדיקה חיים. משכו לניסיון חוזר.</string>
+    <string name="banner_stale_token">גרסת האפליקציה מיושנת. השרת כבר לא מקבל את מפתח הגישה שלה, ולכן נתוני הבריאות קפואים על העותק מהמטמון. עדכנו את האפליקציה מההגדרות.</string>
+
+    <!-- מועדפים -->
+    <string name="favorites_title">מועדפים</string>
+    <string name="favorites_empty_title">אין עדיין מועדפים</string>
+    <string name="favorites_empty_body">היכנסו לרעיונות והקישו על הכוכב בכל כרטיס — הוא יתמלא והרעיון יופיע כאן. נשמר גם אחרי הפעלה מחדש.</string>
+    <string name="favorites_browse">לרעיונות</string>
+
+    <!-- רעיונות -->
+    <string name="ideas_title">רעיונות</string>
+    <string name="ideas_search_hint">חיפוש רעיון</string>
+    <string name="ideas_end_of_feed">ראיתם את כל הרעיונות — משכו לערבוב מחדש</string>
+    <string name="ideas_reload">רענון</string>
+    <string name="ideas_reloading">מרענן…</string>
+
+    <!-- התחברות -->
+    <string name="login_title">Fleet Ideas Lab</string>
+    <string name="login_username">שם משתמש</string>
+    <string name="login_password">סיסמה</string>
+    <string name="login_sign_in">כניסה</string>
+    <string name="login_signing_in">מתחבר…</string>
+    <string name="login_required">נדרשים אימייל וסיסמה</string>
+    <string name="login_failed">ההתחברות נכשלה</string>
+    <string name="login_biometric">כניסה עם טביעת אצבע</string>
+
+    <!-- הגדרות -->
+    <string name="settings_title">הגדרות</string>
+    <string name="settings_account">חשבון</string>
+    <string name="settings_sign_out">התנתקות</string>
+    <string name="settings_sign_out_confirm">התנתקות מוחקת את החיבור במכשיר הזה ומבטלת את העוגייה בשרת. תחזרו למסך ההתחברות.</string>
+    <string name="settings_cancel">ביטול</string>
+
+    <!-- פעולות משותפות -->
+    <string name="action_retry">ניסיון חוזר</string>
+    <string name="action_close">סגירה</string>
+    <string name="action_open_site">פתיחת האתר</string>
+    <string name="action_copy_improve">העתקת בריף שיפור</string>
+    <string name="action_search">חיפוש</string>
+    <string name="action_clear">ניקוי</string>
+
+    <!-- מצבים כלליים -->
+    <string name="state_loading">טוען</string>
+    <string name="error_generic">משהו השתבש.</string>
+    <string name="error_offline">אין חיבור.</string>
+    <string name="value_unknown">—</string>
+</resources>

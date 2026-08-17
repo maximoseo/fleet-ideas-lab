@@ -13,6 +13,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -31,6 +32,7 @@ import ai.maximo.ideaslab.ui.components.FilInset
 import ai.maximo.ideaslab.ui.components.FilScreenHeader
 import ai.maximo.ideaslab.ui.components.FilTag
 import ai.maximo.ideaslab.ui.theme.FilDimens
+import ai.maximo.ideaslab.R
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
 import kotlinx.coroutines.delay
@@ -62,7 +64,7 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
     Box(Modifier.fillMaxSize().statusBarsPadding().pullRefresh(pullState)) {
         Column(Modifier.fillMaxSize().padding(horizontal = FilDimens.screen)) {
             FilScreenHeader(
-                title = "Favorites",
+                title = stringResource(R.string.favorites_title),
                 subtitle = "${list.size} saved · $newCount new · $enhCount enhance · persists in DataStore",
                 actions = {
                     FilledTonalButton(
@@ -87,8 +89,8 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
                 FilListSkeleton(SkeletonKind.IDEA, count = 3)
             } else if (list.isEmpty()) {
                 EmptyState(
-                    title = "No favorites yet",
-                    body = "Go to Ideas and tap ☆ on any card — it turns ★ and appears here. Survives reload and restart.",
+                    title = stringResource(R.string.favorites_empty_title),
+                    body = stringResource(R.string.favorites_empty_body),
                     glyph = "☆",
                 ) {
                     Button(

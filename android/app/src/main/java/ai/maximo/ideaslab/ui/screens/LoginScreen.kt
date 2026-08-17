@@ -39,6 +39,7 @@ import ai.maximo.ideaslab.ui.components.FilBanner
 import ai.maximo.ideaslab.ui.components.FilBannerTone
 import ai.maximo.ideaslab.ui.theme.FilDimens
 import ai.maximo.ideaslab.ui.theme.FilShape
+import ai.maximo.ideaslab.R
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
 import kotlinx.coroutines.launch
@@ -110,7 +111,7 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
 
     fun signIn() {
         if (busy) return
-        if (username.isBlank() || password.isBlank()) { error = "Email and password are required"; return }
+        if (username.isBlank() || password.isBlank()) { error = ctx.getString(R.string.login_required); return }
         focusManager.clearFocus()
         busy = true; error = null
         scope.launch {
@@ -130,7 +131,7 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
                     try { sessionStore.clearSavedCredentials() } catch(_: Exception){}
                 }
                 onSuccess()
-            } else error = res.error ?: "Sign in failed"
+            } else error = res.error ?: ctx.getString(R.string.login_failed)
         }
     }
 

@@ -206,3 +206,16 @@ fun FilSearchField(
         modifier = modifier.fillMaxWidth().heightIn(min = FilDimens.touch),
     )
 }
+
+/**
+ * The translated word for this state.
+ *
+ * `word` stays English because it is also used in log lines and content
+ * descriptions built off the API's own vocabulary; this is what a person reads.
+ */
+fun FilState.labelRes(): Int = when (this) {
+    FilState.HEALTHY -> ai.maximo.ideaslab.R.string.state_healthy
+    FilState.DEGRADED -> ai.maximo.ideaslab.R.string.state_degraded
+    FilState.DOWN -> ai.maximo.ideaslab.R.string.state_down
+    FilState.UNKNOWN -> ai.maximo.ideaslab.R.string.state_unknown
+}

@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -34,6 +35,7 @@ import ai.maximo.ideaslab.ui.components.FilListSkeleton
 import ai.maximo.ideaslab.ui.components.FilTag
 import ai.maximo.ideaslab.ui.components.SkeletonKind
 import ai.maximo.ideaslab.ui.theme.FilDimens
+import ai.maximo.ideaslab.R
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
 import kotlinx.coroutines.delay
@@ -202,7 +204,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
             }
             item(key = "header") {
                 FilScreenHeader(
-                    title = "Ideas",
+                    title = stringResource(R.string.ideas_title),
                     subtitle = "${ideas.size} shown · pull to reload" + if (showOnlyFavorites) " · ★ favorites" else "",
                     actions = {
                         FilterChip(
@@ -251,7 +253,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                         contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(containerColor = p.panel3, contentColor = p.text),
                         modifier = Modifier.heightIn(min = FilDimens.touchSmall),
-                    ) { Text(if (refreshing) "↻ Reloading…" else "↻ Reload", style = FilType.chip) }
+                    ) { Text(if (refreshing) stringResource(R.string.ideas_reloading) else stringResource(R.string.ideas_reload), style = FilType.chip) }
                 }
             }
             if (ideas.isEmpty()) {
@@ -407,7 +409,7 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                             // A skeleton says "two more idea cards land here";
                             // a spinner only says "something is happening".
                             loadingMore -> FilListSkeleton(SkeletonKind.IDEA, count = 2)
-                            endOfFeed && ideas.isNotEmpty() -> Text("You've seen all ideas — pull to reshuffle", style = FilType.label, color = p.muted2)
+                            endOfFeed && ideas.isNotEmpty() -> Text(stringResource(R.string.ideas_end_of_feed), style = FilType.label, color = p.muted2)
                             else -> Spacer(Modifier.height(4.dp))
                         }
                     }

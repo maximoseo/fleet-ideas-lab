@@ -1,3 +1,104 @@
 <resources>
+    <!--
+      User-facing strings.
+
+      Until now this file held exactly one entry (app_name) and every other
+      string was a literal in a composable, so the app could not show Hebrew at
+      all while the web has had an EN/HE toggle for months.
+
+      Scope matches the web on purpose: CHROME and interface text are
+      translated; dashboard names, slugs and probe values stay English, because
+      they are identifiers rather than prose and translating them would make the
+      app and the console disagree about what a thing is called.
+    -->
     <string name="app_name">Ideas Lab</string>
+
+    <!-- Navigation -->
+    <string name="nav_inventory">Inventory</string>
+    <string name="nav_ideas">Ideas</string>
+    <string name="nav_favorites">Favorites</string>
+    <string name="nav_gaps">Gaps</string>
+    <string name="nav_create">Create</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_notifications">Notifications</string>
+    <string name="nav_history">History</string>
+    <string name="nav_update">Update</string>
+
+    <!-- Health states. Always paired with a glyph and never colour alone. -->
+    <string name="state_healthy">healthy</string>
+    <string name="state_degraded">degraded</string>
+    <string name="state_down">down</string>
+    <string name="state_unknown">unknown</string>
+
+    <!-- Fleet strip -->
+    <string name="strip_title">Fleet strip</string>
+    <string name="strip_legend_healthy">Healthy</string>
+    <string name="strip_legend_degraded">Degraded</string>
+    <string name="strip_legend_down">Down</string>
+    <string name="strip_legend_unknown">Unknown</string>
+    <string name="strip_colour_rule">Warm colours mean a dashboard wants attention. Cool means it does not.</string>
+    <string name="strip_bar_label">%1$s: %2$s, health %3$d</string>
+    <string name="strip_bar_label_unknown">%1$s: unknown, no probe data</string>
+
+    <!-- Inventory -->
+    <string name="inventory_title">Fleet Inventory</string>
+    <string name="inventory_syncing">Syncing fleet feed…</string>
+    <string name="inventory_live">%1$d dashboards · live sync · updated %2$s</string>
+    <string name="inventory_cached">%1$d dashboards · offline · cached %2$s</string>
+    <string name="inventory_snapshot">%1$d dashboards · bundled snapshot</string>
+    <string name="inventory_stale_token">%1$d dashboards · update required · data frozen</string>
+    <string name="inventory_empty_title">No dashboards in this feed</string>
+    <string name="inventory_empty_body">The fleet feed returned zero entries. Pull to retry — if it persists, the feed itself is empty.</string>
+    <string name="inventory_sort_worst">Worst first</string>
+    <string name="inventory_sort_alpha">A–Z</string>
+    <string name="inventory_search_hint">Search dashboards</string>
+
+    <!-- Banners -->
+    <string name="banner_offline">Offline — showing cached copy from %1$s. Pull to retry.</string>
+    <string name="banner_snapshot">Offline snapshot — no live probe data. Pull to retry.</string>
+    <string name="banner_stale_token">This app build is out of date. The server no longer accepts its access token, so fleet health is frozen at the cached copy. Update the app from Settings.</string>
+
+    <!-- Favorites -->
+    <string name="favorites_title">Favorites</string>
+    <string name="favorites_empty_title">No favorites yet</string>
+    <string name="favorites_empty_body">Go to Ideas and tap the star on any card — it fills in and appears here. Survives reload and restart.</string>
+    <string name="favorites_browse">Browse ideas</string>
+
+    <!-- Ideas -->
+    <string name="ideas_title">Ideas</string>
+    <string name="ideas_search_hint">Search ideas</string>
+    <string name="ideas_end_of_feed">You have seen every idea — pull to reshuffle</string>
+    <string name="ideas_reload">Reload</string>
+    <string name="ideas_reloading">Reloading…</string>
+
+    <!-- Login -->
+    <string name="login_title">Fleet Ideas Lab</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">Password</string>
+    <string name="login_sign_in">Sign in</string>
+    <string name="login_signing_in">Signing in…</string>
+    <string name="login_required">Email and password are required</string>
+    <string name="login_failed">Sign in failed</string>
+    <string name="login_biometric">Unlock with biometrics</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_account">Account</string>
+    <string name="settings_sign_out">Sign out</string>
+    <string name="settings_sign_out_confirm">Sign out clears your session on this device and invalidates the server cookie. You will return to the login screen.</string>
+    <string name="settings_cancel">Cancel</string>
+
+    <!-- Shared actions -->
+    <string name="action_retry">Retry</string>
+    <string name="action_close">Close</string>
+    <string name="action_open_site">Open site</string>
+    <string name="action_copy_improve">Copy IMPROVE brief</string>
+    <string name="action_search">Search</string>
+    <string name="action_clear">Clear</string>
+
+    <!-- Generic states -->
+    <string name="state_loading">Loading</string>
+    <string name="error_generic">Something went wrong.</string>
+    <string name="error_offline">No connection.</string>
+    <string name="value_unknown">—</string>
 </resources>
