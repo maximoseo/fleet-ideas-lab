@@ -63,14 +63,10 @@ export default function IdeasPage() {
       if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow} ${it.problem} ${it.solution} ${it.evidence}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
-    // Fisher-Yates shuffle seeded by shuffleSeed (deterministic but different order each reload)
-    if (shuffleSeed === 0) return base;
-    const arr = [...base];
-    let seed = shuffleSeed * 9301 + 49297;
-    const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
-    for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); const t = arr[i]; arr[i] = arr[j]; arr[j] = t; }
-    return arr;
-  }, [domain, effort, impact, status, kind, q, shuffleSeed, favOnly, favs, seenIds]);
+    // Stable order — preserve allPool order, never reshuffle the displayed list on scroll.
+    // Only candidates are shuffled when picking (doReload/loadMore), so scroll never jumps to top.
+    return base;
+  }, [domain, effort, impact, status, kind, q, favOnly, favs, seenIds]);
 
   // Auto-reveal search hits that were previously unseen so the result stays on this page.
   useEffect(() => {
@@ -144,8 +140,9 @@ export default function IdeasPage() {
   }
 
   const doReload = useCallback(() => {
+    if (reloading) return;
     setReloading(true);
-    // Find unseen candidates matching current filters (domain/kind/effort/impact/q/fav) — never repeats an ID
+    // Unseen candidates matching current filters — never repeats an ID. Only candidates are shuffled.
     const candidates = [...FLEET_IDEAS, ...FLEET_GENERATED_POOL].filter((it) => !seenIds.has(it.id)).filter((it) => {
       if (domain !== "all" && it.domain !== domain) return false;
       if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
@@ -155,19 +152,16 @@ export default function IdeasPage() {
       return true;
     });
     if (candidates.length === 0) {
-      setShuffleSeed((s) => s + 1);
-      setToast("\u21bb No more new ideas for this filter \u2014 reshuffled " + filtered.length + " shown \u00b7 try Clear or different domain");
+      setToast("\u21bb No more new ideas for this filter \u2014 " + filtered.length + " shown \u00b7 try Clear or different domain");
     } else {
       const take = Math.min(3, candidates.length);
-      // Shuffle candidates then take first N so each reload brings different New IDs
-      const shuffled = [...candidates]; let seed = (shuffleSeed+1)*9301+49297; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; }; for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const t=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=t; }
+      const shuffled = [...candidates]; let seed = (Date.now()%233280)+9301; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; }; for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const t=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=t; }
       const picked = shuffled.slice(0, take);
-      setSeenIds((prev)=>{ const next=new Set(prev); picked.forEach((p)=>next.add(p.id)); return next; });
-      setShuffleSeed((s) => s + 1);
-      setToast("\u21bb New ideas: " + picked.map((p)=>p.slug).join(", ") + " \u00b7 now " + (filtered.length + take) + " shown (reshuffled)");
+      setSeenIds((prev)=>{ const next=new Set(prev); picked.forEach((pp)=>next.add(pp.id)); return next; });
+      setToast("\u21bb New ideas: " + picked.map((pp)=>pp.slug).join(", ") + " \u00b7 now " + (filtered.length + take) + " shown");
     }
     setTimeout(() => { setReloading(false); setToast(null); }, 2200);
-  }, [filtered.length, seenIds, shuffleSeed, domain, effort, impact, kind, q]);
+  }, [filtered.length, seenIds, reloading, domain, effort, impact, kind, q]);
 
   const onTouchStart = useCallback((e: React.TouchEvent) => {
     if (document.activeElement === searchRef.current) return;
@@ -181,36 +175,38 @@ export default function IdeasPage() {
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const [loadingMore, setLoadingMore] = useState(false);
   const [endOfFeed, setEndOfFeed] = useState(false);
-  // Infinite scroll: when sentinel enters viewport, load next unseen batch (same logic as Reload)
+  // Infinite scroll: sentinel appends next unseen batch — stable order, no global reshuffle (fixes jump-to-top on desktop)
   const loadMore = useCallback(() => {
     if (loadingMore || endOfFeed || reloading) return;
+    if (q.trim().length > 0) return;
+    if (favOnly) return;
     const candidates = [...FLEET_IDEAS, ...FLEET_GENERATED_POOL].filter((it) => !seenIds.has(it.id)).filter((it) => {
       if (domain !== "all" && it.domain !== domain) return false;
       if (effort !== ("all" as unknown as Effort) && it.effort !== effort) return false;
       if (impact !== ("all" as unknown as Impact) && it.impact !== impact) return false;
       if (kind !== "all" && (it as unknown as { kind: string }).kind !== kind) return false;
-      if (q && !`${it.title} ${it.slug} ${it.description} ${it.whyNow}`.toLowerCase().includes(q.toLowerCase())) return false;
       return true;
     });
     if (candidates.length === 0) { setEndOfFeed(true); return; }
     setLoadingMore(true);
     setTimeout(() => {
       const take = Math.min(3, candidates.length);
-      let seed = (shuffleSeed+1)*9301+49297; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
+      let seed = (Date.now()%233280)+9301; const rnd=()=>{ seed=(seed*9301+49297)%233280; return seed/233280; };
       const shuffled=[...candidates]; for(let i=shuffled.length-1;i>0;i--){ const j=Math.floor(rnd()*(i+1)); const t=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=t; }
       const picked=shuffled.slice(0,take);
       setSeenIds((prev)=>{ const next=new Set(prev); picked.forEach((pp)=>next.add(pp.id)); return next; });
-      setShuffleSeed((s)=>s+1);
       setLoadingMore(false);
       if (candidates.length <= take) setEndOfFeed(true);
-    }, 500);
-  }, [loadingMore, endOfFeed, reloading, seenIds, shuffleSeed, domain, effort, impact, kind, q]);
+    }, 450);
+  }, [loadingMore, endOfFeed, reloading, seenIds, domain, effort, impact, kind, q, favOnly]);
   useEffect(()=>{ setEndOfFeed(false); },[domain, effort, impact, kind, q, favOnly]);
   useEffect(()=>{
     const el=sentinelRef.current; if(!el) return;
-    const obs=new IntersectionObserver((entries)=>{ if(entries[0].isIntersecting) loadMore(); },{ rootMargin: "200px" });
+    // Pause while searching/favorites — prevents jump and empty loads
+    if (q.trim().length > 0 || favOnly) return;
+    const obs=new IntersectionObserver((entries)=>{ if(entries[0].isIntersecting) loadMore(); },{ rootMargin: "280px", threshold: 0 });
     obs.observe(el); return ()=>obs.disconnect();
-  },[loadMore]);
+  },[loadMore, q, favOnly]);
 
   const onTouchEnd = useCallback(() => {
     if (pullY > 48) doReload();
