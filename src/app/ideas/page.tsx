@@ -145,7 +145,7 @@ export default function IdeasPage() {
       if (!res.ok) throw new Error(data.error || "Failed");
       const botName = data.botUsername || (notifyBot === "coding" ? "CodingAgent64Bot" : "HermesAgent64SparkBot");
       setNotifyResult("✓ Sent \"" + idea.slug + "\" (" + notifyMode.toUpperCase() + ") to @" + botName + (data.message_id ? " · msg " + data.message_id : "") + (data.truncated ? " · truncated to 4096" : ""));
-      setToast("📨 Sent to @" + botName + " — check Telegram 6090160018");
+      setToast("📨 Sent to @" + botName + " — check Telegram");
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Failed";
       setNotifyResult("✕ " + msg);
@@ -454,7 +454,7 @@ export default function IdeasPage() {
             <div className="w-full max-w-lg rounded-2xl border border-sky-500/30 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="inline-flex rounded-full bg-sky-500/15 border border-sky-500/30 px-3 py-1 text-[11px] font-bold text-sky-100">📨 SEND TO BOT</div>
               <h3 className="mt-3 text-lg font-bold text-white">Send &quot;{notifyPicker.title}&quot; to Telegram?</h3>
-              <p className="mt-2 text-sm leading-5 text-white/75">This sends the full {notifyMode.toUpperCase()} brief (up to 4096 chars) directly to the live bot via <span className="font-mono text-sky-100">POST /api/fleet/notify</span>. You&apos;ll see it instantly in Telegram at <span className="font-mono text-white/80">6090160018</span>.</p>
+              <p className="mt-2 text-sm leading-5 text-white/75">This sends the full {notifyMode.toUpperCase()} brief (up to 4096 chars) directly to the live bot via <span className="font-mono text-sky-100">POST /api/fleet/notify</span>. You&apos;ll see it instantly in the configured Telegram chat.</p>
               <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-[11px] leading-4 text-white/50">
                 <div>Slug: <span className="font-mono text-white/70">{notifyPicker.slug}</span> · Gap {notifyPicker.gapScore}% · {notifyPicker.evidence.slice(0, 100)}…</div>
                 <div className="mt-1">Widgets: {notifyPicker.widgets.join(" · ")}</div>

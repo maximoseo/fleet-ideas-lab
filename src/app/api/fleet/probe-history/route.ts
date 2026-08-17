@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { sbSelect, supabaseEnabled } from "@/lib/supabase";
+import { getLatencyPercentiles } from "@/lib/probes";
 
 export const runtime = "nodejs";
 export const maxDuration = 15;
@@ -24,7 +25,18 @@ export async function GET(req: NextRequest) {
       "fil_project_health",
       `select=*&slug=eq.${encodeURIComponent(slug)}&limit=1`,
     );
-    return NextResponse.json({ probes, health: healthRows[0] ?? null, persisted: true });
+    // p95 over 24h and 7d. An average hides the tail that is actually felt;
+    // "usually 150ms, sometimes 3s" and "always 400ms" are different problems.
+    const [day, week] = await Promise.all([
+      getLatencyPercentiles(slug, 24),
+      getLatencyPercentiles(slug, 24 * 7),
+    ]);
+    return NextResponse.json({
+      probes,
+      health: healthRows[0] ?? null,
+      persisted: true,
+      latency: { last24h: day[0] ?? null, last7d: week[0] ?? null },
+    });
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 502 });
   }

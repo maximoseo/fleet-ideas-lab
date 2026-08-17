@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { reportError } from "@/lib/observability";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { FLEET_IDEAS, FLEET_GENERATED_POOL } from "@/lib/fleet";
 import { buildAgentPrompt, buildImprovePrompt } from "@/lib/agentPrompt";
@@ -21,10 +22,18 @@ function resolveToken(bot: string): string | null {
   return process.env.TELEGRAM_NOTIFY64_TOKEN || process.env.TELEGRAM_BOT_TOKEN || null;
 }
 
-function resolveChatId(explicit?: string): string {
-  const raw = (explicit || process.env.TELEGRAM_NOTIFY64_CHAT || "6090160018").trim();
-  // allow comma-separated fallback to first
-  return raw.split(",")[0].trim() || "6090160018";
+/**
+ * No hardcoded fallback.
+ *
+ * This used to default to a literal chat id, so a missing or renamed
+ * TELEGRAM_NOTIFY64_CHAT sent the brief to whoever that id belongs to instead
+ * of failing. A messaging destination is not something to guess at — an
+ * unconfigured server should refuse, loudly.
+ */
+function resolveChatId(explicit?: string): string | null {
+  const raw = (explicit || process.env.TELEGRAM_NOTIFY64_CHAT || "").trim();
+  // A comma-separated list is allowed; the first entry wins.
+  return raw.split(",")[0].trim() || null;
 }
 
 export async function POST(req: NextRequest) {
@@ -74,6 +83,12 @@ export async function POST(req: NextRequest) {
   }
 
   const chatId = resolveChatId(b.chatId);
+  if (!chatId) {
+    return NextResponse.json(
+      { error: "Telegram destination is not configured (TELEGRAM_NOTIFY64_CHAT)" },
+      { status: 503 },
+    );
+  }
 
   let brief: string;
   try {
@@ -123,8 +138,10 @@ export async function POST(req: NextRequest) {
       tgJson = { raw };
     }
   } catch (e) {
-    console.error("[fleet-notify] telegram fetch failed", { bot, idea: idea.slug, mode, error: String(e) });
-    return NextResponse.json({ error: `Telegram send failed: ${String(e)}` }, { status: 502 });
+    // The upstream message can echo the bot token back; never return it and
+    // never log it raw.
+    reportError(e, { route: "/api/fleet/notify", meta: { bot, idea: idea.slug, mode } });
+    return NextResponse.json({ error: "Telegram send failed" }, { status: 502 });
   }
 
   const j = tgJson as { ok?: boolean; result?: { message_id?: number }; description?: string; error_code?: number };

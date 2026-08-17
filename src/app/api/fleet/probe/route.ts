@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { reportError } from "@/lib/observability";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { FLEET_INVENTORY } from "@/lib/fleet";
 import { runFleetProbes } from "@/lib/probes";
@@ -73,7 +74,7 @@ async function handle(req: NextRequest) {
             })),
           );
         } catch (err) {
-          console.warn("[probe] alert log failed:", (err as Error).message);
+          reportError(err, { route: "/api/fleet/probe", meta: { stage: "alert-log" } });
         }
       }
     }

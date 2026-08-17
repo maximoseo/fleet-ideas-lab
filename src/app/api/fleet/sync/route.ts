@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { reportError } from "@/lib/observability";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { FLEET_INVENTORY } from "@/lib/fleet";
 import { sbUpsert, supabaseEnabled } from "@/lib/supabase";
 import { computeDrift, fetchVercelProjects, EXCLUDED_UTILITIES, type DriftReport } from "@/lib/vercel-sync";
+import { rollupProbes } from "@/lib/probes";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -30,7 +32,8 @@ export async function GET(req: NextRequest) {
   try {
     drift = await computeDrift();
   } catch (err) {
-    return NextResponse.json({ error: `vercel sync failed: ${(err as Error).message}` }, { status: 502 });
+    reportError(err, { route: "/api/fleet/sync", meta: { stage: "compute-drift" } });
+    return NextResponse.json({ error: "Vercel sync failed" }, { status: 502 });
   }
 
   let synced = 0;
@@ -61,9 +64,15 @@ export async function GET(req: NextRequest) {
       );
       synced = dashboards.length;
     } catch (err) {
-      console.warn("[sync] supabase upsert failed:", (err as Error).message);
+      reportError(err, { route: "/api/fleet/sync", meta: { stage: "upsert" } });
     }
   }
 
-  return NextResponse.json({ drift, synced, persisted: supabaseEnabled() });
+  // Housekeeping on the same daily tick: roll finished days into
+  // fil_probe_daily and drop raw probe rows past the retention window.
+  // Never allowed to fail the sync — a full table is a slow problem, a broken
+  // cron is an immediate one.
+  const rollup = await rollupProbes().catch(() => null);
+
+  return NextResponse.json({ drift, synced, persisted: supabaseEnabled(), rollup });
 }

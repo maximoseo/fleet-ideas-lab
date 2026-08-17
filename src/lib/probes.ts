@@ -89,17 +89,76 @@ export async function probeUrl(url: string): Promise<ProbeResult> {
   }
 }
 
+/**
+ * Jitter between probes.
+ *
+ * Without it all 38 targets are hit in a tight burst at :00/:15/:30/:45, from
+ * one Vercel egress IP. Several of them are our own Vercel projects, so the
+ * fleet was effectively rate-limit-testing itself four times an hour. A short
+ * random gap costs nothing inside a 120-second function.
+ */
+const PROBE_JITTER_MAX_MS = 400;
+
 async function mapPool<T, R>(items: T[], size: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let i = 0;
-  const workers = Array.from({ length: Math.min(size, items.length) }, async () => {
+  const workers = Array.from({ length: Math.min(size, items.length) }, async (_unused, worker) => {
+    // Stagger the workers themselves so they do not all start on the same tick.
+    if (worker > 0) await new Promise((r) => setTimeout(r, worker * 60));
     while (i < items.length) {
       const idx = i++;
       out[idx] = await fn(items[idx]);
+      await new Promise((r) => setTimeout(r, Math.random() * PROBE_JITTER_MAX_MS));
     }
   });
   await Promise.all(workers);
   return out;
+}
+
+export interface LatencyRow {
+  slug: string;
+  probes: number;
+  p50_ms: number | null;
+  p95_ms: number | null;
+  max_ms: number | null;
+}
+
+/**
+ * Latency percentiles over a recent window. p95 is the number that says
+ * whether a dashboard is getting slower; an average hides exactly the tail
+ * that users notice.
+ */
+export async function getLatencyPercentiles(slug?: string, hours = 24): Promise<LatencyRow[]> {
+  if (!supabaseEnabled()) return [];
+  try {
+    const rows = await sbRpc<LatencyRow[]>("fil_probe_latency", {
+      p_slug: slug ?? null,
+      p_hours: hours,
+    });
+    return Array.isArray(rows) ? rows : [];
+  } catch (err) {
+    console.warn("[probes] latency read failed:", (err as Error).message);
+    return [];
+  }
+}
+
+/**
+ * Roll finished days into fil_probe_daily and drop raw rows past the window.
+ * Called from the daily sync cron — measured 2026-08-17, the raw table grows
+ * about 3,650 rows a day and would reach the storage tier inside a year.
+ */
+export async function rollupProbes(keepDays = 30): Promise<{ rolled: number; deleted: number } | null> {
+  if (!supabaseEnabled()) return null;
+  try {
+    const rows = await sbRpc<{ out_rolled: number; out_deleted: number }[]>("fil_rollup_probes", {
+      p_keep_days: keepDays,
+    });
+    const row = Array.isArray(rows) ? rows[0] : rows;
+    return row ? { rolled: row.out_rolled, deleted: row.out_deleted } : null;
+  } catch (err) {
+    console.warn("[probes] rollup failed:", (err as Error).message);
+    return null;
+  }
 }
 
 /** null = read failed (callers must not trust an empty map as "no rows"). */
