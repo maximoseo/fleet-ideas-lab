@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
+import { appTokenRotationPending } from "@/lib/appToken";
+import { APP_VERSION } from "@/lib/appVersion";
 
 export const runtime = "nodejs";
 
@@ -16,13 +18,16 @@ export async function GET() {
   }
   return NextResponse.json({
     name: "fleet-ideas-lab",
-    version: "1.2.0",
+    version: APP_VERSION.versionName,
     description: "Meta-dashboard API for the MaximoSEO fleet: inventory, live health, gap radar, idea pipeline.",
     auth: {
       session: "POST /api/auth/login {username,password,turnstileToken?} → dl_session cookie",
       app: "Authorization: Bearer <APP_TOKEN> for /api/app/fleet (APK/agent feed)",
       cron: "Authorization: Bearer <CRON_SECRET> for /api/fleet/probe, /api/fleet/sync",
     },
+    // Operator reminder: APP_TOKEN_PREVIOUS is a rotation window, not a
+    // permanent setting. Clear it once the new APK is installed.
+    appTokenRotationPending: appTokenRotationPending(),
     endpoints: {
       "GET /api/fleet/inventory": "Curated inventory merged with live probe health",
       "GET /api/fleet/gaps": "Domain×capability gap matrix",

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { FLEET_INVENTORY } from "@/lib/fleet";
 import { getHealthRows } from "@/lib/probes";
+import { appTokenMatches, appTokens } from "@/lib/appToken";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -19,11 +20,11 @@ export const maxDuration = 30;
  * up as anonymous read traffic on non-sensitive data.
  */
 export async function GET(req: NextRequest) {
-  const expected = process.env.APP_TOKEN;
-  if (!expected) {
+  const accepted = appTokens();
+  if (!accepted.length) {
     return NextResponse.json({ error: "App feed not configured" }, { status: 503 });
   }
-  if (req.headers.get("authorization") !== `Bearer ${expected}`) {
+  if (!appTokenMatches(req.headers.get("authorization")?.replace(/^Bearer /, ""))) {
     return NextResponse.json({ error: "Invalid app token" }, { status: 401 });
   }
   const health = await getHealthRows().catch(() => null);

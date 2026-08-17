@@ -49,3 +49,8 @@ android/build/
 android/.gradle/
 android/.kotlin/
 android/local.properties
+
+# stray editor/agent backups
+*.bak
+*.bak.*
+*.orig

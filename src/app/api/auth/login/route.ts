@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authCookieOptions, createSessionToken, sessionUsername, validateCredentials } from '@/lib/auth';
 import { checkThrottle, clientKey, recordFailure, recordSuccess } from '@/lib/rateLimit';
-import { isRealProduction } from '@/lib/env';
+import { appTokenMatches } from '@/lib/appToken';
 
 export const runtime = 'nodejs';
 
@@ -85,8 +85,7 @@ export async function POST(req: Request) {
     // does not bypass the password: an attacker still needs BOTH the leaked
     // app token AND the real password. Rate limiting applies unchanged.
     const appToken = String(body.appToken || '');
-    const isTrustedApp =
-      Boolean(process.env.APP_TOKEN) && appToken.length > 0 && appToken === process.env.APP_TOKEN;
+    const isTrustedApp = appTokenMatches(appToken);
 
     const ip = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for');
     const challengeOk = isTrustedApp ? true : await verifyTurnstile(turnstileToken, ip);
