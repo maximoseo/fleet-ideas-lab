@@ -37,6 +37,24 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
 
     Scaffold(
         contentWindowInsets = WindowInsets.navigationBars,
+        topBar = {
+            if (!hideBar) {
+                TopAppBar(
+                    title = { Text("Fleet Ideas Lab", style = androidx.compose.material3.MaterialTheme.typography.titleSmall) },
+                    actions = {
+                        IconButton(onClick = { navController.navigate("notifications") }) {
+                            Icon(Icons.Filled.Notifications, contentDescription = "Notifications")
+                        }
+                        IconButton(onClick = { navController.navigate("settings") }) {
+                            Icon(Icons.Filled.Settings, contentDescription = "Settings")
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface,
+                    ),
+                )
+            }
+        },
         bottomBar = {
             if (!hideBar) BottomBar(navController, route)
         }
@@ -54,7 +72,9 @@ fun AppNav(navController: NavHostController, startDestination: String, api: ApiC
             composable("gaps") { GapsScreen() }
             composable("create") { CreateScreen(api) }
             composable("update") { UpdateScreen() }
-            composable("notifications") { NotificationSettingsScreen(navController = navController, api = api, sessionStore = sessionStore) }
+            composable("settings") { SettingsScreen(navController = navController, api = api, sessionStore = sessionStore) }
+            // Legacy route — kept for deep links / old bell buttons; now delegates to Settings so nothing breaks
+            composable("notifications") { SettingsScreen(navController = navController, api = api, sessionStore = sessionStore) }
             composable("schema-studio") { SchemaStudioScreen(onNotifications = { navController.navigate("notifications") }) }
             composable("fleet-history") { FleetHistoryScreen(api) }
         }
