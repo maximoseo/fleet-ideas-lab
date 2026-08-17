@@ -30,7 +30,9 @@ import ai.maximo.ideaslab.ui.components.EmptyState
 import ai.maximo.ideaslab.ui.components.FilCard
 import ai.maximo.ideaslab.ui.components.FilInset
 import ai.maximo.ideaslab.ui.components.FilScreenHeader
+import ai.maximo.ideaslab.ui.components.FilListSkeleton
 import ai.maximo.ideaslab.ui.components.FilTag
+import ai.maximo.ideaslab.ui.components.SkeletonKind
 import ai.maximo.ideaslab.ui.theme.FilDimens
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
@@ -402,7 +404,9 @@ fun IdeasScreen(api: ApiClient, favoritesStore: FleetFavoritesStore? = null, see
                 item(key = "ideas-sentinel") {
                     Box(Modifier.fillMaxWidth().padding(vertical = 12.dp), contentAlignment = Alignment.Center) {
                         when {
-                            loadingMore -> Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) { CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp); Text("Loading more ideas…", style = FilType.label, color = p.accent) }
+                            // A skeleton says "two more idea cards land here";
+                            // a spinner only says "something is happening".
+                            loadingMore -> FilListSkeleton(SkeletonKind.IDEA, count = 2)
                             endOfFeed && ideas.isNotEmpty() -> Text("You've seen all ideas — pull to reshuffle", style = FilType.label, color = p.muted2)
                             else -> Spacer(Modifier.height(4.dp))
                         }

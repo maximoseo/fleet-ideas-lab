@@ -5,6 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -36,7 +38,13 @@ import ai.maximo.ideaslab.ui.components.FilCard
 import ai.maximo.ideaslab.ui.components.FilScreenHeader
 import ai.maximo.ideaslab.ui.components.FilState
 import ai.maximo.ideaslab.ui.components.HealthChip
-import ai.maximo.ideaslab.ui.components.LoadingShimmerCard
+import ai.maximo.ideaslab.ui.components.FilFleetStrip
+import ai.maximo.ideaslab.ui.components.LoadingShimmer
+import ai.maximo.ideaslab.ui.components.FilListSkeleton
+import ai.maximo.ideaslab.ui.components.FleetBar
+import ai.maximo.ideaslab.ui.components.SkeletonKind
+import ai.maximo.ideaslab.ui.components.filEntrance
+import ai.maximo.ideaslab.ui.components.rememberIncrementalWindow
 import ai.maximo.ideaslab.ui.components.color
 import ai.maximo.ideaslab.ui.theme.FilDimens
 import ai.maximo.ideaslab.ui.theme.FilShape
@@ -83,6 +91,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
     }
     fun doReload() { if (!refreshing) reloadTick++ }
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
+    val listState = rememberLazyListState()
 
     val baseSites = feed?.sites ?: emptyList()
     fun stateOf(site: FleetSite): FilState = FilState.of(feed?.health?.get(site.slug)?.state)
@@ -102,6 +111,13 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
         }
         sorted
     }
+
+    val window = rememberIncrementalWindow(
+        listState = listState,
+        totalCount = sites.size,
+        // Re-filtering or re-sorting must not leave a window into the old list.
+        resetKey = "${worstFirst}|${shuffleSeed}|${sites.size}",
+    )
 
     val f = feed
     val syncSubtitle = when {
@@ -149,33 +165,38 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
             Spacer(Modifier.height(8.dp))
         }
 
-        // Health summary strip — counts per band + the color rule in words.
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = FilDimens.screen),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            for (state in FilState.entries) {
-                val n = counts[state] ?: 0
-                val c = state.color()
-                Column(
-                    Modifier
-                        .weight(1f)
-                        .clip(FilShape.card)
-                        .background(if (n > 0) c.copy(alpha = 0.10f) else p.panel)
-                        .border(FilDimens.border, if (n > 0) c.copy(alpha = 0.30f) else p.line, FilShape.card)
-                        .padding(horizontal = 10.dp, vertical = 8.dp),
-                ) {
-                    Text("$n", style = FilType.data, color = if (n > 0) c else p.muted2)
-                    Text(state.word, style = FilType.label, color = if (n > 0) c else p.muted2, maxLines = 1)
-                }
-            }
+        // Fleet strip — one bar per dashboard, worst first, hatched stub for
+        // unknown, legend that counts each band AND states the rule in words.
+        // This replaces the four count tiles that used to sit here: the strip
+        // carries the same counts and the same sentence, plus the shape of the
+        // fleet, which four numbers cannot show.
+        if (f != null && baseSites.isNotEmpty()) {
+            FilFleetStrip(
+                bars = baseSites.map { site ->
+                    val st = stateOf(site)
+                    FleetBar(
+                        slug = site.slug,
+                        name = site.name,
+                        state = st,
+                        health = feed?.health?.get(site.slug)?.let { h ->
+                            // No probe latency yet means no reading, not a zero.
+                            if (h.lastStatus in 200..399) 90 else 40
+                        } ?: 0,
+                    )
+                },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = FilDimens.screen),
+            )
+            Spacer(Modifier.height(4.dp))
+        } else if (f == null) {
+            // Even the strip gets a placeholder — the header must not pop in.
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = FilDimens.screen)
+                    .height(64.dp),
+            ) { LoadingShimmer(Modifier.fillMaxSize()) }
+            Spacer(Modifier.height(8.dp))
         }
-        Text(
-            "Cool = fine · Warm = needs attention",
-            style = FilType.label,
-            color = p.muted2,
-            modifier = Modifier.padding(horizontal = FilDimens.screen).padding(top = 6.dp),
-        )
 
         // Controls: triage sort + shuffle + manual reload.
         Row(
@@ -206,6 +227,7 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
 
         Box(Modifier.fillMaxSize().pullRefresh(pullState)) {
             LazyColumn(
+                state = listState,
                 verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap),
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -216,7 +238,9 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                 ),
             ) {
                 if (feed == null) {
-                    items(4) { LoadingShimmerCard() }
+                    // Shaped like the row that is coming, so the list does not
+                    // jump when the feed lands.
+                    item { FilListSkeleton(SkeletonKind.SITE, count = 4) }
                 } else if (sites.isEmpty()) {
                     item {
                         EmptyState(
@@ -226,17 +250,24 @@ fun InventoryScreen(navController: NavController? = null, onNotifications: () ->
                         )
                     }
                 } else {
-                    items(sites, key = { it.slug }) { site ->
+                    // All 38 cards used to mount on the first frame. Render a
+                    // window and extend it on scroll — same helper the Ideas
+                    // feed uses, so there is one implementation of this.
+                    itemsIndexed(sites.take(window.shown), key = { _, it -> it.slug }) { index, site ->
                         InventoryRow(
                             site = site,
                             state = stateOf(site),
                             feed = feed,
+                            modifier = Modifier.filEntrance(index),
                             onCopyImprove = {
                                 val brief = buildImprovePromptForProject(site)
                                 clipboardImprove.setText(AnnotatedString(brief))
                                 Toast.makeText(ctx, "IMPROVE brief copied (" + site.slug + ")", Toast.LENGTH_SHORT).show()
                             },
                         )
+                    }
+                    if (window.hasMore) {
+                        item { FilListSkeleton(SkeletonKind.SITE, count = 1) }
                     }
                     item {
                         Column(Modifier.fillMaxWidth().padding(top = 8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
@@ -266,6 +297,7 @@ private fun InventoryRow(
     site: FleetSite,
     state: FilState,
     feed: FleetFeed?,
+    modifier: Modifier = Modifier,
     onCopyImprove: () -> Unit,
 ) {
     val p = FilTheme.palette
@@ -280,6 +312,7 @@ private fun InventoryRow(
         else -> "build" to p.warn
     }
     FilCard(
+        modifier = modifier,
         accent = stateColor,
         contentDescription = "${site.name}, ${state.word}, checked ${if (checked.isEmpty()) "never" else checked}",
     ) {

@@ -8,14 +8,14 @@
  * app shipped 1.3.6).
  */
 export const APP_VERSION = {
-  versionCode: 34,
-  versionName: "1.3.8",
+  versionCode: 35,
+  versionName: "1.4.0",
   minSdk: 24,
   targetSdk: 36,
-  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.3.8/app-release.apk",
+  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.4.0/app-release.apk",
   fallbackUrl: "https://fleet-ideas-lab.maximo-seo.ai/api/app/download",
   changelog:
-    "1.3.8 Security review follow-ups: the app now stores your password only when biometric unlock is actually available, logout clears the saved username as well as the password, and a rejected access token says so plainly instead of looking like being offline. Carries 1.3.7's R8 shrinking (APK 2.9 MB, down from 15 MB) and the signed AAB.",
+    "1.4.0 Visual release. Fleet strip on Inventory — one bar per dashboard, worst first, hatched for unknown, with the colour rule written out. Health tracks replace score badges so you compare by position, not by decoding a colour. Skeletons shaped like the row that is coming, everywhere a list used to appear blank. Inventory renders a page at a time instead of mounting all 38 cards. Favourites no longer flashes \"no favourites\" before the store answers. One staggered entrance animation, skipped entirely if you have animations turned off in Android settings.",
   mandatory: false,
-  releasedAt: "2026-08-17T20:30:00Z",
+  releasedAt: "2026-08-17T21:15:00Z",
 } as const;

@@ -5,6 +5,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.devtools.ksp")
+    id("io.github.takahirom.roborazzi")
 }
 
 // Secrets/signing live in android/local.properties (gitignored) — never in git.
@@ -28,8 +29,8 @@ android {
         applicationId = "ai.maximo.ideaslab"
         minSdk = 24
         targetSdk = 36
-        versionCode = 34
-        versionName = "1.3.8"
+        versionCode = 35
+        versionName = "1.4.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { useSupportLibrary = true }
@@ -79,6 +80,13 @@ android {
         compose = true
         buildConfig = true
     }
+
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { it.systemProperty("robolectric.graphicsMode", "NATIVE") }
+        }
+    }
     composeOptions { kotlinCompilerExtensionVersion = "1.5.14" }
 
     packaging { resources { excludes += "/META-INF/{AL2.0,LGPL2.1}" } }
@@ -122,6 +130,19 @@ implementation("androidx.core:core-ktx:1.12.0")
     // parser test fails with "not mocked".
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.json:json:20240303")
+
+    // Screenshot rendering on the JVM. Debug variant only — these are a
+    // development instrument, and the release unit-test gate should stay fast
+    // and free of golden-image comparisons. There is no emulator and no /dev/kvm on
+    // the build machine, so this is the only way to LOOK at a Compose screen
+    // before shipping it. Robolectric renders at its own SDK level, which is
+    // why this works where Paparazzi did not: Paparazzi's layoutlib is pinned
+    // to the compileSdk, and compileSdk here is 36.
+    testDebugImplementation("org.robolectric:robolectric:4.14.1")
+    testDebugImplementation("io.github.takahirom.roborazzi:roborazzi:1.32.2")
+    testDebugImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.32.2")
+    testDebugImplementation("androidx.compose.ui:ui-test-junit4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
 
 ksp { arg("room.schemaLocation", "$projectDir/schemas") }

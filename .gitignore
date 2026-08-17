@@ -54,3 +54,7 @@ android/local.properties
 *.bak
 *.bak.*
 *.orig
+
+# Roborazzi output — regenerate with:
+#   ./gradlew :app:testDebugUnitTest -Proborazzi.test.record=true
+android/app/build/screenshots/

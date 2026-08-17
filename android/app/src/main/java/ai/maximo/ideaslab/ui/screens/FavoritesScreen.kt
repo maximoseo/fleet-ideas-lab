@@ -3,6 +3,7 @@ package ai.maximo.ideaslab.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
@@ -22,6 +23,9 @@ import ai.maximo.ideaslab.data.FleetFavoritesStore
 import ai.maximo.ideaslab.data.buildAgentPrompt
 import ai.maximo.ideaslab.data.buildImprovePrompt
 import ai.maximo.ideaslab.ui.components.EmptyState
+import ai.maximo.ideaslab.ui.components.FilListSkeleton
+import ai.maximo.ideaslab.ui.components.SkeletonKind
+import ai.maximo.ideaslab.ui.components.filEntrance
 import ai.maximo.ideaslab.ui.components.FilCard
 import ai.maximo.ideaslab.ui.components.FilInset
 import ai.maximo.ideaslab.ui.components.FilScreenHeader
@@ -30,6 +34,7 @@ import ai.maximo.ideaslab.ui.theme.FilDimens
 import ai.maximo.ideaslab.ui.theme.FilTheme
 import ai.maximo.ideaslab.ui.theme.FilType
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -39,7 +44,14 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
     val ctx = LocalContext.current
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
-    val favSet by favoritesStore?.favoritesFlow()?.collectAsState(initial = emptySet()) ?: remember { mutableStateOf(emptySet<String>()) }
+    // null = the store has not answered yet. The old code seeded this with an
+    // empty set, so the screen confidently rendered "No favorites yet" for one
+    // frame on every visit — a wrong answer, not a loading state.
+    val favSetOrNull by favoritesStore?.favoritesFlow()?.map { it as Set<String>? }
+        ?.collectAsState(initial = null)
+        ?: remember { mutableStateOf(emptySet<String>() as Set<String>?) }
+    val loading = favSetOrNull == null
+    val favSet = favSetOrNull ?: emptySet()
     var refreshing by remember { mutableStateOf(false) }
     fun doReload() { scope.launch { refreshing = true; delay(400); refreshing = false; Toast.makeText(ctx, "Favorites · ${favSet.size} saved", Toast.LENGTH_SHORT).show() } }
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
@@ -70,7 +82,10 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
                 }
             }
             Spacer(Modifier.height(12.dp))
-            if (list.isEmpty()) {
+            if (loading) {
+                // Never claim "no favorites" before the store has answered.
+                FilListSkeleton(SkeletonKind.IDEA, count = 3)
+            } else if (list.isEmpty()) {
                 EmptyState(
                     title = "No favorites yet",
                     body = "Go to Ideas and tap ☆ on any card — it turns ★ and appears here. Survives reload and restart.",
@@ -83,9 +98,9 @@ fun FavoritesScreen(favoritesStore: FleetFavoritesStore? = null, onBrowseIdeas: 
                 }
             } else {
                 LazyColumn(verticalArrangement = Arrangement.spacedBy(FilDimens.cardGap), modifier = Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 80.dp + 24.dp, top = 4.dp)) {
-                    items(list) { idea ->
+                    itemsIndexed(list) { index, idea ->
                         var expanded by remember(idea.slug) { mutableStateOf(false) }
-                        FilCard {
+                        FilCard(modifier = Modifier.filEntrance(index)) {
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
                                 Text(idea.title, style = FilType.cardTitle, color = p.text, modifier = Modifier.weight(1f).padding(end = 8.dp), maxLines = 2, overflow = TextOverflow.Ellipsis)
                                 FilTag(text = "★ saved", color = p.accent)
