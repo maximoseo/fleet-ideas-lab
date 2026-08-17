@@ -10,7 +10,7 @@ export const runtime = "nodejs";
  * installed an app that can never be updated in place and has to be uninstalled first.
  */
 const APK_URL =
-  "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.3.0/fleet-ideas-lab-v1.3.0.apk";
+  "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.3.0/app-release.apk";
 
 export async function GET() {
   // Redirect to the GitHub Release artifact — Vercel keeps the stable /api/app/download URL
