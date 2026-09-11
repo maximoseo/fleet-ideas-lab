@@ -9,6 +9,6 @@ export const runtime = "nodejs";
 export async function GET(req: Request): Promise<Response> {
   return new Response(JSON.stringify(buildOpenApi(APP, routes, originOf(req, APP)), null, 2), {
     status: 200,
-    headers: { "content-type": "application/json", "cache-control": "public, max-age=300", vary: "host, x-forwarded-host" },
+    headers: { "content-type": "application/json", "cache-control": "public, max-age=300", vary: "host, x-forwarded-host, x-forwarded-proto" },
   });
 }

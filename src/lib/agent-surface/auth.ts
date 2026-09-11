@@ -26,12 +26,19 @@ function safeEq(a: string, b: string): boolean {
   return timingSafeEqual(ha, hb);
 }
 
-export function presentedKey(req: Request): string | null {
+/** Every credential the request presents: Bearer token and/or x-api-key (both are checked). */
+export function presentedKeys(req: Request): string[] {
+  const out: string[] = [];
   const auth = req.headers.get("authorization") ?? "";
   const m = /^Bearer\s+(.+)$/i.exec(auth.trim());
-  if (m && m[1]) return m[1].trim();
+  if (m && m[1]) out.push(m[1].trim());
   const x = req.headers.get("x-api-key");
-  return x && x.trim() ? x.trim() : null;
+  if (x && x.trim()) out.push(x.trim());
+  return out;
+}
+
+export function presentedKey(req: Request): string | null {
+  return presentedKeys(req)[0] ?? null;
 }
 
 const warnedShort = new Set<string>();
@@ -55,11 +62,11 @@ export function agentSurfaceConfigured(): boolean {
 export function checkAgentKey(req: Request): AuthOk | AuthFail {
   const keys = configuredKeys();
   if (!keys.length) return { ok: false, status: 503, error: "agent surface not configured" };
-  const presented = presentedKey(req);
-  if (!presented) return { ok: false, status: 401, error: "unauthorized" };
-  // compare against every configured key (constant work per key) — no early exit on match position
+  const presented = presentedKeys(req);
+  if (!presented.length) return { ok: false, status: 401, error: "unauthorized" };
+  // every presented credential against every configured key (constant work) — no early exit on match position
   let matched: string | null = null;
-  for (const k of keys) if (safeEq(presented, k)) matched = k;
+  for (const p of presented) for (const k of keys) if (safeEq(p, k)) matched = k;
   if (!matched) return { ok: false, status: 401, error: "unauthorized" };
   return { ok: true, keyId: keyIdOf(matched) };
 }

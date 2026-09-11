@@ -110,6 +110,7 @@ export async function handleRest(req: Request, app: AppInfo, routes: Route[], su
 
   const auth = requireAgentKey(req);
   if (auth.deny) {
+    if (auth.deny.status === 503) return finish(auth.deny, "-"); // unconfigured: not a failed attempt
     const brake = takeAuthFailure(req);
     return finish(brake.allowed ? auth.deny : rateLimitResponse(brake), "-");
   }

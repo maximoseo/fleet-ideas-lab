@@ -39,7 +39,7 @@ export function buildOpenApi(app: AppInfo, routes: Route[], origin: string): Rec
       const bodyRequired = [...required].filter((k) => !pathParams.includes(k));
       op.requestBody = {
         required: Boolean(bodyRequired.length),
-        content: { "application/json": { schema: { type: "object", properties: bodyProps, required: bodyRequired.length ? bodyRequired : undefined } } },
+        content: { "application/json": { schema: { type: "object", properties: bodyProps, required: bodyRequired.length ? bodyRequired : undefined, additionalProperties: r.input?.additionalProperties } } },
       };
     }
     if (parameters.length) op.parameters = parameters;

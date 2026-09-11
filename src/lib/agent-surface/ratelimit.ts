@@ -47,9 +47,10 @@ export function takeToken(keyId: string, now = Date.now()): RateResult {
   return take(`key:${keyId}`, CAPACITY, REFILL_PER_MS, now);
 }
 
-/** Vercel sets x-forwarded-for from the edge; the first hop is the client. */
+/** Vercel stamps the trusted client IP in x-vercel-forwarded-for; x-forwarded-for is the fallback elsewhere. */
 export function clientIp(req: Request): string {
-  return (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || "unknown";
+  const v = req.headers.get("x-vercel-forwarded-for") ?? req.headers.get("x-forwarded-for") ?? "";
+  return v.split(",")[0].trim() || "unknown";
 }
 
 /** Failed-auth attempts: 20/min per client IP, so a key cannot be brute-forced against one instance. */

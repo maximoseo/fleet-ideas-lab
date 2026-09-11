@@ -28,14 +28,29 @@ type Q = {
 };
 export type Db = { from: (table: string) => Q };
 
-export const SECRET_COLUMN = /(token|secret|password|passwd|api_key|apikey|private_key|credential|cookie|session|salt|hash|auth_header|bearer|refresh|client_secret|encrypted|ssh|webhook_url|dsn)/i;
+// Secret-ish column names by segment (split on _ - space / camelCase): a column is withheld when a
+// segment is a secret word or a known pair (api key, private key, client secret, refresh token, app password,
+// auth header, webhook url). Metrics like tokens_in / total_tokens / content_hash / session_id stay visible.
+const SECRET_WORDS = new Set(["token", "secret", "password", "passwd", "apikey", "credential", "credentials", "cookie", "salt", "bearer", "dsn", "ssh", "encrypted", "jwt"]);
+const SECRET_PAIRS = new Set(["api key", "private key", "client secret", "refresh token", "access token", "app password", "auth header", "webhook url", "signing key", "service key", "service role"]);
+// "<something>_key" is a credential (openrouter_key, bing_key, service_key…) unless the prefix is one of these non-secret senses
+const SAFE_KEY_PREFIX = new Set(["kpi", "idempotency", "commit", "metric", "primary", "foreign", "sort", "cache", "finding", "row", "step", "event", "group", "partition", "translation", "i18n", "lookup", "dedupe", "dedup", "cursor", "page", "map", "column", "field", "prompt", "template", "feature", "flag", "config", "setting", "locale"]);
+export function isSecretColumn(name: string): boolean {
+  const segs = name.replace(/([a-z0-9])([A-Z])/g, "$1 $2").toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
+  if (segs.some((w) => SECRET_WORDS.has(w))) return true;
+  for (let i = 0; i + 1 < segs.length; i++) if (SECRET_PAIRS.has(`${segs[i]} ${segs[i + 1]}`)) return true;
+  if (segs.length > 1 && segs[segs.length - 1] === "key" && !SAFE_KEY_PREFIX.has(segs[segs.length - 2])) return true;
+  return false;
+}
+/** kept for callers that test a key name; prefer isSecretColumn() */
+export const SECRET_COLUMN = { test: isSecretColumn };
 
 export function redact<T>(row: T): T {
   if (!row || typeof row !== "object") return row;
   if (Array.isArray(row)) return row.map((v) => redact(v)) as unknown as T;
   const out: Record<string, unknown> = {};
   for (const [k, v] of Object.entries(row as Record<string, unknown>)) {
-    if (SECRET_COLUMN.test(k)) continue;
+    if (isSecretColumn(k)) continue;
     out[k] = v && typeof v === "object" ? redact(v) : v;
   }
   return out as T;
@@ -55,10 +70,12 @@ export type EntitySpec = {
   searchColumns?: string[];
   orderBy?: string;
   ascending?: boolean;
-  /** equality filters exposed as query params, e.g. ["status", "client_id"] */
+  /** equality filters exposed as query params, e.g. ["status", "client_id", "active:boolean", "rating:integer"] */
   filters?: string[];
   /** soft-delete guard: columns that must be NULL on every row returned, e.g. ["deleted_at"] */
   isNull?: string[];
+  /** fixed equality predicates applied to every query (list, get, search, stats) — ownership scope the caller cannot widen, e.g. { kind: "ca_single" } */
+  where?: Record<string, string | number | boolean>;
   /** columns to count by in <entity>_stats, e.g. ["status"] */
   groupBy?: string[];
   maxLimit?: number;
@@ -79,27 +96,37 @@ export function entityRoutes(db: () => Db, spec: EntitySpec): Route[] {
   const orderCol = spec.orderBy ?? "created_at";
   const base = `${spec.pathPrefix ?? ""}/${spec.entity}`;
   const want = new Set(spec.only ?? ["list", "get", "search", "stats"]);
-  const guard = (q: Q): Q => (spec.isNull ?? []).reduce((acc, c) => acc.is(c, null), q);
+  const guard = (q: Q): Q => {
+    let g = (spec.isNull ?? []).reduce((acc, c) => acc.is(c, null), q);
+    for (const [c, v] of Object.entries(spec.where ?? {})) g = g.eq(c, v);
+    return g;
+  };
+  // "col" or "col:boolean|integer|number" — the type drives validation and coercion, so an agent can pass true / 5
+  const filterSpecs = (spec.filters ?? []).map((f) => {
+    const [name, t] = f.split(":");
+    const type = t === "boolean" || t === "integer" || t === "number" ? t : "string";
+    return { name, type } as { name: string; type: "string" | "boolean" | "integer" | "number" };
+  });
   const finish = (rows: unknown[]) => rows.map((r) => redact(r as Record<string, unknown>)).map((r) => (spec.map ? spec.map(r) : r));
   const routes: Route[] = [];
 
   if (want.has("list")) {
-    const props: Record<string, { type: "integer" | "string" | "boolean"; description?: string; minimum?: number; maximum?: number; default?: unknown }> = {
+    const props: Record<string, { type: "integer" | "string" | "boolean" | "number"; description?: string; minimum?: number; maximum?: number; default?: unknown }> = {
       limit: { type: "integer", description: `rows to return (1–${maxLimit})`, minimum: 1, maximum: maxLimit, default: 25 },
       offset: { type: "integer", description: "rows to skip", minimum: 0, default: 0 },
     };
-    for (const f of spec.filters ?? []) props[f] = { type: "string", description: `filter: ${f} equals` };
+    for (const f of filterSpecs) props[f.name] = { type: f.type, description: `filter: ${f.name} equals` };
     routes.push({
       name: `list_${spec.entity}`,
       method: "GET",
       path: base,
-      summary: `List ${spec.summary} (newest first, paginated).`,
+      summary: `List ${spec.summary} (ordered by ${orderCol} ${spec.ascending ? "ascending" : "descending"}, paginated).`,
       input: { type: "object", properties: props, additionalProperties: false },
       handler: async (input) => {
         const limit = Math.min(Number(input.limit ?? 25), maxLimit);
         const offset = Number(input.offset ?? 0);
         let q = guard(db().from(spec.table).select(select, { count: "exact" }));
-        for (const f of spec.filters ?? []) if (input[f] !== undefined && input[f] !== "") q = q.eq(f, input[f]);
+        for (const f of filterSpecs) if (input[f.name] !== undefined && input[f.name] !== "") q = q.eq(f.name, input[f.name]);
         q = q.order(orderCol, { ascending: spec.ascending ?? false, nullsFirst: false }).range(offset, offset + limit - 1);
         const { data, error, count } = await q;
         if (error) fail(error);
@@ -169,7 +196,9 @@ export function entityRoutes(db: () => Db, spec: EntitySpec): Route[] {
         for (const col of spec.groupBy ?? []) {
           const { data, error: e2 } = await guard(db().from(spec.table).select(col)).limit(SCAN_CAP);
           if (e2) fail(e2);
-          if (((data as unknown[]) ?? []).length >= SCAN_CAP) truncated = true;
+          // truncated when the scan holds fewer rows than the authoritative count (our cap or PostgREST's max-rows)
+          const scanned = ((data as unknown[]) ?? []).length;
+          if (scanned < (count ?? 0)) truncated = true;
           const c: Record<string, number> = {};
           for (const row of (data as Record<string, unknown>[]) ?? []) {
             const k = String(row[col] ?? "null");

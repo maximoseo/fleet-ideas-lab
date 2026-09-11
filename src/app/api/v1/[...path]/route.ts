@@ -2,7 +2,7 @@ import { handleRest } from "../../../../../src/lib/agent-surface/rest";
 import { APP, routes } from "../../../../../src/lib/agent-surface/routes";
 
 // Agent surface — REST. Every operation comes from lib/agent-surface/routes.ts;
-// the same table generates /api/openapi.json and the MCP tools at /api/mcp.
+// the same table generates /api/openapi.json and the MCP tools (APP.mcpPath, default /api/mcp).
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 

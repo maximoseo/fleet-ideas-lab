@@ -88,7 +88,7 @@ export function buildMcpHandler(app: AppInfo, routes: Route[]): (req: Request) =
       }
     }
     let op = req.method.toLowerCase();
-    if (req.method === "POST") {
+    if (req.method === "POST" && auth.ok === true) { // unauthenticated callers get the 401 below, not a body inspection
       try {
         const body = await req.clone().json();
         if (Array.isArray(body)) {
@@ -101,8 +101,15 @@ export function buildMcpHandler(app: AppInfo, routes: Route[]): (req: Request) =
         /* not JSON — the SDK answers */
       }
     }
-    const res = await authed(req);
-    audit({ surface: "mcp", op, keyId: auth.ok === true ? auth.keyId : "-", status: res.status, ms: Date.now() - t0 });
+    let res: Response;
+    try {
+      res = await authed(req);
+    } catch (e) {
+      console.error("agent-surface mcp handler error", e instanceof Error ? e.message : e);
+      res = new Response(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32603, message: "internal error" } }), { status: 500, headers: { "content-type": "application/json" } });
+    }
+    // tools/call is audited per tool inside the callback; everything else gets one line here
+    if (op !== "tools/call" || res.status !== 200) audit({ surface: "mcp", op, keyId: auth.ok === true ? auth.keyId : "-", status: res.status, ms: Date.now() - t0 });
     return res;
   };
 }

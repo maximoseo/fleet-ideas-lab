@@ -12,7 +12,8 @@
   "auth": {
     "env": "AGENT_API_KEY",
     "header": "Authorization: Bearer <key>",
-    "alt_header": "x-api-key"
+    "alt_header": "x-api-key",
+    "secondary_env": "DASHBOARD_AGENT_API_KEY (accepted when set — parallel rollout of 2026-09-11)"
   },
   "rate_limit": "60/min per key (per instance)",
   "surface": "v1",
