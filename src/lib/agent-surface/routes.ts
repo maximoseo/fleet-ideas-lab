@@ -79,13 +79,20 @@ export const routes: Route[] = [
     handler: async (input) => {
       const curated = [...FLEET_IDEAS, ...FLEET_GENERATED_POOL];
       let statuses: Record<string, IdeaRow> = {};
+      let boardOk = false; // true only once the board statuses were actually read
       if (supabaseEnabled()) {
-        const rows = await sbSelect<IdeaRow>("fil_ideas", "select=slug,title,payload,status,priority,effort,created_at,updated_at");
-        statuses = Object.fromEntries(rows.map((r) => [r.slug, r]));
+        try {
+          const rows = await sbSelect<IdeaRow>("fil_ideas", "select=slug,title,payload,status,priority,effort,created_at,updated_at");
+          statuses = Object.fromEntries(rows.map((r) => [r.slug, r]));
+          boardOk = true;
+        } catch (e) {
+          // the curated list is still useful without the board; say so instead of failing the whole call
+          console.error("agent-surface list_ideas: board read failed", e instanceof Error ? e.message : e);
+        }
       }
       let items = curated.map((i) => ({ ...i, board: statuses[i.slug] ? { status: statuses[i.slug].status, updated_at: statuses[i.slug].updated_at } : null }));
       if (input.status) items = items.filter((i) => i.board?.status === String(input.status));
-      return { items, count: items.length, supabase: supabaseEnabled() };
+      return { items, count: items.length, board: boardOk ? "ok" : supabaseEnabled() ? "unavailable" : "not configured" };
     },
   },
   {
