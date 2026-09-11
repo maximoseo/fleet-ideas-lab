@@ -1,0 +1,72 @@
+{
+  "$schema": "https://maximo-seo.ai/schemas/agent-surface-v1.json",
+  "id": "fleet-ideas-lab",
+  "name": "Fleet Ideas Lab",
+  "hosts": [
+    "fleet-ideas-lab.maximo-seo.ai"
+  ],
+  "openapi": "https://fleet-ideas-lab.maximo-seo.ai/api/openapi.json",
+  "mcp": "https://fleet-ideas-lab.maximo-seo.ai/api/mcp",
+  "rest": "https://fleet-ideas-lab.maximo-seo.ai/api/v1",
+  "health": "https://fleet-ideas-lab.maximo-seo.ai/api/v1/health",
+  "auth": {
+    "env": "AGENT_API_KEY",
+    "header": "Authorization: Bearer <key>",
+    "alt_header": "x-api-key"
+  },
+  "rate_limit": "60/min per key (per instance)",
+  "surface": "v1",
+  "tools": [
+    {
+      "name": "health",
+      "method": "GET",
+      "path": "/api/v1/health",
+      "summary": "Health of the Fleet Ideas Lab agent surface: ok, git sha, tool count.",
+      "write": false
+    },
+    {
+      "name": "list_inventory",
+      "method": "GET",
+      "path": "/api/v1/inventory",
+      "summary": "The fleet inventory (slug, name, url, domains, capabilities, status) with live health when probes exist.",
+      "write": false
+    },
+    {
+      "name": "fleet_audit",
+      "method": "GET",
+      "path": "/api/v1/audit",
+      "summary": "Capability audit score per dashboard (what the audit page shows).",
+      "write": false
+    },
+    {
+      "name": "gap_radar",
+      "method": "GET",
+      "path": "/api/v1/gaps",
+      "summary": "Gap radar: domains × capabilities coverage matrix across the fleet.",
+      "write": false
+    },
+    {
+      "name": "generated_ideas",
+      "method": "GET",
+      "path": "/api/v1/ideas/generated",
+      "summary": "Ideas generated from the gap radar (title, domain, kind, priority, effort).",
+      "write": false
+    },
+    {
+      "name": "list_ideas",
+      "method": "GET",
+      "path": "/api/v1/ideas",
+      "summary": "The idea board: curated + pooled ideas with their current status from Supabase (backlog / planned / building / live …).",
+      "write": false
+    },
+    {
+      "name": "list_idea_events",
+      "method": "GET",
+      "path": "/api/v1/ideas/events",
+      "summary": "Idea status transitions (slug, from → to, note), newest first.",
+      "write": false
+    }
+  ],
+  "write_tools": [],
+  "tool_count": 7
+}
