@@ -17,6 +17,10 @@ import type { AppInfo, Route } from "./types";
  */
 export function buildMcpHandler(app: AppInfo, routes: Route[]): (req: Request) => Promise<Response> {
   const table = allRoutes(app, routes);
+  // per-request marker: set by the tool callback once it has written its own audit line, so the
+  // outer handler still audits a tools/call that never reached a callback (unknown tool, schema
+  // rejection — HTTP 200 with a JSON-RPC error) without double-counting the ones that did
+  const marks = new WeakMap<Request, { audited: boolean }>();
 
   const core = createMcpHandler(
     (server) => {
@@ -33,15 +37,18 @@ export function buildMcpHandler(app: AppInfo, routes: Route[]): (req: Request) =
             const t0 = Date.now();
             const keyId = String(ctx.http?.authInfo?.clientId ?? "-");
             const origin = ctx.http?.authInfo?.extra?.origin ? String(ctx.http.authInfo.extra.origin) : `https://${app.hosts[0]}`;
+            const mark = ctx.http?.authInfo?.extra?.mark as { audited: boolean } | undefined;
             try {
               const result = await invoke(r, args ?? {}, { keyId, surface: "mcp", origin });
               audit({ surface: "mcp", op: r.name, keyId, status: 200, ms: Date.now() - t0 });
+              if (mark) mark.audited = true;
               return { content: [{ type: "text" as const, text: JSON.stringify(result, null, 1) }] };
             } catch (e) {
               const status = e instanceof RouteError ? e.status : 500;
               const code = e instanceof RouteError ? e.code : "internal_error";
               const msg = e instanceof Error ? e.message : "internal_error";
               audit({ surface: "mcp", op: r.name, keyId, status, ms: Date.now() - t0 });
+              if (mark) mark.audited = true;
               if (status >= 500) console.error("agent-surface mcp error", r.name, msg);
               // 4xx carry their message (validation, not-found, confirm); 5xx detail stays in the log
               return { isError: true, content: [{ type: "text" as const, text: JSON.stringify(status < 500 ? { error: code, message: msg.slice(0, 300) } : { error: code }) }] };
@@ -62,7 +69,9 @@ export function buildMcpHandler(app: AppInfo, routes: Route[]): (req: Request) =
     (req) => {
       const r = checkAgentKey(req);
       if (r.ok !== true) return undefined;
-      return { token: r.keyId, clientId: r.keyId, scopes: ["agent"], extra: { origin: originOf(req, app) } };
+      const mark = { audited: false };
+      marks.set(req, mark);
+      return { token: r.keyId, clientId: r.keyId, scopes: ["agent"], extra: { origin: originOf(req, app), mark } };
     },
     { required: true },
   );
@@ -108,8 +117,9 @@ export function buildMcpHandler(app: AppInfo, routes: Route[]): (req: Request) =
       console.error("agent-surface mcp handler error", e instanceof Error ? e.message : e);
       res = new Response(JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32603, message: "internal error" } }), { status: 500, headers: { "content-type": "application/json" } });
     }
-    // tools/call is audited per tool inside the callback; everything else gets one line here
-    if (op !== "tools/call" || res.status !== 200) audit({ surface: "mcp", op, keyId: auth.ok === true ? auth.keyId : "-", status: res.status, ms: Date.now() - t0 });
+    // tools/call is audited per tool inside the callback; everything else — and a tools/call that never
+    // reached a callback (unknown tool, schema rejection, transport error) — gets one line here
+    if (op !== "tools/call" || !marks.get(req)?.audited) audit({ surface: "mcp", op, keyId: auth.ok === true ? auth.keyId : "-", status: res.status, ms: Date.now() - t0 });
     return res;
   };
 }

@@ -23,7 +23,11 @@ export function buildOpenApi(app: AppInfo, routes: Route[], origin: string): Rec
         "200": { description: "OK", content: { "application/json": { schema: r.output ?? { type: "object" } } } },
         "400": { description: "Invalid input, or a write called without confirm: true" },
         "401": { description: "Missing or invalid key" },
+        "404": { description: "No such row" },
+        "405": { description: "Method not allowed on this path (Allow header lists the methods)" },
         "429": { description: "Rate limited (60 requests / minute)" },
+        "500": { description: "Internal error (detail in the server log, never in the body)" },
+        "502": { description: "Upstream (database / internal route) failed" },
         "503": { description: "Agent surface not configured on this deployment" },
       },
     };

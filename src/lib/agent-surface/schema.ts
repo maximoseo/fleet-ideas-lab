@@ -102,7 +102,7 @@ export function parseInput(schema: ObjectSchema | undefined, raw: Record<string,
   // Write routes carry `confirm` in their schema (rest.ts withConfirm), so no special case here.
   const issues: Issue[] = [];
   for (const [k, v] of Object.entries(raw)) {
-    if (value[k] !== undefined || Object.prototype.hasOwnProperty.call(s.properties, k)) continue;
+    if (Object.prototype.hasOwnProperty.call(value, k) || Object.prototype.hasOwnProperty.call(s.properties, k)) continue; // own keys only: "toString" is not present just because Object has it
     if (s.additionalProperties !== false) value[k] = fromQuery ? coerce({ type: "string" }, v) : v;
     else issues.push({ message: `unknown property "${k}"`, path: [k] });
   }

@@ -40,13 +40,27 @@ class Query implements PromiseLike<Result> {
     if (this.wantCount) prefer.push("count=exact");
     if (prefer.length) headers.Prefer = prefer.join(",");
     if (this.rng) headers.Range = `${this.rng[0]}-${this.rng[1]}`;
-    if (this.head) headers.Range = "0-0";
-    const res = await fetch(url, { headers, cache: "no-store" });
-    if (!res.ok && res.status !== 206) return { data: null, error: { message: `postgrest ${res.status}` } };
+    // head: count only — HEAD carries Content-Range without a body
+    let res: Response;
+    try {
+      // bounded: a hung PostgREST must not pin a serverless invocation until the platform kills it
+      res = await fetch(url, { method: this.head ? "HEAD" : "GET", headers, cache: "no-store", signal: AbortSignal.timeout(20_000) });
+    } catch (e) {
+      return { data: null, error: { message: e instanceof Error && e.name === "TimeoutError" ? "postgrest timeout" : "postgrest unreachable" } };
+    }
     const cr = res.headers.get("content-range") ?? "";
     const m = /\/(\d+|\*)$/.exec(cr);
     const count = m && m[1] !== "*" ? Number(m[1]) : null;
-    const data = this.head ? [] : ((await res.json()) as unknown);
+    if (res.status === 416) return { data: [], error: null, count }; // offset past the last row: an empty page, not an error
+    if (!res.ok) return { data: null, error: { message: `postgrest ${res.status}` } };
+    let data: unknown = [];
+    if (!this.head) {
+      try {
+        data = (await res.json()) as unknown;
+      } catch {
+        return { data: null, error: { message: "postgrest returned a non-JSON body" } };
+      }
+    }
     return { data, error: null, count };
   }
   then<T1 = Result, T2 = never>(onfulfilled?: ((v: Result) => T1 | PromiseLike<T1>) | null, onrejected?: ((e: unknown) => T2 | PromiseLike<T2>) | null): PromiseLike<T1 | T2> {

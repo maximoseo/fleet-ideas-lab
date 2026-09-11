@@ -76,12 +76,15 @@ function matchPath(template: string, actual: string): Record<string, string> | n
 
 /** Request origin — only trusted when the host is one of the app's own hosts (or a Vercel preview). */
 export function originOf(req: Request, app?: AppInfo): string {
-  const proto = req.headers.get("x-forwarded-proto") ?? "https";
   const host = (req.headers.get("x-forwarded-host") ?? req.headers.get("host") ?? new URL(req.url).host).toLowerCase();
   const hostname = host.replace(/:\d+$/, "");
+  // x-forwarded-proto is only honoured as http for a local run; everything else is https (never a caller-chosen scheme)
+  const local = hostname === "localhost" || hostname === "127.0.0.1";
+  const proto = local && req.headers.get("x-forwarded-proto") === "http" ? "http" : "https";
   // own = configured hosts, this deployment's Vercel URLs, or a local run — never an arbitrary *.vercel.app
   const vercelOwn = [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL, process.env.VERCEL_PROJECT_PRODUCTION_URL].filter(Boolean).map((h) => String(h).toLowerCase());
-  const own = !app || app.hosts.includes(hostname) || vercelOwn.includes(hostname) || hostname === "localhost" || hostname === "127.0.0.1";
+  if (!app) return `${proto}://${host}`;
+  const own = app.hosts.includes(hostname) || vercelOwn.includes(hostname) || local;
   return own ? `${proto}://${host}` : `https://${app.hosts[0]}`;
 }
 
@@ -121,7 +124,10 @@ export async function handleRest(req: Request, app: AppInfo, routes: Route[], su
   const candidates = table.filter((r) => matchPath(r.path, path) !== null).sort((a, b) => paramCount(a) - paramCount(b));
   if (!candidates.length) return finish(json({ error: "not_found", path }, 404), auth.keyId);
   const route = candidates.find((r) => r.method === req.method);
-  if (!route) return finish(json({ error: "method_not_allowed", allowed: candidates.map((r) => r.method) }, 405, { allow: candidates.map((r) => r.method).join(", ") }), auth.keyId);
+  if (!route) {
+    const allowed = [...new Set(candidates.map((r) => r.method))];
+    return finish(json({ error: "method_not_allowed", allowed }, 405, { allow: allowed.join(", ") }), auth.keyId);
+  }
 
   // null-prototype + own-key copy: a "__proto__" key in a body or query can never reach the prototype chain
   const raw: Record<string, unknown> = Object.create(null);
