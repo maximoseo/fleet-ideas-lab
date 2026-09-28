@@ -55,7 +55,7 @@ class InventoryHeaderScreenshotTest {
             "Fleet Ideas Lab", "Forecast", "Indexing", "Journey Lab", "Link Loss",
             "Local SEO", "N8N Monitoring", "Prompt Forge", "Radar", "Renewals",
             "Reports", "Revenue", "Reviews", "Schema Studio", "SEO Audit",
-            "SEO Dashboard", "Service Vault", "Site Intel", "Site Scan Fix", "Site Vault",
+            "SEO Dashboard", "Workspace Hub", "Site Intel", "Site Scan Fix", "Site Vault",
             "SLA", "Status", "Subscription Quota", "To-Do Tasks", "WP Command",
             "Schema", "AIO", "Hub Status",
         )

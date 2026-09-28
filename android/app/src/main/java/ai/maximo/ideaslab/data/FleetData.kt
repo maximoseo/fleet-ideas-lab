@@ -53,7 +53,7 @@ object FleetData {
         FleetSite("agentic-os-dashboard", "Agentic OS Dashboard", "automation", "live", "reporting + automation", "The OS for your agents — runs and observes workflows."),
         FleetSite("rep-center", "Rep Center", "outreach", "live", "analytics", "Reputation center — reviews and NAP across directories."),
         FleetSite("content-decay-dashboard", "Content Decay Dashboard", "content", "live", "reporting", "Finds decaying content — what lost traffic and what to refresh."),
-        FleetSite("service-vault", "Service Vault", "automation", "live", "analytics", "Secure vault for service credentials — keys by name, never in code."),
+        FleetSite("service-vault", "Workspace Hub", "automation", "live", "analytics", "Smartsheet sheets, dashboards, reports and folders, with connected tools."),
         FleetSite("status-page", "Status Page", "technical", "live", "reporting + alerts", "Public fleet status — uptime at a glance."),
         FleetSite("clients-automation-dashboard", "Clients Automation", "automation", "beta", "automation", "Automates client ops — recurring tasks without manual runs."),
         FleetSite("wp-command-center", "WP Command Center", "technical", "beta", "automation", "Commands your WordPress fleet — bulk actions from one board."),
