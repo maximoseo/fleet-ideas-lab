@@ -179,7 +179,7 @@ fun LoginScreen(api: ApiClient, sessionStore: SessionStore, onSuccess: () -> Uni
 
         OutlinedTextField(
             value = username, onValueChange = { username = it; if (error != null) error = null },
-            label = { Text("Email") }, placeholder = { Text("service@maximo-seo.com", color = p.muted2) },
+            label = { Text("Email") }, placeholder = { Text("you@company.com", color = p.muted2) },
             singleLine = true,
             isError = error != null && username.isBlank(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),

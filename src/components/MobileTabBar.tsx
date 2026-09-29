@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {useState} from "react";
 import { useLang, type I18nKey } from "@/components/i18n";
+import { isPublicRoute } from "@/lib/publicRoute";
 
 const TABS: ReadonlyArray<{ href: string; key: I18nKey; icon: (a: boolean) => React.ReactNode }> = [
   {
@@ -74,7 +75,16 @@ export default function MobileTabBar() {
     const next = typeof open === "function" ? open(moreOpen) : open;
     setOpenedOn(next ? pathname : null);
   };
-  if (pathname === "/login") return null;
+  // App chrome must not render on a route reachable without a session. `/login`
+  // was the only such route until `/share` and `/prototypes` went public, and on
+  // those the bar rendered tabs to gated routes that Next then prefetched — five
+  // 307s to login for a visitor who never signed in.
+  //
+  // The predicate reads the same `publicRoutes.json` the middleware uses, but it
+  // is NOT the middleware's matcher: `/api/v1` is an API namespace, so the
+  // component drops it while the middleware keeps it. Shared data, two callers,
+  // a deliberate asymmetry — do not collapse them.
+  if (isPublicRoute(pathname)) return null;
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const moreActive = MORE.some((m) => isActive(m.href));
 
