@@ -3,10 +3,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 /**
- * These guard two regressions that are invisible to a unit test of behaviour:
- * a control that no longer meets the 44px touch minimum, and a public feed that
- * has picked internal detail back up. Both were measured live in a browser
- * before being fixed, so the assertion is on the source that produced them.
+ * These two regressions are invisible to a behavioural test: a control that no
+ * longer meets the 44px touch minimum, and a public feed that has picked
+ * internal detail back up. Both were measured live in a browser before being
+ * fixed, so the assertion is on the source that produced them.
  */
 
 const loginPage = readFileSync(
@@ -19,37 +19,62 @@ const appVersion = readFileSync(
   "utf8",
 );
 
-const WCAG_MIN_TARGET = 44;
+/** Tailwind spacing unit: h-11 === 44px. */
+const TAILWIND_UNIT_PX = 4;
+
+function tailwindSize(className: string, axis: "h" | "w"): number {
+  // Match the axis class regardless of the order it appears in, so `w-11 h-11`
+  // is accepted as readily as `h-11 w-11`.
+  const match = className.match(new RegExp(`\\b${axis}-(\\d+)\\b`));
+  expect(match, `no ${axis}-<n> class in "${className}"`).not.toBeNull();
+  return Number(match![1]) * TAILWIND_UNIT_PX;
+}
 
 describe("password visibility toggle", () => {
   it("meets the 44px minimum touch target", () => {
-    // h-11 w-11 === 44px. h-8 w-8 (32px) is what shipped and it failed on every
-    // viewport — 320, 390, 768 and 1440 all measured 32x32.
-    const button = loginPage.slice(
-      loginPage.indexOf("aria-label={showPassword"),
-      loginPage.indexOf("</button>", loginPage.indexOf("aria-label={showPassword")),
-    );
-    const match = button.match(/h-(\d+)\s+w-(\d+)/);
-    expect(match).not.toBeNull();
-    const height = Number(match![1]) * 4;
-    const width = Number(match![2]) * 4;
-    expect(Math.min(height, width)).toBeGreaterThanOrEqual(WCAG_MIN_TARGET);
+    // Start at the attribute, then read the className that follows — matching
+    // the whole button block also matches the explanatory comment above it,
+    // which is exactly how the first version of this test passed while the
+    // button was still 32px.
+    const attrIndex = loginPage.indexOf('aria-label={showPassword');
+    const classIndex = loginPage.indexOf('className="', attrIndex);
+    const className = loginPage
+      .slice(classIndex + 'className="'.length, loginPage.indexOf('"', classIndex + 11));
+
+    // The icon may be any size; the hit area is what the guideline governs.
+    const height = tailwindSize(className, "h");
+    const width = tailwindSize(className, "w");
+    expect(Math.min(height, width)).toBeGreaterThanOrEqual(44);
   });
 });
 
 describe("public release notes", () => {
-  it("stays under a length a public feed should carry", () => {
-    const changelog = appVersion.match(/changelog:\s*\n?\s*"([^"]*)"/)?.[1] ?? "";
-    expect(changelog.length).toBeGreaterThan(0);
-    // The 1.5.0 note was ~640 characters of internal postmortem. Keep the
-    // public feed short enough that nobody writes a bug report in it.
-    expect(changelog.length).toBeLessThanOrEqual(400);
+  /**
+   * /api/app/version is unauthenticated by design — the APK feed needs it — so
+   * this string is world-readable on an indexed host.
+   */
+  function changelog(): string {
+    const match = appVersion.match(/changelog:\s*\n?\s*"([^"]*)"/);
+    expect(match, "no changelog literal found").not.toBeNull();
+    return match![1];
+  }
+
+  it("stays short enough for a public feed", () => {
+    // The 1.5.0 note was ~640 characters of internal postmortem.
+    expect(changelog().length).toBeLessThanOrEqual(400);
   });
 
   it("does not name internal dashboards, counts, or latent defects", () => {
-    const changelog = appVersion.match(/changelog:\s*\n?\s*"([^"]*)"/)?.[1] ?? "";
+    const notes = changelog();
     for (const leak of ["untruthful", "silently dropped", "did not mirror"]) {
-      expect(changelog).not.toContain(leak);
+      expect(notes).not.toContain(leak);
     }
+  });
+
+  it("assumes a single-line literal, and that assumption is load-bearing", () => {
+    // Kilo: the regex above only reads one line. If the changelog ever becomes a
+    // multi-line template string these assertions go quiet, so say so.
+    const multiLine = appVersion.includes('changelog: `');
+    expect(multiLine).toBe(false);
   });
 });

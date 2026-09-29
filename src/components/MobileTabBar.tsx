@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {useState} from "react";
 import { useLang, type I18nKey } from "@/components/i18n";
-import publicRoutes from "@/lib/publicRoutes.json";
+import { isPublicRoute } from "@/lib/publicRoute";
 
 const TABS: ReadonlyArray<{ href: string; key: I18nKey; icon: (a: boolean) => React.ReactNode }> = [
   {
@@ -75,26 +75,11 @@ export default function MobileTabBar() {
     const next = typeof open === "function" ? open(moreOpen) : open;
     setOpenedOn(next ? pathname : null);
   };
-  /**
-   * The tab bar is app chrome, so it must not render on any route that is
-   * reachable without a session. `/login` was the only such route until
-   * `/share` and `/prototypes` went public. On those the bar rendered tabs to
-   * gated routes, and Next prefetched all five of them on load — five 307s to
-   * the login page for a visitor who never signed in. `publicRoutes.json` is
-   * already the single source of truth for the unauthenticated surface (the
-   * middleware and `scripts/smoke-auth-matrix.mjs` read it), so it decides here
-   * too rather than growing a second list that can drift.
-   */
-  const isPublicRoute = (path: string): boolean => {
-    const { exact = [], prefix = [] } = publicRoutes as {
-      exact?: string[];
-      prefix?: string[];
-    };
-    return (
-      exact.includes(path) ||
-      prefix.some((p) => p !== "/api/v1" && path.startsWith(p))
-    );
-  };
+  // App chrome must not render on a route reachable without a session. `/login`
+  // was the only such route until `/share` and `/prototypes` went public, and on
+  // those the bar rendered tabs to gated routes that Next then prefetched — five
+  // 307s to login for a visitor who never signed in. The predicate lives in
+  // `@/lib/publicRoute` so it is shared with the guards and testable directly.
   if (isPublicRoute(pathname)) return null;
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const moreActive = MORE.some((m) => isActive(m.href));
