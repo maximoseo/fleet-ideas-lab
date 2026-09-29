@@ -18,6 +18,12 @@ jobs:
       DASHBOARD_AUTH_SECRET: ci-smoke-secret-0123456789abcdef0123456789
       DASHBOARD_AUTH_USERNAME: ci
       DASHBOARD_AUTH_PASSWORD: ci-smoke-password-not-real
+      # The agent surface fails CLOSED: with no key configured its routes answer
+      # 503, not 401. The auth-matrix smoke asserts every non-allowlisted route
+      # returns exactly 401, so CI has been red since the agent surface landed —
+      # a missing env value, not an open route. Give it a key and the routes
+      # answer the way the check expects. Never a real one.
+      AGENT_API_KEY: ci-smoke-agent-key-not-a-real-credential
     steps:
       - uses: actions/checkout@v4
         with:
