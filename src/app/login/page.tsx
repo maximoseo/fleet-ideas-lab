@@ -166,7 +166,7 @@ function LoginForm() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg bg-black/30 border border-violet-500/20 pl-3 pr-10 py-2 text-sm text-violet-50 placeholder:text-violet-200/25 focus:border-violet-400/60 focus:outline-none"
+                className="w-full rounded-lg bg-black/30 border border-violet-500/20 pl-3 pr-12 py-2 text-sm text-violet-50 placeholder:text-violet-200/25 focus:border-violet-400/60 focus:outline-none"
                 placeholder="••••••••"
               />
               <button
@@ -177,9 +177,12 @@ function LoginForm() {
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 title={showPassword ? "Hide password" : "Show password"}
                 /**
-                 * 44x44 is the smallest target WCAG 2.5.5 and both platform HIGs
-                 * accept; the icon stays 16px inside a padded hit area rather than
-                 * the button itself growing to icon size.
+                 * 44x44 hit area: WCAG 2.5.5 and Apple's HIG both set 44px as
+                 * the floor, Material's 48dp is the tighter of the two. The icon
+                 * stays 16px inside the padded area rather than the button
+                 * itself growing to icon size. `right-0` puts the box flush
+                 * inside the input, so the input carries pr-12 (48px) to keep
+                 * text and the caret clear of it.
                  */
                 className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-violet-200/50 hover:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400/60"
               >

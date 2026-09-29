@@ -78,8 +78,12 @@ export default function MobileTabBar() {
   // App chrome must not render on a route reachable without a session. `/login`
   // was the only such route until `/share` and `/prototypes` went public, and on
   // those the bar rendered tabs to gated routes that Next then prefetched — five
-  // 307s to login for a visitor who never signed in. The predicate lives in
-  // `@/lib/publicRoute` so it is shared with the guards and testable directly.
+  // 307s to login for a visitor who never signed in.
+  //
+  // The predicate reads the same `publicRoutes.json` the middleware uses, but it
+  // is NOT the middleware's matcher: `/api/v1` is an API namespace, so the
+  // component drops it while the middleware keeps it. Shared data, two callers,
+  // a deliberate asymmetry — do not collapse them.
   if (isPublicRoute(pathname)) return null;
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
   const moreActive = MORE.some((m) => isActive(m.href));
