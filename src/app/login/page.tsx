@@ -176,7 +176,12 @@ function LoginForm() {
                 aria-pressed={showPassword}
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 title={showPassword ? "Hide password" : "Show password"}
-                className="absolute right-1 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-violet-200/50 hover:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400/60"
+                /**
+                 * 44x44 is the smallest target WCAG 2.5.5 and both platform HIGs
+                 * accept; the icon stays 16px inside a padded hit area rather than
+                 * the button itself growing to icon size.
+                 */
+                className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-violet-200/50 hover:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400/60"
               >
                 <EyeIcon shown={showPassword} />
               </button>

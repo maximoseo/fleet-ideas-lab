@@ -14,8 +14,15 @@ export const APP_VERSION = {
   targetSdk: 36,
   apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.5.0/app-release.apk",
   fallbackUrl: "https://fleet-ideas-lab.maximo-seo.ai/api/app/download",
+  /**
+   * Public release notes. This object is served unauthenticated at
+   * /api/app/version — the APK feed needs it, so it cannot be gated — which
+   * means anything here is world-readable on an indexed host. Keep it to
+   * user-visible change; internal postmortems belong in the repo, not in a
+   * feed the whole internet can fetch.
+   */
   changelog:
-    "1.5.0 Hebrew, a detail screen, and two things the app used to state untruthfully. At large text the fleet strip legend silently dropped a whole band, so a fleet with unknown dashboards reported as if it had none. In Hebrew the health rail did not mirror, so a low score sat where a high one belongs. Both fixed and both now covered by tests that fail if they come back. New: full Hebrew interface, a per-dashboard detail screen with probe history and p50/p95 latency, search across the 38 dashboards, two-column layout on tablets and landscape, an offline queue for actions taken with no signal, and one emphasis level so the worst dashboard actually stands out.",
+    "1.5.0 — full Hebrew interface, a per-dashboard detail screen with probe history and p50/p95 latency, search across the fleet, a two-column layout on tablets and landscape, and an offline queue for actions taken with no signal.",
   mandatory: false,
   releasedAt: "2026-08-17T22:00:00Z",
 } as const;
