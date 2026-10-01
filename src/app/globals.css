@@ -6,13 +6,13 @@
    layout.tsx sets document.documentElement.dataset.theme from
    localStorage "fil-theme" or prefers-color-scheme. */
 :root {
-  --bg: #0c0a13;
-  --panel: #151120;
+  --bg: #171320;
+  --panel: #272036;
   --text: #efebfa;
-  --muted: #8c82ab;
-  --line: #2b2340;
+  --muted: #c1b6d4;
+  --line: #655575;
   --accent: #a78bfa;
-  --good: #8b7fe8;
+  --good: #baadff;
   --warn: #e8b14c;
   --bad: #f2637e;
   --background: var(--bg);
