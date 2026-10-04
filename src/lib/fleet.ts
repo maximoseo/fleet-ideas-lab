@@ -49,10 +49,10 @@ export interface FleetProject {
   url?: string; // production alias
   description?: string;
   plainExplainer?: string;
-  source?: "vercel" | "hostinger" | "local";
+  source?: "vercel" | "hostinger" | "local" | "registry";
 }
 
-// Engine inventory — 37 verified dashboards from the 2026-08-15 audit (46 Vercel minus 9 utilities),
+// Engine inventory — 37 verified dashboards from the 2026-08-15 audit (46 Vercel minus 9 utilities), reconciled against the registry on 2026-10-04,
 // plus anything shipped since. Deterministic, used by audit/gaps/ideas. Live size: FLEET_COUNT.
 export const FLEET_INVENTORY: FleetProject[] = [
   { slug: "fleet-hub", name: "Fleet Hub", domains: ["automation", "reporting"], capabilities: ["reporting", "automation"], health: "healthy", updated: "2026-08-15", url: "https://hub.maximo-seo.ai", plainExplainer: "Your fleet's front door — see every dashboard in one place and jump anywhere in one click.", description: "Fleet Hub — central fleet control & navigation", source: "vercel" },
@@ -92,7 +92,27 @@ export const FLEET_INVENTORY: FleetProject[] = [
   { slug: "wp-command-center", name: "WP Command Center", domains: ["whm", "automation"], capabilities: ["automation"], health: "degraded", updated: "2026-08-11", url: "https://wp-command-center.maximo-seo.ai", plainExplainer: "Commands your WordPress fleet — bulk actions from one board.", description: "WP Command Center — WordPress fleet command", source: "vercel" },
   { slug: "site-vault", name: "Site Vault", domains: ["whm", "technical"], capabilities: ["alerts"], health: "degraded", updated: "2026-08-11", url: "https://site-vault.maximo-seo.ai", plainExplainer: "Your site inventory vault — every site, stack, and health in one list.", description: "Site Vault — site inventory & vault", source: "vercel" },
   { slug: "n8n-dashboard-v3", name: "n8n Dashboard", domains: ["automation", "technical"], capabilities: ["automation", "alerts"], health: "degraded", updated: "2026-08-08", url: "https://n8n.maximo-seo.ai", plainExplainer: "Your n8n workflows — runs, failures, and triggers in one dashboard.", description: "n8n Dashboard — workflow automation (n8n.maximo-seo.ai)", source: "vercel" },
+  // Added 2026-10-04 from the agent-surface registry (Doppler FLEET_AGENT_SURFACES_JSON, 44 surfaces). Classification
+  // comes from each surface's own OpenAPI description; health is "unknown" because nothing here has probed them yet.
+  { slug: "architect-lab", name: "Architect Lab", domains: ["technical", "design"], capabilities: ["visualization"], health: "unknown", updated: "2026-10-01", url: "https://architect-lab.maximo-seo.ai", plainExplainer: "Saved system architectures drawn as graphs, with a review of each one.", description: "Architect Lab \u2014 AI-generated system architectures with graph and review", source: "registry" },
+  { slug: "bot-command", name: "Bot Command", domains: ["automation"], capabilities: ["automation", "analytics"], health: "unknown", updated: "2026-10-01", url: "https://bots.maximo-seo.ai", plainExplainer: "Which bots are online, what is in their task queue and how the last 7 days went.", description: "Bot Command \u2014 fleet bots (live/offline) and their task queue with 7-day stats", source: "registry" },
+  { slug: "client-results", name: "Client Results", domains: ["reporting", "client-ops", "seo"], capabilities: ["reporting", "analytics", "visualization"], health: "unknown", updated: "2026-10-01", url: "https://results.maximo-seo.ai", plainExplainer: "Per-client SEO reports: traffic over time, AI visibility, top pages and queries, tasks and wins.", description: "Client Results \u2014 client-facing SEO results and period reports", source: "registry" },
+  { slug: "command-center", name: "Command Center", domains: ["client-ops", "automation"], capabilities: ["automation"], health: "unknown", updated: "2026-10-01", url: "https://command-center.maximo-seo.ai", plainExplainer: "The daily feed in one place: tasks, portal status and ready-made message templates.", description: "Command Center \u2014 daily command feed: tasks, portal status, message templates", source: "registry" },
+  { slug: "flows", name: "Flows", domains: ["automation"], capabilities: ["visualization", "automation"], health: "unknown", updated: "2026-10-01", url: "https://flows.maximo-seo.ai", plainExplainer: "Workflow diagrams you draw and save in the Flows editor.", description: "Flows \u2014 flow diagrams (React Flow workflows) saved by the Flows editor", source: "registry" },
+  { slug: "mobile-game-work-plans", name: "Mobile Game Work Plans", domains: ["automation"], capabilities: ["analytics"], health: "unknown", updated: "2026-10-03", url: "https://mobile-game-work-plans.maximo-seo.ai", plainExplainer: "Mobile game ideas with a work plan for each, ranked by priority.", description: "Mobile Game Work Plans \u2014 game concepts and their work plans ranked by priority", source: "registry" },
+  { slug: "money-pulse", name: "Money Pulse", domains: ["client-ops", "reporting"], capabilities: ["analytics", "reporting", "alerts"], health: "unknown", updated: "2026-10-01", url: "https://money.maximo-seo.ai", plainExplainer: "The agency's cash picture: monthly fees, invoices, overdue state, MRR and payment reminders.", description: "Money Pulse \u2014 agency cash pulse: client fees, invoices, MRR and payment reminders", source: "registry" },
+  { slug: "qa-dashboard", name: "QA Dashboard", domains: ["technical"], capabilities: ["analytics", "reporting"], health: "unknown", updated: "2026-10-01", url: "https://qa.maximo-seo.ai", plainExplainer: "Quality checks across the fleet: targets, findings by severity, scans and fix plans.", description: "QA Dashboard \u2014 fleet QA targets, findings, scans and remediation plans", source: "registry" },
+  { slug: "webs-hub", name: "Webs Hub", domains: ["automation"], capabilities: [], health: "unknown", updated: "2026-10-01", url: "https://superapp.maximo-seo.ai", plainExplainer: "The registry of fleet apps and the catalogue of Android APKs (WebView shells for the dashboards).", description: "Webs Hub \u2014 fleet app registry and Android APK catalogue", source: "registry" },
 ];
+
+/**
+ * Registry surfaces that are deliberately NOT in the inventory. The 2026-08-15 audit classed these two as
+ * utilities rather than dashboards; scripts/check-inventory-vs-registry.mjs fails on any other gap.
+ */
+export const INVENTORY_EXCLUDED: Record<string, string> = {
+  "to-do-tasks": "utility (2026-08-15 audit): task manager, not a fleet dashboard",
+  "site-scan-fix": "utility (2026-08-15 audit): scan-and-fix tool, not a fleet dashboard",
+};
 
 export function getSlugs(): Set<string> {
   return new Set(FLEET_INVENTORY.map((p) => p.slug));

@@ -4,6 +4,7 @@ import { sanitizeHtml } from "./extract/html";
 import { extractCopy } from "./extract/copy";
 import { detectSections } from "./extract/sections";
 import { isNoise } from "./extract/html";
+import { wpFetch } from "@/lib/wp-safe";
 import { detectPlatform, extractColorsFromHtml, extractFontsFromHtml } from "./extract/design";
 
 // The public surface is unchanged — every existing import of "@/lib/extract"
@@ -102,10 +103,10 @@ function inferPersonality(profile: {
 
 async function fetchRaw(url: string): Promise<{ html: string; headers: Headers } | null> {
   try {
-    const res = await fetch(url, {
+    // Operator-supplied URL fetched from the server: refuse internal hosts, re-check every redirect hop.
+    const res = await wpFetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (compatible; DesignLab/1.0)" },
       signal: AbortSignal.timeout(20000),
-      redirect: "follow",
     });
     return { html: await res.text(), headers: res.headers };
   } catch {

@@ -92,7 +92,7 @@ export async function probeUrl(url: string): Promise<ProbeResult> {
 /**
  * Jitter between probes.
  *
- * Without it all 38 targets are hit in a tight burst at :00/:15/:30/:45, from
+ * Without it all the targets are hit in a tight burst at :00/:15/:30/:45, from
  * one Vercel egress IP. Several of them are our own Vercel projects, so the
  * fleet was effectively rate-limit-testing itself four times an hour. A short
  * random gap costs nothing inside a 120-second function.

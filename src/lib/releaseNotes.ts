@@ -18,6 +18,25 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.6.1",
+    date: "2026-10-04",
+    title: { en: "Complete inventory, faster sign-in, Android 1.5.1", he: "מלאי מלא, כניסה מהירה יותר ואנדרואיד 1.5.1" },
+    changes: [
+      {
+        en: "The inventory now lists 9 more dashboards found in the registry (45 in total). Dashboards nobody has probed yet are labelled \"not probed\" instead of being guessed.",
+        he: "המלאי כולל עכשיו 9 דשבורדים נוספים מהרישום (45 בסך הכול). דשבורדים שעדיין לא נבדקו מסומנים \"לא נבדק\" ולא מנוחשים.",
+      },
+      {
+        en: "The sign-in security check now loads when you start typing, so the page opens faster.",
+        he: "בדיקת האבטחה בכניסה נטענת עכשיו כשמתחילים להקליד, כך שהדף נפתח מהר יותר.",
+      },
+      {
+        en: "Shared links show a clear preview title. Android 1.5.1 replaces the arbitrary gap matrix with one derived from each dashboard's primary domain.",
+        he: "קישורי שיתוף מציגים כותרת תצוגה מקדימה ברורה. אנדרואיד 1.5.1 מחליף את מטריצת הפערים השרירותית במטריצה שנגזרת מהתחום הראשי של כל דשבורד.",
+      },
+    ],
+  },
+  {
     version: "1.6.0",
     date: "2026-10-04",
     title: { en: "English first, Hebrew on every screen", he: "אנגלית כשפה ראשית, עברית בכל מסך" },

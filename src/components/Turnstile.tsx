@@ -61,6 +61,30 @@ function turnstileReady(): Promise<void> {
   return readyPromise;
 }
 
+/**
+ * Resolve on the first sign that a person is using the page (focus, pointer, key, touch), or after
+ * FALLBACK_MS so the widget always loads eventually. The challenge script is ~700 KiB and 500 ms of
+ * main-thread work (diagnosis F15); loading it on first interaction keeps it out of the page load,
+ * and the visitor has not finished typing a password by the time it is ready.
+ */
+const FALLBACK_MS = 10_000;
+function whenInteracted(): Promise<void> {
+  if (typeof window === "undefined") return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    const events = ["focusin", "pointerdown", "keydown", "touchstart"] as const;
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      events.forEach((e) => window.removeEventListener(e, finish, true));
+      window.clearTimeout(timer);
+      resolve();
+    };
+    events.forEach((e) => window.addEventListener(e, finish, { capture: true, passive: true }));
+    const timer = window.setTimeout(finish, FALLBACK_MS);
+  });
+}
+
 export type TurnstileHandle = {
   /**
    * Re-arm the widget. Turnstile tokens are single-use: after a rejected
@@ -88,6 +112,7 @@ export const Turnstile = forwardRef<
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const [failed, setFailed] = useState(false);
+  const [armed, setArmed] = useState(false);
   const onTokenRef = useRef(onToken);
   onTokenRef.current = onToken;
 
@@ -126,7 +151,11 @@ export const Turnstile = forwardRef<
 
   useEffect(() => {
     let mounted = true;
-    turnstileReady()
+    whenInteracted()
+      .then(() => {
+        if (mounted) setArmed(true);
+        return turnstileReady();
+      })
       .then(() => {
         if (mounted) render();
       })
@@ -148,7 +177,17 @@ export const Turnstile = forwardRef<
 
   return (
     <div>
-      <div ref={containerRef} style={{ minHeight: 65 }} />
+      <div style={{ position: "relative" }}>
+        <div ref={containerRef} style={{ minHeight: 65 }} />
+        {!armed && !failed && (
+          <div
+            role="status"
+            style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", fontSize: 12, opacity: 0.7 }}
+          >
+            {tr("The security check loads as soon as you start typing.", "בדיקת האבטחה נטענת ברגע שמתחילים להקליד.")}
+          </div>
+        )}
+      </div>
       {failed && (
         <div style={{ fontSize: 12, color: "#f59e0b", padding: "8px 0" }}>
           {tr(

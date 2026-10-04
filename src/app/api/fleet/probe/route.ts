@@ -16,7 +16,7 @@ export const maxDuration = 120;
  *
  * Sends Telegram alerts on confirmed state transitions. Roll-up rule: more
  * than 5 transitions in one run = one digest message (platform-wide incident
- * looks exactly like this; 38 separate pings would be a storm).
+ * looks exactly like this; dozens of separate pings would be a storm).
  */
 function cronAuthorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET;

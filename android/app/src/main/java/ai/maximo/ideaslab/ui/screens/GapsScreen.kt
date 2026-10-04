@@ -45,7 +45,7 @@ fun GapsScreen() {
             delay(400)
             reloadKey++
             refreshing = false
-            Toast.makeText(ctx, "Reloaded · gaps derived from 37", Toast.LENGTH_SHORT).show()
+            Toast.makeText(ctx, "Reloaded · gaps derived from ${FleetData.sites.size} dashboards", Toast.LENGTH_SHORT).show()
         }
     }
     val pullState = rememberPullRefreshState(refreshing = refreshing, onRefresh = { doReload() })
@@ -53,15 +53,15 @@ fun GapsScreen() {
     val gaps = FleetData.gaps
     val map = FleetData.matrix.associateBy { "${it.site}::${it.gap}" }
 
-    // Warm rule for cells: 0 none = quiet panel, 1 low = amber, 2 high = red-pink.
+    // Cells: 0 = the site's primary area (quiet panel), 1 = not its focus (amber). Level 2 is unused.
     fun cellColor(level: Int): Color = when (level) { 2 -> p.bad; 1 -> p.warn; else -> p.panel2 }
-    fun cellWord(level: Int): String = when (level) { 2 -> "high"; 1 -> "low"; else -> "none" }
+    fun cellWord(level: Int): String = when (level) { 2 -> "high"; 1 -> "not its focus"; else -> "primary area" }
 
     Box(Modifier.fillMaxSize().statusBarsPadding().pullRefresh(pullState)) {
         Column(Modifier.fillMaxSize().padding(FilDimens.screen)) {
             FilScreenHeader(
                 title = "Gap Matrix",
-                subtitle = "Sites × {SEO, Design, Content, Tech} · 0 none · 1 low · 2 high",
+                subtitle = "Sites × {SEO, Design, Content, Tech} · derived from each site's primary domain",
                 actions = {
                     FilledTonalButton(
                         onClick = { doReload() },
@@ -71,12 +71,11 @@ fun GapsScreen() {
                 },
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                LegendDot(cellColor(0), "0 · none", bordered = true)
-                LegendDot(cellColor(1), "1 · low")
-                LegendDot(cellColor(2), "2 · high")
+                LegendDot(cellColor(0), "0 · primary area", bordered = true)
+                LegendDot(cellColor(1), "1 · not its focus")
             }
             Text(
-                "Cool = fine · warm = needs attention",
+                "Quiet = this is the site's own area · amber = not its focus",
                 style = FilType.label,
                 color = p.muted2,
                 modifier = Modifier.padding(top = 6.dp),

@@ -210,3 +210,16 @@ const APP_CHANNEL_MAX = 30;
 export async function appChannelRateLimit() {
   return bucketHit('appchan:global', APP_CHANNEL_WINDOW_MS, APP_CHANNEL_MAX);
 }
+
+/**
+ * Cap on WordPress traffic (/api/wp/*), per user per 10 minutes, per scope.
+ * These routes hold client Application Passwords and write to live sites; a
+ * runaway client loop or a stolen session should hit a wall, not a client's
+ * site. A batch push counts once.
+ */
+const WP_WINDOW_MS = 10 * 60 * 1000;
+const WP_MAX = 60;
+
+export async function wpRateLimit(userId: string, scope: 'write' | 'connect') {
+  return bucketHit(`wp:${scope}:${userId}`, WP_WINDOW_MS, WP_MAX);
+}

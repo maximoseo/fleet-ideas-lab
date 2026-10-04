@@ -154,7 +154,7 @@ Vercel — it drifted once and every local build produced an APK whose feed retu
 
 ## 6. Data and retention
 
-- `fil_probes` — raw probe rows, ~3,650/day for 38 targets at 15-minute intervals.
+- `fil_probes` — raw probe rows, ~3,650/day for about 45 targets (the inventory size) at 15-minute intervals.
 - `fil_probe_daily` — per-slug daily rollup with p50/p95/max latency.
 - `fil_rollup_probes(keep_days := 30)` runs on the daily `/api/fleet/sync` cron: rolls finished
   days up, then deletes raw rows past the window. It is never allowed to fail the sync.

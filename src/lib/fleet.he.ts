@@ -38,6 +38,42 @@ export interface HeIdea {
 
 // ───────────────────────── FLEET_INVENTORY ─────────────────────────
 export const HE_PROJECTS: Record<string, HeProject> = {
+  "architect-lab": {
+    description: "Architect Lab — ארכיטקטורות מערכת שנוצרו ב-AI, עם גרף וביקורת",
+    plainExplainer: "ארכיטקטורות מערכת שנשמרו, מוצגות כגרף יחד עם ביקורת על כל אחת.",
+  },
+  "bot-command": {
+    description: "Bot Command — בוטים בצי (פעיל/לא מחובר), תור המשימות שלהם וסטטיסטיקה של 7 ימים",
+    plainExplainer: "אילו בוטים מחוברים, מה בתור המשימות שלהם ואיך עברו 7 הימים האחרונים.",
+  },
+  "client-results": {
+    description: "Client Results — תוצאות SEO ללקוחות ודוחות תקופתיים",
+    plainExplainer: "דוחות SEO לכל לקוח: תנועה לאורך זמן, נראות ב-AI, דפים ושאילתות מובילים, משימות והישגים.",
+  },
+  "command-center": {
+    description: "Command Center — פיד פיקוד יומי: משימות, סטטוס פורטלים ותבניות הודעה",
+    plainExplainer: "הפיד היומי במקום אחד: משימות, סטטוס פורטלים ותבניות הודעה מוכנות.",
+  },
+  "flows": {
+    description: "Flows — דיאגרמות זרימה (workflows של React Flow) שנשמרו בעורך Flows",
+    plainExplainer: "דיאגרמות זרימה שמציירים ושומרים בעורך Flows.",
+  },
+  "mobile-game-work-plans": {
+    description: "Mobile Game Work Plans — רעיונות למשחקי מובייל ותוכניות עבודה, מדורגים לפי עדיפות",
+    plainExplainer: "רעיונות למשחקי מובייל עם תוכנית עבודה לכל אחד, מדורגים לפי עדיפות.",
+  },
+  "money-pulse": {
+    description: "Money Pulse — דופק התזרים של הסוכנות: דמי לקוחות, חשבוניות, MRR ותזכורות תשלום",
+    plainExplainer: "תמונת התזרים של הסוכנות: דמי ניהול חודשיים, חשבוניות, פיגורים, MRR ותזכורות תשלום.",
+  },
+  "qa-dashboard": {
+    description: "QA Dashboard — יעדי QA בצי, ממצאים, סריקות ותוכניות תיקון",
+    plainExplainer: "בדיקות איכות על פני הצי: יעדים, ממצאים לפי חומרה, סריקות ותוכניות תיקון.",
+  },
+  "webs-hub": {
+    description: "Webs Hub — רישום אפליקציות הצי וקטלוג ה-APK לאנדרואיד",
+    plainExplainer: "רישום האפליקציות של הצי וקטלוג קובצי ה-APK (מעטפות WebView לדשבורדים).",
+  },
   "fleet-hub": {
     description: "Fleet Hub — שליטה וניווט מרכזיים בצי",
     plainExplainer: "הכניסה הראשית לצי שלכם — כל הדשבורדים במקום אחד, וקפיצה לכל אחד מהם בלחיצה אחת.",

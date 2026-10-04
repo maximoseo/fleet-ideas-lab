@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
+import { badRequest, checkWpTarget, isShortString, readJsonBody, readTextCapped, wpFetch, wpPreflight } from "@/lib/wp-safe";
 
 export const maxDuration = 30;
 
@@ -11,16 +12,26 @@ export const maxDuration = 30;
  */
 export async function POST(req: NextRequest) {
   // Auth guard: middleware also covers /api, this is defence in depth.
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch {
     return unauthorized();
   }
+  const blocked = await wpPreflight(req, user, "connect");
+  if (blocked) return blocked;
   try {
-    const { url, username, appPassword } = await req.json();
+    const raw = await readJsonBody(req);
+    if (!raw) return badRequest("Invalid JSON body");
+    const { url, username, appPassword } = raw;
     if (!url) return NextResponse.json({ error: "URL required" }, { status: 400 });
+    if ((username !== undefined && username !== "" && !isShortString(username)) || (appPassword !== undefined && appPassword !== "" && !isShortString(appPassword))) {
+      return badRequest("Invalid username or application password");
+    }
 
-    const base = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const target = await checkWpTarget(url);
+    if (!target.ok) return badRequest(target.error);
+    const base = target.base;
     const apiBase = `${base.origin}/wp-json`;
 
     // 1. Test public REST API
@@ -28,7 +39,7 @@ export async function POST(req: NextRequest) {
     let wpVersion = "";
     let restEnabled = false;
     try {
-      const res = await fetch(`${apiBase}/wp/v2/types`, {
+      const res = await wpFetch(`${apiBase}/wp/v2/types`, {
         headers: { "User-Agent": "DesignLab/1.0" },
         signal: AbortSignal.timeout(15000),
       });
@@ -37,11 +48,12 @@ export async function POST(req: NextRequest) {
 
     // 2. Get site info
     try {
-      const res = await fetch(base.origin, {
+      const res = await wpFetch(base.origin, {
         headers: { "User-Agent": "Mozilla/5.0 (compatible; DesignLab/1.0)" },
         signal: AbortSignal.timeout(15000),
       });
-      const html = await res.text();
+      // Cap the homepage read: only <title> and the generator meta are used.
+      const html = await readTextCapped(res, 512 * 1024);
       siteName = html.match(/<title[^>]*>([^<]*)<\/title>/i)?.[1]?.trim() || "";
       wpVersion = html.match(/<meta[^>]*name=["']generator["'][^>]*content=["']WordPress\s*([\d.]+)["']/i)?.[1] || "";
       if (!restEnabled && (html.includes("wp-content") || html.includes("wp-includes"))) {
@@ -70,7 +82,7 @@ export async function POST(req: NextRequest) {
     if (username && appPassword) {
       try {
         const authHeader = "Basic " + Buffer.from(`${username}:${appPassword}`).toString("base64");
-        const meRes = await fetch(`${apiBase}/wp/v2/users/me?context=edit`, {
+        const meRes = await wpFetch(`${apiBase}/wp/v2/users/me?context=edit`, {
           headers: { Authorization: authHeader, "User-Agent": "DesignLab/1.0" },
           signal: AbortSignal.timeout(15000),
         });
@@ -81,7 +93,7 @@ export async function POST(req: NextRequest) {
         }
 
         // Get pages for injection target selection — full list for batch
-        const pagesRes = await fetch(`${apiBase}/wp/v2/pages?per_page=100&status=publish`, {
+        const pagesRes = await wpFetch(`${apiBase}/wp/v2/pages?per_page=100&status=publish`, {
           headers: { Authorization: authHeader, "User-Agent": "DesignLab/1.0" },
           signal: AbortSignal.timeout(15000),
         });

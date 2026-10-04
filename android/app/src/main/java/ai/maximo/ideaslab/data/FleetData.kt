@@ -57,9 +57,36 @@ object FleetData {
         FleetSite("wp-command-center", "WP Command Center", "technical", "beta", "automation", "Commands your WordPress fleet — bulk actions from one board."),
         FleetSite("site-vault", "Site Vault", "technical", "beta", "alerts", "Your site inventory vault — every site and health in one list."),
         FleetSite("n8n-dashboard-v3", "n8n Dashboard", "automation", "beta", "automation + alerts", "Your n8n workflows — runs, failures, and triggers."),
+        // Added 2026-10-04 from the agent-surface registry; status "concept" = not probed yet (same as the web inventory).
+        FleetSite("architect-lab", "Architect Lab", "technical", "concept", "visualization", "Saved system architectures drawn as graphs, with a review of each one."),
+        FleetSite("bot-command", "Bot Command", "automation", "concept", "automation + analytics", "Which bots are online, what is in their task queue and how the last 7 days went."),
+        FleetSite("client-results", "Client Results", "analytics", "concept", "reporting + analytics + visualization", "Per-client SEO reports: traffic over time, AI visibility, top pages and queries, tasks and wins."),
+        FleetSite("command-center", "Command Center", "automation", "concept", "automation", "The daily feed in one place: tasks, portal status and ready-made message templates."),
+        FleetSite("flows", "Flows", "automation", "concept", "visualization + automation", "Workflow diagrams you draw and save in the Flows editor."),
+        FleetSite("mobile-game-work-plans", "Mobile Game Work Plans", "automation", "concept", "analytics", "Mobile game ideas with a work plan for each, ranked by priority."),
+        FleetSite("money-pulse", "Money Pulse", "analytics", "concept", "analytics + reporting + alerts", "The agency's cash picture: monthly fees, invoices, overdue state, MRR and payment reminders."),
+        FleetSite("qa-dashboard", "QA Dashboard", "technical", "concept", "analytics + reporting", "Quality checks across the fleet: targets, findings by severity, scans and fix plans."),
+        FleetSite("webs-hub", "Webs Hub", "automation", "concept", "reporting", "The registry of fleet apps and the catalogue of Android APKs (WebView shells for the dashboards)."),
     )
     val gaps = listOf("SEO", "Design", "Content", "Tech")
-    val matrix: List<GapCell> = sites.flatMap { s -> gaps.map { g -> GapCell(s.slug, g, kotlin.math.abs((s.slug.hashCode() + g.hashCode()) % 3)) } }
+    /** The domain tag each matrix column stands for. */
+    val gapDomain = mapOf("SEO" to "seo", "Design" to "design", "Content" to "content", "Tech" to "technical")
+    /**
+     * Derived from the data: 0 = the site's primary domain is this area, 1 = it is not that site's focus.
+     * (Until 1.5.1 every cell was abs((slug.hashCode() + gap.hashCode()) % 3): arbitrary numbers shown as findings.)
+     */
+    fun gapLevel(site: FleetSite, gap: String): Int =
+        if (site.domain.split(" + ").any { it.trim() == gapDomain[gap] }) 0 else 1
+
+    /** Rollout status from the server's static health label (same mapping as the web inventory). */
+    fun statusForHealth(health: String): String = when (health) {
+        "healthy" -> "live"
+        "degraded" -> "beta"
+        "stale" -> "build"
+        "unknown" -> "concept"
+        else -> "live" // an older server sends no label: keep the previous behaviour
+    }
+    val matrix: List<GapCell> = sites.flatMap { s -> gaps.map { g -> GapCell(s.slug, g, gapLevel(s, g)) } }
     // Deduplicated 2026-08-15: 5 NEW (white-space) + 6 ENHANCEMENT (add as tab) — 1 duplicate removed (content-decay already live)
     val ideas = listOf(
         FleetIdea("anomaly-explain-engine", "Anomaly Explain Engine", "analytics", "high", "Build Anomaly Explain Engine: timeline + LLM root-cause + impact. Use GA4+GSC anomalies.", "new", 17, "analytics\u00d7alerts 1/6 (17%) — 5 of 6 analytics dashboards lack alerts", ""),

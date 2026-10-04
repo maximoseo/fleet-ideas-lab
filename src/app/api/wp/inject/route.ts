@@ -3,6 +3,25 @@ import { requireUser, unauthorized } from "@/lib/auth";
 import { checkHonesty } from "@/lib/honesty";
 import { recordInjection, markInjectionsRemoved } from "@/lib/injection-registry";
 import type { SiteProfile } from "@/lib/types";
+import {
+  MAX_HTML_CHARS,
+  buildStyleBlock,
+  sanitizeCss,
+  stripPreviousInjections,
+  wrapPrototype,
+  MARKER_PREFIX,
+} from "@/lib/wp-content";
+import {
+  badRequest,
+  checkWpTarget,
+  isShortString,
+  parseId,
+  readJsonBody,
+  statusFor,
+  upstreamDetail,
+  wpFetch,
+  wpPreflight,
+} from "@/lib/wp-safe";
 
 export const maxDuration = 30;
 
@@ -26,66 +45,6 @@ interface InjectBody {
   confirmSlug?: string;
 }
 
-const MARKER_PREFIX = "design-lab-style";
-
-/**
- * Build a scoped, reversible style block.
- * The CSS is wrapped in a marker comment so it can be found and removed later.
- */
-function buildStyleBlock(css: string, id: string): string {
-  return `\n<!-- ${MARKER_PREFIX}:${id}:start -->\n<style id="${MARKER_PREFIX}-${id}">\n${css}\n</style>\n<!-- ${MARKER_PREFIX}:${id}:end -->\n`;
-}
-
-/** Remove any previous design-lab style blocks from content */
-function stripPreviousInjections(content: string): string {
-  return content.replace(/<!-- design-lab-style:[^:]+:start -->[\s\S]*?<!-- design-lab-style:[^:]+:end -->\n?/g, "");
-}
-
-/**
- * Convert a standalone prototype document into something safe to paste into a
- * WordPress page.
- *
- * The generated file is a complete HTML document; a page body cannot contain
- * <html>, <head> or <body>. The head's <style> and font <link> tags are lifted
- * out, the CSS is scoped to a wrapper class so it cannot restyle the rest of
- * the theme, and only the body's markup is kept.
- */
-function wrapPrototype(doc: string, id: string): string {
-  const wrapper = `${MARKER_PREFIX}-proto-${id}`;
-
-  const styles = [...doc.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join("\n");
-  const fontLinks = [...doc.matchAll(/<link[^>]+href="https:\/\/fonts\.[^"]+"[^>]*>/gi)]
-    .map((m) => m[0])
-    .join("\n");
-
-  const bodyMatch = doc.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  const bodyAttrs = doc.match(/<body([^>]*)>/i)?.[1] || "";
-  const dir = /dir\s*=\s*["']rtl["']/i.test(doc) ? ' dir="rtl"' : "";
-  const inner = (bodyMatch ? bodyMatch[1] : doc)
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .trim();
-
-  // Scope every rule to the wrapper. :root and html/body rules are rewritten to
-  // target the wrapper so custom properties still resolve inside it.
-  const scoped = styles
-    .replace(/(^|\})\s*(:root|html|body)\s*(?=[,{])/g, `$1 .${wrapper} `)
-    .replace(/(^|\})\s*(html|body)\s*,\s*/g, `$1 .${wrapper}, `);
-
-  const langAttr = /lang\s*=\s*["']he["']/i.test(doc) ? ' lang="he"' : "";
-
-  return `<!-- ${MARKER_PREFIX}:${id}:start -->
-${fontLinks}
-<style id="${MARKER_PREFIX}-${id}">
-.${wrapper}{all:initial;display:block;}
-.${wrapper} *{box-sizing:border-box;}
-${scoped}
-</style>
-<div class="${wrapper}"${dir}${langAttr} data-body-attrs="${bodyAttrs.replace(/"/g, "&quot;").slice(0, 200)}">
-${inner}
-</div>
-<!-- ${MARKER_PREFIX}:${id}:end -->`;
-}
-
 /**
  * POST /api/wp/inject
  *
@@ -98,23 +57,42 @@ ${inner}
  */
 export async function POST(req: NextRequest) {
   // Auth guard: middleware also covers /api, this is defence in depth.
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch {
     return unauthorized();
   }
+  const blocked = await wpPreflight(req, user, "write");
+  if (blocked) return blocked;
   try {
-    const body = (await req.json()) as InjectBody;
-    const { url, username, appPassword, pageId, css, html, profile, mode, styleName, confirmSlug } = body;
+    const raw = await readJsonBody(req);
+    if (!raw) return badRequest("Invalid JSON body");
+    const body = raw as unknown as InjectBody;
+    const { url, username, appPassword, css, html, profile, mode, styleName, confirmSlug } = body;
+    const pageId = parseId(body.pageId);
 
-    if (!url || !username || !appPassword || !pageId) {
+    if (!url || !username || !appPassword || !body.pageId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    }
+    if (!isShortString(username) || !isShortString(appPassword) || pageId === null) {
+      return badRequest("Invalid username, application password or page id");
     }
     if (!css && !html) {
       return NextResponse.json({ error: "Either css or html is required" }, { status: 400 });
     }
+    if ((css !== undefined && typeof css !== "string") || (html !== undefined && typeof html !== "string")) {
+      return badRequest("css and html must be strings");
+    }
     if (mode !== "draft" && mode !== "inject") {
       return NextResponse.json({ error: "Mode must be 'draft' or 'inject'" }, { status: 400 });
+    }
+    if (html && html.length > MAX_HTML_CHARS) return badRequest(`HTML too large (max ${MAX_HTML_CHARS} characters)`, 413);
+    let safeCss = "";
+    if (css) {
+      const checked = sanitizeCss(css);
+      if (!checked.ok) return badRequest(checked.error, checked.error.startsWith("CSS too large") ? 413 : 400);
+      safeCss = checked.css;
     }
 
     /**
@@ -146,7 +124,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const base = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const target = await checkWpTarget(url);
+    if (!target.ok) return badRequest(target.error);
+    const base = target.base;
     const apiBase = `${base.origin}/wp-json/wp/v2`;
     const authHeader = "Basic " + Buffer.from(`${username}:${appPassword}`).toString("base64");
     const headers = {
@@ -156,13 +136,13 @@ export async function POST(req: NextRequest) {
     };
 
     // 1. Fetch the current page
-    const pageRes = await fetch(`${apiBase}/pages/${pageId}?context=edit`, {
+    const pageRes = await wpFetch(`${apiBase}/pages/${pageId}?context=edit`, {
       headers,
       signal: AbortSignal.timeout(15000),
     });
     if (!pageRes.ok) {
-      const err = await pageRes.text();
-      return NextResponse.json({ error: `Could not fetch page: ${pageRes.status} ${err.slice(0, 200)}` }, { status: pageRes.status });
+      const err = await upstreamDetail(pageRes);
+      return NextResponse.json({ error: `Could not fetch page: ${pageRes.status} ${err}`.trim() }, { status: statusFor(pageRes) });
     }
     const page = await pageRes.json();
     const originalContent: string = page.content?.raw || page.content?.rendered || "";
@@ -173,12 +153,12 @@ export async function POST(req: NextRequest) {
     const cleanContent = stripPreviousInjections(originalContent);
     const injectId = `${Date.now().toString(36)}`;
     const styledContent = html
-      ? wrapPrototype(html, injectId)
-      : cleanContent + buildStyleBlock(css || "", injectId);
+      ? wrapPrototype(html, injectId, { bodyAttrs: true })
+      : cleanContent + buildStyleBlock(safeCss, injectId);
 
     if (mode === "draft") {
       // ── SAFE MODE: create a draft copy ──
-      const draftRes = await fetch(`${apiBase}/pages`, {
+      const draftRes = await wpFetch(`${apiBase}/pages`, {
         method: "POST",
         headers,
         body: JSON.stringify({
@@ -189,8 +169,8 @@ export async function POST(req: NextRequest) {
         signal: AbortSignal.timeout(20000),
       });
       if (!draftRes.ok) {
-        const err = await draftRes.text();
-        return NextResponse.json({ error: `Could not create draft: ${draftRes.status} ${err.slice(0, 200)}` }, { status: draftRes.status });
+        const err = await upstreamDetail(draftRes);
+        return NextResponse.json({ error: `Could not create draft: ${draftRes.status} ${err}`.trim() }, { status: statusFor(draftRes) });
       }
       const draft = await draftRes.json();
       // Registry after the response — never blocks the WP result
@@ -237,7 +217,7 @@ export async function POST(req: NextRequest) {
     // known to exist rather than assumed.
     let revisionIdBefore: number | null = null;
     try {
-      const revRes = await fetch(`${apiBase}/pages/${pageId}/revisions?per_page=1`, {
+      const revRes = await wpFetch(`${apiBase}/pages/${pageId}/revisions?per_page=1`, {
         headers,
         signal: AbortSignal.timeout(10000),
       });
@@ -249,15 +229,15 @@ export async function POST(req: NextRequest) {
       // Non-fatal: the inline backup below is still returned.
     }
 
-    const updateRes = await fetch(`${apiBase}/pages/${pageId}`, {
+    const updateRes = await wpFetch(`${apiBase}/pages/${pageId}`, {
       method: "POST",
       headers,
       body: JSON.stringify({ content: styledContent }),
       signal: AbortSignal.timeout(20000),
     });
     if (!updateRes.ok) {
-      const err = await updateRes.text();
-      return NextResponse.json({ error: `Could not update page: ${updateRes.status} ${err.slice(0, 200)}` }, { status: updateRes.status });
+      const err = await upstreamDetail(updateRes);
+      return NextResponse.json({ error: `Could not update page: ${updateRes.status} ${err}`.trim() }, { status: statusFor(updateRes) });
     }
     const updated = await updateRes.json();
 
@@ -297,18 +277,29 @@ export async function POST(req: NextRequest) {
  */
 export async function DELETE(req: NextRequest) {
   // Auth guard: middleware also covers /api, this is defence in depth.
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch {
     return unauthorized();
   }
+  const blocked = await wpPreflight(req, user, "write");
+  if (blocked) return blocked;
   try {
-    const { url, username, appPassword, pageId } = await req.json();
-    if (!url || !username || !appPassword || !pageId) {
+    const raw = await readJsonBody(req);
+    if (!raw) return badRequest("Invalid JSON body");
+    const { url, username, appPassword } = raw;
+    const pageId = parseId(raw.pageId);
+    if (!url || !username || !appPassword || !raw.pageId) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
+    if (!isShortString(username) || !isShortString(appPassword) || pageId === null) {
+      return badRequest("Invalid username, application password or page id");
+    }
 
-    const base = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const target = await checkWpTarget(url);
+    if (!target.ok) return badRequest(target.error);
+    const base = target.base;
     const apiBase = `${base.origin}/wp-json/wp/v2`;
     const headers = {
       Authorization: "Basic " + Buffer.from(`${username}:${appPassword}`).toString("base64"),
@@ -316,8 +307,8 @@ export async function DELETE(req: NextRequest) {
       "User-Agent": "DesignLab/1.0",
     };
 
-    const pageRes = await fetch(`${apiBase}/pages/${pageId}?context=edit`, { headers, signal: AbortSignal.timeout(15000) });
-    if (!pageRes.ok) return NextResponse.json({ error: "Could not fetch page" }, { status: pageRes.status });
+    const pageRes = await wpFetch(`${apiBase}/pages/${pageId}?context=edit`, { headers, signal: AbortSignal.timeout(15000) });
+    if (!pageRes.ok) return NextResponse.json({ error: "Could not fetch page" }, { status: statusFor(pageRes) });
     const page = await pageRes.json();
     const content: string = page.content?.raw || "";
 
@@ -326,13 +317,31 @@ export async function DELETE(req: NextRequest) {
     }
 
     const cleaned = stripPreviousInjections(content);
-    const updateRes = await fetch(`${apiBase}/pages/${pageId}`, {
+    if (cleaned === content) {
+      return NextResponse.json(
+        { ok: false, removed: false, error: "Found a Fleet Ideas Lab marker but no complete block to remove. Restore a WordPress revision instead." },
+        { status: 409 },
+      );
+    }
+    // A full-page prototype injection REPLACES the page body, so stripping its
+    // block leaves nothing. Writing an empty page is data loss, not a rollback.
+    if (!cleaned.trim()) {
+      return NextResponse.json(
+        {
+          ok: false,
+          removed: false,
+          error: "This page body was replaced by a prototype; removing the block would leave it empty. Restore a WordPress revision instead (GET/POST /api/wp/revisions).",
+        },
+        { status: 409 },
+      );
+    }
+    const updateRes = await wpFetch(`${apiBase}/pages/${pageId}`, {
       method: "POST",
       headers,
       body: JSON.stringify({ content: cleaned }),
       signal: AbortSignal.timeout(20000),
     });
-    if (!updateRes.ok) return NextResponse.json({ error: "Could not update page" }, { status: updateRes.status });
+    if (!updateRes.ok) return NextResponse.json({ error: "Could not update page" }, { status: statusFor(updateRes) });
 
     // Registry after the response
     after(() => markInjectionsRemoved(base.origin, pageId));

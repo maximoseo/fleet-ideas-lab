@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { sbPatch, sbSelect, supabaseEnabled } from "@/lib/supabase";
+import { checkMutationRequest } from "@/lib/wp-safe";
 
 export const runtime = "nodejs";
 export const maxDuration = 15;
@@ -26,7 +27,9 @@ export async function GET(req: NextRequest) {
     const injections = await sbSelect("fil_injections", q);
     return NextResponse.json({ injections, persisted: true });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 502 });
+    // The PostgREST error text names tables and filters; keep it in the logs.
+    console.warn("[injections] registry error:", (err as Error).message);
+    return NextResponse.json({ error: "Registry unavailable" }, { status: 502 });
   }
 }
 
@@ -36,6 +39,8 @@ export async function PATCH(req: NextRequest) {
   } catch {
     return unauthorized();
   }
+  const bad = checkMutationRequest(req);
+  if (bad) return bad;
   if (!supabaseEnabled()) return NextResponse.json({ error: "Persistence not configured" }, { status: 503 });
   const body = await req.json().catch(() => ({}));
   const id = String(body.id || "");
@@ -49,6 +54,8 @@ export async function PATCH(req: NextRequest) {
     });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: (err as Error).message }, { status: 502 });
+    // The PostgREST error text names tables and filters; keep it in the logs.
+    console.warn("[injections] registry error:", (err as Error).message);
+    return NextResponse.json({ error: "Registry unavailable" }, { status: 502 });
   }
 }
