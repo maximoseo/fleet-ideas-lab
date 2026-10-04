@@ -318,8 +318,11 @@ export default function RedesignPage() {
     if (!selectedPage) return;
     setRevisionsLoading(true);
     try {
-      const qs = new URLSearchParams({ url: wpUrl || url, username: wpUser, appPassword: wpPass, pageId: String(selectedPage) });
-      const res = await fetch(`/api/wp/revisions?${qs.toString()}`);
+      // Credentials go in headers, not the query string (URLs end up in logs, history and Referer).
+      // Headers can only carry printable ASCII; anything else falls back to the query string.
+      const ascii = /^[\x20-\x7e]*$/.test(wpUser) && /^[\x20-\x7e]*$/.test(wpPass);
+      const qs = new URLSearchParams({ url: wpUrl || url, pageId: String(selectedPage), ...(ascii ? {} : { username: wpUser, appPassword: wpPass }) });
+      const res = await fetch(`/api/wp/revisions?${qs.toString()}`, ascii ? { headers: { "x-wp-username": wpUser, "x-wp-app-password": wpPass } } : undefined);
       const data = await res.json();
       if (res.ok) setRevisions(data.revisions || []);
       else setRevisions([]);

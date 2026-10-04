@@ -75,7 +75,17 @@ object FleetData {
      * Derived from the data: 0 = the site's primary domain is this area, 1 = it is not that site's focus.
      * (Until 1.5.1 every cell was abs((slug.hashCode() + gap.hashCode()) % 3): arbitrary numbers shown as findings.)
      */
-    fun gapLevel(site: FleetSite, gap: String): Int = if (site.domain == gapDomain[gap]) 0 else 1
+    fun gapLevel(site: FleetSite, gap: String): Int =
+        if (site.domain.split(" + ").any { it.trim() == gapDomain[gap] }) 0 else 1
+
+    /** Rollout status from the server's static health label (same mapping as the web inventory). */
+    fun statusForHealth(health: String): String = when (health) {
+        "healthy" -> "live"
+        "degraded" -> "beta"
+        "stale" -> "build"
+        "unknown" -> "concept"
+        else -> "live" // an older server sends no label: keep the previous behaviour
+    }
     val matrix: List<GapCell> = sites.flatMap { s -> gaps.map { g -> GapCell(s.slug, g, gapLevel(s, g)) } }
     // Deduplicated 2026-08-15: 5 NEW (white-space) + 6 ENHANCEMENT (add as tab) — 1 duplicate removed (content-decay already live)
     val ideas = listOf(

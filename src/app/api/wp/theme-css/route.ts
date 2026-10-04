@@ -254,6 +254,16 @@ export async function DELETE(req: NextRequest) {
 
     if (!updateRes.ok) return NextResponse.json({ error: "Could not update settings" }, { status: statusFor(updateRes) });
 
+    // A 200 alone proves nothing: core WordPress ignores unknown settings and still answers 200.
+    const updated = (await updateRes.json().catch(() => null)) as { custom_css_additional_css?: unknown } | null;
+    const after = updated?.custom_css_additional_css;
+    if (typeof after !== "string" || after.includes("Fleet Ideas Lab Injection") || after.includes("Design Lab Injection")) {
+      return NextResponse.json(
+        { error: "WordPress accepted the request but the injected CSS is still present. Remove it in Appearance > Additional CSS." },
+        { status: 502 },
+      );
+    }
+
     return NextResponse.json({ ok: true, removed: true, message: "Fleet Ideas Lab CSS removed from theme." });
   } catch (err) {
     return NextResponse.json({ error: "Rollback failed: " + (err instanceof Error ? err.message : "unknown") }, { status: 500 });

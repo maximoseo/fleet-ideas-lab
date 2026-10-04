@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
     url: p.url,
     domains: p.domains,
     capabilities: p.capabilities,
+    health: p.health,
     plainExplainer: p.plainExplainer,
     live: health?.[p.slug]
       ? {

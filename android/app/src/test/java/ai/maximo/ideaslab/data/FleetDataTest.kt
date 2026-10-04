@@ -25,4 +25,17 @@ class FleetDataTest {
     @Test fun slugsAreUnique() {
         assertEquals(FleetData.sites.size, FleetData.sites.map { it.slug }.toSet().size)
     }
+
+    @Test fun multiDomainSitesCoverEachOfTheirDomains() {
+        val site = FleetSite("x", "X", "technical + analytics", "live", "reporting", "")
+        assertEquals(0, FleetData.gapLevel(site, "Tech"))
+        assertEquals(1, FleetData.gapLevel(site, "SEO"))
+    }
+
+    @Test fun statusFollowsTheHealthLabel() {
+        assertEquals("live", FleetData.statusForHealth("healthy"))
+        assertEquals("beta", FleetData.statusForHealth("degraded"))
+        assertEquals("concept", FleetData.statusForHealth("unknown"))
+        assertEquals("live", FleetData.statusForHealth(""))
+    }
 }

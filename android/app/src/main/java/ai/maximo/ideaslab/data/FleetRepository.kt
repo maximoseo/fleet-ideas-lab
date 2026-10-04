@@ -153,8 +153,8 @@ class FleetRepository(private val context: Context) {
                     domain = o.optJSONArray("domains")?.let { d ->
                         (0 until d.length()).joinToString(" + ") { d.optString(it) }
                     }?.ifBlank { "fleet" } ?: "fleet",
-                    // Feed has no live/beta rollout flag; every inventoried project is deployed.
-                    status = "live",
+                    // Servers from 1.6.1 send the static health label; older ones do not, and read as live.
+                    status = FleetData.statusForHealth(o.optString("health")),
                     stack = o.optJSONArray("capabilities")?.let { c ->
                         (0 until c.length()).joinToString(" + ") { c.optString(it) }
                     }?.ifBlank { "dashboard" } ?: "dashboard",
