@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { detectSlop, type SlopScore, type SlopCategory, type SlopSeverity } from "@/lib/slop-detector";
 import SiteHeader from "@/components/SiteHeader";
 import { pushHistory, getReopenEntry } from "@/lib/history";
@@ -84,7 +84,7 @@ export default function AuditPage() {
     } catch {}
   }, []);
 
-  const analyze = useCallback(async () => {
+  const analyzeRaw = useCallback(async () => {
     if (!url.trim()) { setError(tr("Enter a URL first", "יש להזין URL תחילה")); return; }
     setError("");
     setStep("loading");
@@ -119,6 +119,17 @@ export default function AuditPage() {
       setStep("input");
     }
   }, [url, tr]);
+  // One analysis at a time: a second click while the first is running would race and let the older result win.
+  const analyzeBusy = useRef(false);
+  const analyze = useCallback(async () => {
+    if (analyzeBusy.current) return;
+    analyzeBusy.current = true;
+    try {
+      await analyzeRaw();
+    } finally {
+      analyzeBusy.current = false;
+    }
+  }, [analyzeRaw]);
 
   const filtered = score?.results.filter(r =>
     filter === "all" ? true : r.pattern.category === filter
