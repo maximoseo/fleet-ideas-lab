@@ -47,6 +47,21 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {children}
         <MobileTabBar />
         <WhatsNew />
+      <script dangerouslySetInnerHTML={{ __html: `(function(){try{if(new URLSearchParams(location.search).get("embed")==="1")document.documentElement.dataset.embed="1";}catch(e){}})();` }} />
+        <style dangerouslySetInnerHTML={{ __html: `
+/* ── Panel embed mode (data-embed="1") — suppress app chrome inside dashboards-panel ── */
+[data-embed="1"] body { background: transparent; }
+[data-embed="1"] header,
+[data-embed="1"] [role="banner"],
+[data-embed="1"] .app-sidebar,
+[data-embed="1"] [class*="topbar" i],
+[data-embed="1"] [class*="dock" i],
+[data-embed="1"] [class*="mobile-nav" i],
+[data-embed="1"] [id*="mobile-nav" i],
+[data-embed="1"] nav[aria-label*="main" i],
+[data-embed="1"] nav[aria-label*="primary" i] { display: none !important; }
+[data-embed="1"] main { padding-top: 0 !important; }
+` }} />
       </body>
     </html>
   );
