@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { auditFleet, gapRadar, generateIdeas, runFullPipeline } from "./ideas-engine";
+import { auditFleet, gapRadar, generateIdeas, inventorySnapshot, runFullPipeline } from "./ideas-engine";
 import { ALL_CAPABILITIES, ALL_DOMAINS, FLEET_INVENTORY, type FleetProject } from "./fleet";
 
 /**
@@ -105,5 +105,95 @@ describe("runFullPipeline", () => {
     expect(out.audits).toHaveLength(FLEET_INVENTORY.length);
     expect(out.gaps.cells.length).toBeGreaterThan(0);
     expect(out.ideas.length).toBeGreaterThan(0);
+  });
+});
+
+/**
+ * The scores are heuristics, and the one thing they must not be is random.
+ * Until 2026-10-04 every score added a hash of the project slug and the age maths
+ * were anchored to a fixed date, so two identical projects scored differently and
+ * freshness could never decay.
+ */
+describe("auditFleet is not noise", () => {
+  const base: FleetProject = {
+    slug: "alpha",
+    name: "Alpha",
+    domains: ["seo", "analytics"],
+    capabilities: ["analytics", "reporting"],
+    health: "healthy",
+    updated: "2026-08-01",
+  };
+  const NOW = new Date("2026-08-02T00:00:00Z").getTime();
+
+  it("gives two projects that differ only in name the same scores", () => {
+    const [a, b] = auditFleet([base, { ...base, slug: "zzz-other-name", name: "Other" }], NOW);
+    for (const k of ["coverage", "freshness", "usability", "businessValue", "overall"] as const) {
+      expect(a[k], k).toBe(b[k]);
+    }
+  });
+
+  it("lets freshness decay as the clock moves", () => {
+    const early = auditFleet([base], NOW)[0].freshness;
+    const late = auditFleet([base], NOW + 60 * 86400000)[0].freshness;
+    expect(early).toBe(95);
+    expect(late).toBeLessThan(early);
+  });
+
+  it("is repeatable for the same inventory and clock", () => {
+    expect(auditFleet([base], NOW)).toEqual(auditFleet([base], NOW));
+  });
+
+  it("only suggests generic fixes for capabilities the project does not declare", () => {
+    const complete: FleetProject = { ...base, capabilities: ["analytics", "alerts", "automation", "reporting", "visualization"] };
+    const text = auditFleet([complete], NOW)[0].improvements.join(" | ");
+    expect(text).not.toMatch(/threshold alerts/i);
+    expect(text).not.toMatch(/scheduled PDF export/i);
+    expect(text).not.toMatch(/n8n\/webhook triggers/i);
+  });
+
+  it("does suggest them when the capability is missing", () => {
+    const bare: FleetProject = { ...base, domains: ["seo"], capabilities: [] };
+    const text = auditFleet([bare], NOW)[0].improvements.join(" | ");
+    expect(text).toMatch(/threshold alerts/i);
+  });
+});
+
+describe("inventorySnapshot", () => {
+  it("reports the newest update and its age", () => {
+    const now = new Date("2026-10-04T00:00:00Z").getTime();
+    const s = inventorySnapshot([{ ...FLEET_INVENTORY[0], updated: "2026-08-01" }, { ...FLEET_INVENTORY[0], updated: "2026-08-16" }], now);
+    expect(s.latestUpdated).toBe("2026-08-16");
+    expect(s.ageDays).toBe(49);
+  });
+
+  it("copes with an empty inventory", () => {
+    expect(inventorySnapshot([])).toEqual({ latestUpdated: null, ageDays: null });
+  });
+});
+
+describe("effort estimate", () => {
+  const rank = { S: 0, M: 1, L: 2, XL: 3 } as const;
+  it("never rates a smaller scope above a larger one", () => {
+    const ideas = generateIdeas(null, []);
+    for (const a of ideas) for (const b of ideas) {
+      if (a.widgets.length + a.iaSketch.length < b.widgets.length + b.iaSketch.length) {
+        expect(rank[a.effort as keyof typeof rank], `${a.slug} vs ${b.slug}`).toBeLessThanOrEqual(rank[b.effort as keyof typeof rank]);
+      }
+    }
+  });
+
+  it("does not depend on the slug", () => {
+    const [x] = generateIdeas(null, []);
+    expect(x.effort).toBe(generateIdeas(null, []).find((i) => i.slug === x.slug)?.effort);
+  });
+});
+
+describe("freshness boundaries", () => {
+  const p: FleetProject = { slug: "b", name: "B", domains: ["seo"], capabilities: ["analytics"], health: "healthy", updated: "2026-08-01" };
+  const day = 86400000;
+  const t0 = new Date("2026-08-01T00:00:00Z").getTime();
+  it("keeps 95 until two full days have passed, then drops", () => {
+    expect(auditFleet([p], t0 + 2 * day + 12 * 3600000)[0].freshness).toBe(95);
+    expect(auditFleet([p], t0 + 3 * day)[0].freshness).toBe(80);
   });
 });

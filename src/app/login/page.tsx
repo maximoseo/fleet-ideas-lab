@@ -119,7 +119,7 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-[#0c0a14]">
+    <main className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg)]">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-violet-500/15 border border-violet-500/30 mb-4">
@@ -149,7 +149,7 @@ function LoginForm() {
               autoComplete="username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full rounded-lg bg-black/30 border border-violet-500/20 px-3 py-2 text-sm text-violet-50 placeholder:text-violet-200/25 focus:border-violet-400/60 focus:outline-none"
+              className="w-full rounded-lg bg-black/30 border border-violet-500/20 px-3 py-2 text-sm text-violet-50 placeholder:text-[var(--muted)] focus:border-violet-400/60 focus:outline-none"
               placeholder="operator"
             />
           </div>
@@ -166,7 +166,7 @@ function LoginForm() {
                 autoComplete="current-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-lg bg-black/30 border border-violet-500/20 pl-3 pr-12 py-2 text-sm text-violet-50 placeholder:text-violet-200/25 focus:border-violet-400/60 focus:outline-none"
+                className="w-full rounded-lg bg-black/30 border border-violet-500/20 pl-3 pr-12 py-2 text-sm text-violet-50 placeholder:text-[var(--muted)] focus:border-violet-400/60 focus:outline-none"
                 placeholder="••••••••"
               />
               <button
@@ -236,7 +236,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen bg-[#0c0a14]" />}>
+    <Suspense fallback={<main className="min-h-screen bg-[var(--bg)]" />}>
       <LoginForm />
     </Suspense>
   );

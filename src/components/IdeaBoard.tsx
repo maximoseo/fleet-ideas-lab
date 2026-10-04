@@ -200,7 +200,7 @@ function BoardCard({
   const prev = idx > 0 ? STATUS_ORDER[idx - 1] : null;
   const next = idx < STATUS_ORDER.length - 1 ? STATUS_ORDER[idx + 1] : null;
   return (
-    <article className="rounded-xl border border-white/10 bg-[#1a1428] p-3">
+    <article className="rounded-xl border border-white/10 bg-[var(--panel)] p-3">
       <div className="flex flex-wrap items-center gap-1.5">
         <span
           className="rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
@@ -230,7 +230,7 @@ function BoardCard({
           className="min-h-[36px] w-full rounded-lg border border-white/15 bg-white/5 px-2 text-[12px] font-semibold text-white/80 focus:border-violet-500 focus:outline-none disabled:opacity-50"
         >
           {STATUS_ORDER.map((s) => (
-            <option key={s} value={s} className="bg-[#151120] text-white">
+            <option key={s} value={s} className="bg-[var(--bg)] text-white">
               {s}
             </option>
           ))}

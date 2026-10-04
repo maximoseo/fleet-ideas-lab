@@ -133,3 +133,40 @@ describe("validateCredentials", () => {
     expect(auth.validateCredentials("anyone", "wrong")).toBe(false);
   });
 });
+
+describe("password-version tag", () => {
+  it("is an HMAC tag, not a bare hash of the password", async () => {
+    await freshAuth(BASE);
+    const env = await import("./env");
+    expect(env.passwordVersion()).toMatch(/^v2\.[A-Za-z0-9_-]{16}$/);
+  });
+
+  it("changes with the signing secret and with the password", async () => {
+    await freshAuth(BASE);
+    const env = await import("./env");
+    const a = env.passwordVersion();
+    await freshAuth({ ...BASE, DASHBOARD_AUTH_SECRET: "another-secret-0123456789abcdef0123" });
+    const b = env.passwordVersion();
+    await freshAuth({ ...BASE, DASHBOARD_AUTH_PASSWORD: "a-different-password" });
+    const c = env.passwordVersion();
+    expect(new Set([a, b, c]).size).toBe(3);
+  });
+
+  it("rejects a token minted before the password changed", async () => {
+    const auth = await freshAuth(BASE);
+    const token = auth.createSessionToken("operator@example.com");
+    const after = await freshAuth({ ...BASE, DASHBOARD_AUTH_PASSWORD: "rotated-password" });
+    expect(after.verifySessionToken(token)).toBeNull();
+  });
+
+  it("keeps sessions alive across a signing-secret rotation", async () => {
+    const auth = await freshAuth(BASE);
+    const token = auth.createSessionToken("operator@example.com");
+    const rotated = await freshAuth({
+      ...BASE,
+      DASHBOARD_AUTH_SECRET: "brand-new-secret-0123456789abcdef01",
+      DASHBOARD_AUTH_SECRET_PREVIOUS: BASE.DASHBOARD_AUTH_SECRET,
+    });
+    expect(rotated.verifySessionToken(token)?.username).toBe("operator@example.com");
+  });
+});

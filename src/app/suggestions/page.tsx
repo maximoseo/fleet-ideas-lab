@@ -97,7 +97,7 @@ export default function SuggestionsPage() {
   const quickWins = suggestions.filter(s => s.effort === "easy");
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+    <div className="min-h-screen bg-[var(--bg)] text-white" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
       <SiteHeader subtitle="AI design ideas" />
       {pullY > 0 ? (<div className="flex justify-center py-2" style={{ opacity: pullY / 72 }}><span className={`inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-xs font-semibold ${pullY > 48 ? "border-violet-500/40 bg-violet-500/20 text-violet-200" : "border-white/10 bg-white/5 text-white/50"}`}><span className={pullY > 48 ? "animate-spin inline-block" : ""}>{pullY > 48 ? "\u21bb" : "\u2193"}</span>{pullY > 48 ? "Release to reload" : "Pull to reload"}</span></div>) : null}
 

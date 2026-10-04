@@ -119,7 +119,7 @@ export default function AuditPage() {
   const passedOnly = filtered.filter(r => !r.detected);
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white">
+    <div className="min-h-screen bg-[var(--bg)] text-white">
       <SiteHeader subtitle="Audit a client site" />
 
       <main className="mx-auto max-w-5xl px-6 py-8">

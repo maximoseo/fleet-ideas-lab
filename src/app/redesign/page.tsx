@@ -350,7 +350,7 @@ export default function RedesignPage() {
   const allFailed = slots.length > 0 && slots.every((s) => s.status === "error");
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white">
+    <div className="min-h-screen bg-[var(--bg)] text-white">
       <SiteHeader subtitle="Analyse a site → redesign prototypes → WordPress draft" />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
@@ -627,6 +627,7 @@ export default function RedesignPage() {
                         <iframe
                           srcDoc={originalDoc}
                           title="Original page"
+                          // untrusted markup: no allow-scripts (see PrototypeFrame.tsx)
                           sandbox="allow-same-origin"
                           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
                         />
@@ -638,6 +639,7 @@ export default function RedesignPage() {
                           <iframe
                             srcDoc={previewDoc}
                             title="Preview with new CSS"
+                            // untrusted markup: no allow-scripts (see PrototypeFrame.tsx)
                             sandbox="allow-same-origin"
                             style={{ width: "100%", height: "100%", border: 0 }}
                           />
@@ -681,7 +683,7 @@ export default function RedesignPage() {
               <select value={selectedPage} onChange={(e) => { setSelectedPage(+e.target.value); setConfirmSlug(""); }}
                 dir="ltr" className="mb-5 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white outline-none focus:border-violet-500">
                 {(wpStatus?.pages || []).map((p) => (
-                  <option key={p.id} value={p.id} className="bg-[#161322]">{p.title}</option>
+                  <option key={p.id} value={p.id} className="bg-[var(--bg)]">{p.title}</option>
                 ))}
               </select>
             ) : (

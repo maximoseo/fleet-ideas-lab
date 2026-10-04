@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { FLEET_INVENTORY } from "@/lib/fleet";
 import { getHealthRows } from "@/lib/probes";
+import { inventorySnapshot } from "@/lib/ideas-engine";
 import { supabaseEnabled } from "@/lib/supabase";
 
 export const runtime = "nodejs";
@@ -38,5 +39,6 @@ export async function GET() {
     inventory,
     count: inventory.length,
     liveHealth: health !== null && Object.keys(health).length > 0,
+    snapshot: inventorySnapshot(FLEET_INVENTORY),
   });
 }

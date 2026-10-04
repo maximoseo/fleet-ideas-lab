@@ -84,8 +84,11 @@ export function PrototypeFrame({
           ref={ref}
           srcDoc={html}
           title={`Prototype preview at ${VIEWPORTS[viewport].label}`}
-          // No allow-same-origin: generated markup is treated as untrusted.
-          // Measurement still works because srcDoc frames stay same-process.
+          // Generated markup is untrusted, so it must never run script: there is NO
+          // allow-scripts. allow-same-origin is here only so the parent can read the
+          // framed document to measure its height, which is safe without scripts.
+          // Never add allow-scripts next to it: that pair lets the framed page remove
+          // its own sandbox. src/components/sandbox.guard.test.ts enforces this.
           sandbox="allow-same-origin"
           onLoad={() => {
             measure();

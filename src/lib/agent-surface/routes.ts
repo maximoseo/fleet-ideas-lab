@@ -1,5 +1,6 @@
 import { FLEET_IDEAS, FLEET_GENERATED_POOL, FLEET_INVENTORY } from "../fleet";
-import { auditFleet, gapRadar, generateIdeas } from "../ideas-engine";
+import { auditFleet, gapRadar, generateIdeas, inventorySnapshot, AUDIT_BASIS } from "../ideas-engine";
+import { effectiveStatus } from "../ideaStatus";
 import { getHealthRows } from "../probes";
 import { sbSelect, supabaseEnabled } from "../supabase";
 import { RouteError } from "./types";
@@ -33,24 +34,24 @@ export const routes: Route[] = [
     name: "list_inventory",
     method: "GET",
     path: "/inventory",
-    summary: "The fleet inventory (slug, name, url, domains, capabilities, status) with live health when probes exist.",
+    summary: "The fleet inventory (slug, name, url, domains, capabilities, status) with live health when probes exist. `health` is the label frozen at the inventory snapshot; `live.state` is the current probe state; `snapshot` says how old the curated inventory is.",
     handler: async () => {
       const health = await getHealthRows();
       const items = FLEET_INVENTORY.map((p) => {
         const live = health?.[p.slug];
         return { ...p, live: live ? { state: live.state, lastStatus: live.last_status, latencyMs: live.last_latency_ms, checkedAt: live.updated_at, lastOkAt: live.last_ok_at } : null };
       });
-      return { items, count: items.length, liveHealth: health !== null && Object.keys(health).length > 0 };
+      return { items, count: items.length, liveHealth: health !== null && Object.keys(health).length > 0, snapshot: inventorySnapshot(FLEET_INVENTORY) };
     },
   },
   {
     name: "fleet_audit",
     method: "GET",
     path: "/audit",
-    summary: "Capability audit score per dashboard (what the audit page shows).",
+    summary: "Heuristic audit score per dashboard (declared capabilities, inventory snapshot age, static health label). Not measured usage or quality: see `basis` and `snapshot`.",
     handler: async () => {
       const items = auditFleet(FLEET_INVENTORY);
-      return { items, count: items.length };
+      return { items, count: items.length, basis: AUDIT_BASIS, snapshot: inventorySnapshot(FLEET_INVENTORY) };
     },
   },
   {
@@ -74,8 +75,8 @@ export const routes: Route[] = [
     name: "list_ideas",
     method: "GET",
     path: "/ideas",
-    summary: "The idea board: curated + pooled ideas with their current status from Supabase (backlog / planned / building / live …).",
-    input: { type: "object", properties: { status: { type: "string", description: "filter by board status" } }, additionalProperties: false },
+    summary: "The idea board: curated + pooled ideas. `status` is the current pipeline status (the persisted board status when there is one, otherwise the seed mapped into the same vocabulary); `seed_status` is the raw value from the static seed; `board` carries the persisted row (status, updated_at) or null.",
+    input: { type: "object", properties: { status: { type: "string", description: "filter by pipeline status (backlog / planned / building / shipped / archived)" } }, additionalProperties: false },
     handler: async (input) => {
       const curated = [...FLEET_IDEAS, ...FLEET_GENERATED_POOL];
       let statuses: Record<string, IdeaRow> = {};
@@ -90,8 +91,14 @@ export const routes: Route[] = [
           console.error("agent-surface list_ideas: board read failed", e instanceof Error ? e.message : e);
         }
       }
-      let items = curated.map((i) => ({ ...i, board: statuses[i.slug] ? { status: statuses[i.slug].status, updated_at: statuses[i.slug].updated_at } : null }));
-      if (input.status) items = items.filter((i) => i.board?.status === String(input.status));
+      let items = curated.map((i) => {
+        const row = statuses[i.slug];
+        const board = row ? { status: row.status, updated_at: row.updated_at } : null;
+        // `status` used to be the raw seed value (new / scoped …) next to a separate `board.status`,
+        // so an idea moved on the board still read as "new" to anyone who looked at the top-level field.
+        return { ...i, seed_status: i.status, status: effectiveStatus(i.status, board), board };
+      });
+      if (input.status) items = items.filter((i) => i.status === String(input.status));
       return { items, count: items.length, board: boardOk ? "ok" : supabaseEnabled() ? "unavailable" : "not configured" };
     },
   },

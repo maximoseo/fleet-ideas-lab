@@ -153,7 +153,7 @@ export default function GeneratePage() {
   const lovartStyles = ["violet", "quiet", "editorial"] as const;
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white">
+    <div className="min-h-screen bg-[var(--bg)] text-white">
       <SiteHeader subtitle="Design tokens & CSS export" />
 
       <main className="mx-auto max-w-6xl px-6 py-8">

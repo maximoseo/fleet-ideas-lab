@@ -43,7 +43,7 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
   if (!open) return null;
   return (
     <div className="fixed inset-0 z-[80] flex items-start justify-center pt-[12vh] bg-black/60 p-4" onClick={onClose}>
-      <div className="w-full max-w-2xl rounded-2xl border border-white/15 bg-[#0f0b1a] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div className="w-full max-w-2xl rounded-2xl border border-white/15 bg-[var(--bg)] shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 border-b border-white/10 px-4 py-3">
           <span className="text-white/65">⌘K</span>
           <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder="Jump to dashboard / idea / gap — e.g. site-intel, anomaly, outreach×automation" className="flex-1 bg-transparent text-sm text-white placeholder:text-white/60 focus:outline-none" />

@@ -152,7 +152,7 @@ export default function HistoryPage() {
 
   if (!hydrated) {
     return (
-      <div className="min-h-screen bg-[#0c0a14] text-white">
+      <div className="min-h-screen bg-[var(--bg)] text-white">
         <SiteHeader subtitle="All analyzed sites · compare · share" />
         <main className="mx-auto max-w-5xl px-6 py-8">
           <div className="py-20 text-center text-sm text-white/65">Loading history…</div>
@@ -162,7 +162,7 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white">
+    <div className="min-h-screen bg-[var(--bg)] text-white">
       <SiteHeader subtitle="All analyzed sites · compare · share · reopen" />
 
       <main className="mx-auto max-w-5xl px-6 py-8">

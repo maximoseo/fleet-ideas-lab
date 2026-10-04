@@ -3,17 +3,10 @@ import { requireUser, unauthorized } from "@/lib/auth";
 import { FLEET_INVENTORY, FLEET_IDEAS, FLEET_GENERATED_POOL } from "@/lib/fleet";
 import { auditFleet, gapRadar, generateIdeas } from "@/lib/ideas-engine";
 import { sbInsertIgnore, sbSelect, supabaseEnabled } from "@/lib/supabase";
+import { STATUS_MAP } from "@/lib/ideaStatus";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
-
-/** Static statuses → pipeline vocabulary. */
-const STATUS_MAP: Record<string, string> = {
-  new: "backlog",
-  backlog: "backlog",
-  scoped: "planned",
-  shipped: "shipped",
-};
 
 interface IdeaRow {
   slug: string;

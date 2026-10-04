@@ -17,7 +17,11 @@ Two behaviours worth knowing before you debug a login:
 
 - If `DASHBOARD_AUTH_USERNAME` is **empty**, login is **password-only**. If it is set and
   either side contains `@`, the comparison is case-insensitive.
-- Session tokens carry a `pv` tag derived from the password. Changing
+- Session tokens carry a `pv` tag: an HMAC of the password keyed by the signing secret
+  (`v2.` prefix; it used to be a bare 32-bit hash). The first deploy that ships it
+  invalidates every existing session once, so the operator and the Android app must log in again.
+  Signing-secret rotation still works because every secret in the rotation window is accepted.
+  The tag is derived from the password. Changing
   `DASHBOARD_AUTH_PASSWORD` logs out every session everywhere, immediately — web and phone.
   That, not expiry, is the revocation mechanism.
 
@@ -45,7 +49,7 @@ returning 401. Adding a public route is an explicit, test-covered decision.
 | `DASHBOARD_AUTH_SECRET_PREVIOUS` | optional | no | Rotation window — old tokens stay valid while set. |
 | `DASHBOARD_AUTH_USERNAME` | prod, preview | no | Empty means password-only login. |
 | `DASHBOARD_AUTH_PASSWORD` | prod, preview | yes in prod | Changing it force-logs-out everyone. |
-| `TURNSTILE_SECRET_KEY` | prod, preview | recommended | Missing = captcha disabled, with a warning. |
+| `TURNSTILE_SECRET_KEY` | prod, preview | yes in prod | Missing in production = web login refused (fail-closed). Outside production a missing value skips the check. The Android app channel (APP_TOKEN) is unaffected. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | prod, preview | yes | Widget `0x4AAAAAAEQyCmGw2i6fiaAq`. |
 | `APP_TOKEN` | prod | yes for the app | Bearer for `/api/app/fleet`; also the app's challenge bypass. |
 | `APP_TOKEN_PREVIOUS` | prod | temporary | Rotation window only — clear it once the new APK is out. |
@@ -61,7 +65,15 @@ The Vercel project has **no git integration** — pushing to `main` runs CI but 
 
 ```bash
 git push origin main                      # CI: typecheck, lint, tests, version sync, build, auth matrix
-npx vercel deploy --prod --token="$VERCEL_TOKEN_2" --scope=maximo-seo --yes
+npx vercel deploy --prod --token="$VERCEL_TOKEN_2" --scope=maximo-seo --yes \
+  --build-env GIT_COMMIT_SHA=$(git rev-parse HEAD)
+```
+
+The `--build-env` flag matters: a CLI deploy uploads no git metadata, so without it
+`/api/v1/health` reports `version: "unknown"`. Check it after the deploy:
+
+```bash
+AGENT_API_KEY=... node scripts/smoke-health-version.mjs https://fleet-ideas-lab.maximo-seo.ai "$(git rev-parse HEAD)"
 ```
 
 Then verify the **deployed artefact**, not the source. A green build is not evidence:
@@ -156,8 +168,20 @@ Vercel — it drifted once and every local build produced an APK whose feed retu
 - **Turnstile is in managed mode** (an explicit "verify you are human" click). Switching it to
   invisible is one setting in the Cloudflare dashboard; it could not be done from here because
   the API token has no Turnstile write scope and the endpoint rejects the global key with 405.
-- **Light theme contrast**: fixed from unusable to usable, but axe still reports ~184 borderline
-  contrast nodes in light against 43 in dark. Tracked, not finished.
+- **Light theme contrast**: class-based dark backgrounds (`bg-[#0c0a14]` and friends) were replaced
+  with tokens on 2026-10-04, and `src/components/theme.guard.test.ts` blocks new ones. /login and
+  /share measure at least 4.5:1 in both themes at 320 to 1440px; the authenticated pages were not
+  re-measured end to end, so treat the older axe figure (~184 nodes in light) as stale, not as fixed.
+- **Database objects are not versioned.** `supabase/migrations` defines only three tables and
+  four functions. `fil_ideas`, `fil_idea_events`, `fil_transition_idea`, `fil_injections`,
+  `fil_analyses`, `fil_favorites`, `fil_alerts`, `fil_project_health` and `fil_record_probe`
+  exist in production but not in the repo, so a fresh project cannot be rebuilt from it. Needs a
+  schema dump from the live database.
+- **Audit scores are heuristics over a hand-curated inventory**, not measured usage. The API says
+  so in `basis`, and returns the inventory age in `snapshot`.
+- **The Android Gaps matrix** (`FleetData.kt`) is still generated from `hashCode` and the app
+  keeps a static copy of the fleet data. Not fixed: there is no Android toolchain in the
+  environment that made these changes.
 - **`src/app/redesign/page.tsx` is 850 lines** and not split. Its flow needs a Firecrawl key and
   a live target site to exercise, so rearranging it without being able to run it is a bad trade.
 - **`sanitizeHtml` is a copy stripper, not an XSS sanitiser.** It removes whole script/style/

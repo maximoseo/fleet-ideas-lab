@@ -376,7 +376,7 @@ export default function MockupPage() {
   const style = STYLES[selectedStyle];
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white">
+    <div className="min-h-screen bg-[var(--bg)] text-white">
       <SiteHeader subtitle="Full-page mockups — content-real" />
       <main className="mx-auto max-w-6xl px-6 py-8">
         {step === "input" && (
