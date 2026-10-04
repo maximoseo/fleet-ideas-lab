@@ -20,7 +20,7 @@ export const RELEASE_NOTES: ReleaseNote[] = [
   {
     version: "1.6.1",
     date: "2026-10-04",
-    title: { en: "Complete inventory, faster sign-in, Android 1.5.1", he: "מלאי מלא, כניסה מהירה יותר ואנדרואיד 1.5.1" },
+    title: { en: "Complete inventory and faster sign-in", he: "מלאי מלא וכניסה מהירה יותר" },
     changes: [
       {
         en: "The inventory now lists 9 more dashboards found in the registry (45 in total). Dashboards nobody has probed yet are labelled \"not probed\" instead of being guessed.",
@@ -31,8 +31,8 @@ export const RELEASE_NOTES: ReleaseNote[] = [
         he: "בדיקת האבטחה בכניסה נטענת עכשיו כשמתחילים להקליד, כך שהדף נפתח מהר יותר.",
       },
       {
-        en: "Shared links show a clear preview title. Android 1.5.1 replaces the arbitrary gap matrix with one derived from each dashboard's primary domain.",
-        he: "קישורי שיתוף מציגים כותרת תצוגה מקדימה ברורה. אנדרואיד 1.5.1 מחליף את מטריצת הפערים השרירותית במטריצה שנגזרת מהתחום הראשי של כל דשבורד.",
+        en: "Shared links show a clear preview title. The next Android release replaces the arbitrary gap matrix with one derived from each dashboard's primary domain.",
+        he: "קישורי שיתוף מציגים כותרת תצוגה מקדימה ברורה. הגרסה הבאה של אנדרואיד מחליפה את מטריצת הפערים השרירותית במטריצה שנגזרת מהתחום הראשי של כל דשבורד.",
       },
     ],
   },
