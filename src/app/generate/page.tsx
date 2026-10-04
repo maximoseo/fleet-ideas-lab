@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import SiteHeader from "@/components/SiteHeader";
 import { pushHistory } from "@/lib/history";
+import { useLang } from "@/components/i18n";
 import {
   type DesignTokens,
   generateCSS,
@@ -35,6 +36,7 @@ function Swatch({ color, label }: { color: string; label: string }) {
 }
 
 export default function GeneratePage() {
+  const { tr } = useLang();
   const [step, setStep] = useState<"input" | "loading" | "result">("input");
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
@@ -46,7 +48,7 @@ export default function GeneratePage() {
   const [lovartResult, setLovartResult] = useState<Record<string, string>>({});
 
   const analyze = useCallback(async () => {
-    if (!url.trim()) { setError("Enter a URL first"); return; }
+    if (!url.trim()) { setError(tr("Enter a URL first", "יש להזין כתובת URL")); return; }
     setError("");
     setStep("loading");
     try {
@@ -56,7 +58,7 @@ export default function GeneratePage() {
         body: JSON.stringify({ url: url.trim() }),
       });
       const d = await res.json() as Record<string, unknown>;
-      if (!res.ok) { setError((d.error as string) || "Failed"); setStep("input"); return; }
+      if (!res.ok) { setError((d.error as string) || tr("Failed", "הפעולה נכשלה")); setStep("input"); return; }
       setData(d as unknown as DesignSystemData);
       try {
         const aRes = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: url.trim() }) });
@@ -65,10 +67,10 @@ export default function GeneratePage() {
       } catch {}
       setStep("result");
     } catch {
-      setError("Network error");
+      setError(tr("Network error", "שגיאת רשת"));
       setStep("input");
     }
-  }, [url]);
+  }, [url, tr]);
 
   const getExport = useCallback((): string => {
     if (!data) return "";
@@ -154,21 +156,21 @@ export default function GeneratePage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-white">
-      <SiteHeader subtitle="Design tokens & CSS export" />
+      <SiteHeader subtitle={tr("Design tokens & CSS export", "Design tokens וייצוא CSS")} />
 
       <main className="mx-auto max-w-6xl px-6 py-8">
         {step === "input" && (
           <div className="mx-auto max-w-xl">
-            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>Extract a design system</h2>
+            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>{tr("Extract a design system", "חילוץ מערכת עיצוב")}</h2>
             <p className="mb-6 text-sm text-white/50">
-              Paste any URL. We&apos;ll extract colors, fonts, spacing, and radius — then generate a complete design system in 4 export formats, including an auto-generated dark mode variant (lightness -40 via HSL).
+              {tr("Paste any URL. We'll extract colors, fonts, spacing, and radius — then generate a complete design system in 4 export formats, including an auto-generated dark mode variant (lightness -40 via HSL).", "הדביקו כתובת URL כלשהי. נחלץ צבעים, גופנים, ריווח ורדיוס — ואז ניצור מערכת עיצוב מלאה ב-4 פורמטים לייצוא, כולל גרסת dark mode שנוצרת אוטומטית (בהירות ‎-40 דרך HSL).")}
             </p>
             <div className="flex gap-2">
               <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && analyze()}
                 placeholder="https://example.com" dir="ltr"
                 className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-violet-500" />
               <button onClick={analyze} className="rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">
-                Extract
+                {tr("Extract", "חילוץ")}
               </button>
             </div>
             {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
@@ -178,7 +180,7 @@ export default function GeneratePage() {
         {step === "loading" && (
           <div className="mx-auto max-w-xl py-20 text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-violet-500/30 border-t-violet-500" />
-            <p className="text-lg font-semibold">Extracting design tokens from {url}…</p>
+            <p className="text-lg font-semibold">{tr("Extracting design tokens from", "מחלץ design tokens מ-")} {url}…</p>
           </div>
         )}
 
@@ -187,17 +189,17 @@ export default function GeneratePage() {
             {/* Left: visual preview */}
             <div className="space-y-6">
               <button onClick={() => { setStep("input"); setData(null); }} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/20">
-                ← New site
+                {tr("← New site", "→ אתר חדש")}
               </button>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/65">Color Palette</h3>
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Color Palette", "פלטת צבעים")}</h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {Object.entries(data.tokens.colors).map(([key, val]) => (
                     <Swatch key={key} color={val} label={key} />
                   ))}
                 </div>
-                <h3 className="mb-3 mt-6 text-sm font-bold uppercase tracking-wider text-white/65">Dark Variant (HSL lightness -40)</h3>
+                <h3 className="mb-3 mt-6 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Dark Variant (HSL lightness -40)", "גרסה כהה (HSL, בהירות ‎-40)")}</h3>
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
                   {Object.entries(data.darkVariant).map(([key, val]) => (
                     <Swatch key={key} color={val} label={key} />
@@ -206,14 +208,14 @@ export default function GeneratePage() {
               </div>
 
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/65">Typography</h3>
+                <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Typography", "טיפוגרפיה")}</h3>
                 <div className="space-y-3">
                   <div>
-                    <span className="text-xs text-white/65">Display</span>
+                    <span className="text-xs text-white/65">{tr("Display", "כותרות")}</span>
                     <p className="text-2xl font-bold" style={{ fontFamily: `${data.tokens.fonts.display}, sans-serif` }}>{data.tokens.fonts.display}</p>
                   </div>
                   <div>
-                    <span className="text-xs text-white/65">Body</span>
+                    <span className="text-xs text-white/65">{tr("Body", "גוף הטקסט")}</span>
                     <p className="text-lg" style={{ fontFamily: `${data.tokens.fonts.body}, sans-serif` }}>{data.tokens.fonts.body}</p>
                   </div>
                   <div>
@@ -225,7 +227,7 @@ export default function GeneratePage() {
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Spacing (baseUnit)</h3>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Spacing (baseUnit)", "ריווח (baseUnit)")}</h3>
                   <div className="space-y-1.5">
                     {data.tokens.spacing.map((s, i) => (
                       <div key={i} className="flex items-center gap-2">
@@ -237,7 +239,7 @@ export default function GeneratePage() {
                   </div>
                 </div>
                 <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Radius</h3>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Radius", "רדיוס")}</h3>
                   <div className="flex flex-wrap gap-3">
                     {data.tokens.radius.map((r, i) => (
                       <div key={i} className="text-center">
@@ -251,7 +253,7 @@ export default function GeneratePage() {
 
               {/* Shadows */}
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Shadows</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Shadows", "צללים")}</h3>
                 <div className="flex flex-wrap gap-3">
                   {data.tokens.shadows.map((s, i) => (
                     <div key={i} className="flex h-16 w-28 items-center justify-center rounded-lg bg-white text-xs font-medium text-black" style={{ boxShadow: s }}>
@@ -263,45 +265,45 @@ export default function GeneratePage() {
 
               {/* Raw detected */}
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Raw Detected — {data.rawColors.length} colors · {data.rawFonts.length} fonts</h3>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Raw Detected", "נתונים שזוהו")} — {data.rawColors.length} {tr("colors", "צבעים")} · {data.rawFonts.length} {tr("fonts", "גופנים")}</h3>
                 <div className="mb-3 flex flex-wrap gap-1.5">
                   {data.rawColors.map((c) => (
-                    <button key={c} onClick={() => navigator.clipboard.writeText(c)} title={`Click to copy ${c}`}
+                    <button key={c} onClick={() => navigator.clipboard.writeText(c)} title={tr(`Click to copy ${c}`, `לחצו להעתקת ${c}`)}
                       className="inline-flex h-7 items-center gap-1 rounded-full border border-white/20 px-2 text-xs transition hover:border-white/40">
                       <span className="inline-block h-4 w-4 rounded-full border border-white/20" style={{ background: c }} />
                       <span dir="ltr" className="text-white/70">{c}</span>
                     </button>
                   ))}
-                  {data.rawColors.length === 0 && <span className="text-xs text-white/60">No colors detected</span>}
+                  {data.rawColors.length === 0 && <span className="text-xs text-white/60">{tr("No colors detected", "לא זוהו צבעים")}</span>}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {data.rawFonts.map((f) => (
                     <span key={f} className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/70" style={{ fontFamily: `${f}, sans-serif` }}>{f}</span>
                   ))}
-                  {data.rawFonts.length === 0 && <span className="text-xs text-white/60">No fonts detected</span>}
+                  {data.rawFonts.length === 0 && <span className="text-xs text-white/60">{tr("No fonts detected", "לא זוהו גופנים")}</span>}
                 </div>
               </div>
 
               {/* Lovart hook */}
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">Lovart — Generate hero</h3>
-                <p className="mb-3 text-xs text-white/50">Per style — calls Lovart API if key is set, otherwise shows a placeholder.</p>
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-white/65">{tr("Lovart — Generate hero", "Lovart — יצירת הירו")}</h3>
+                <p className="mb-3 text-xs text-white/50">{tr("Per style — calls Lovart API if key is set, otherwise shows a placeholder.", "לכל סגנון — קורא ל-Lovart API אם הוגדר מפתח, אחרת מוצג מציין מיקום.")}</p>
                 <div className="grid gap-3 sm:grid-cols-3">
                   {lovartStyles.map((style) => (
                     <div key={style} className="rounded-lg border border-white/10 bg-black/20 p-3">
                       <div className="mb-2 text-xs font-semibold capitalize text-white/80">{style}</div>
                       {lovartResult[style] ? (
                         lovartResult[style] === "placeholder" ? (
-                          <div className="flex h-24 items-center justify-center rounded bg-gradient-to-br from-violet-600/30 to-fuchsia-600/30 text-xs text-white/50">Placeholder hero — set LOVART_API_KEY</div>
+                          <div className="flex h-24 items-center justify-center rounded bg-gradient-to-br from-violet-600/30 to-fuchsia-600/30 text-xs text-white/50">{tr("Placeholder hero — set LOVART_API_KEY", "הירו זמני — יש להגדיר LOVART_API_KEY")}</div>
                         ) : (
-                          <img src={lovartResult[style]} alt={`${style} hero`} className="h-24 w-full rounded object-cover" />
+                          <img src={lovartResult[style]} alt={tr(`${style} hero`, `הירו ${style}`)} className="h-24 w-full rounded object-cover" />
                         )
                       ) : (
-                        <div className="flex h-24 items-center justify-center rounded bg-white/5 text-xs text-white/60">No hero yet</div>
+                        <div className="flex h-24 items-center justify-center rounded bg-white/5 text-xs text-white/60">{tr("No hero yet", "אין הירו עדיין")}</div>
                       )}
                       <button onClick={() => handleLovart(style)} disabled={lovartBusy === style}
                         className="mt-2 w-full rounded-lg bg-violet-600 py-2 text-xs font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50">
-                        {lovartBusy === style ? "Generating…" : `Generate ${style} hero`}
+                        {lovartBusy === style ? tr("Generating…", "יוצר…") : tr(`Generate ${style} hero`, `יצירת הירו ${style}`)}
                       </button>
                     </div>
                   ))}
@@ -312,9 +314,9 @@ export default function GeneratePage() {
             {/* Right: export panel */}
             <div className="space-y-4">
               <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-                <h3 className="mb-3 text-sm font-bold">📦 Export</h3>
+                <h3 className="mb-3 text-sm font-bold">{tr("📦 Export", "📦 ייצוא")}</h3>
                 <div className="mb-3 grid grid-cols-2 gap-2">
-                  {([["css", "CSS Variables"], ["tailwind", "Tailwind Config"], ["designmd", "design.md"], ["shadcn", "shadcn Theme"]] as const).map(([f, label]) => (
+                  {([["css", tr("CSS Variables", "משתני CSS")], ["tailwind", tr("Tailwind Config", "הגדרות Tailwind")], ["designmd", "design.md"], ["shadcn", tr("shadcn Theme", "ערכת נושא shadcn")]] as const).map(([f, label]) => (
                     <button key={f} onClick={() => setFormat(f)}
                       className={`rounded-lg px-3 py-2 text-xs font-medium transition ${format === f ? "bg-violet-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>
                       {label}
@@ -327,18 +329,18 @@ export default function GeneratePage() {
                 <div className="mt-3 flex gap-2">
                   <button onClick={copyExport}
                     className="flex-1 rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500">
-                    {copied ? "✓ Copied!" : "Copy"}
+                    {copied ? tr("✓ Copied!", "✓ הועתק!") : tr("Copy", "העתקה")}
                   </button>
                   <button onClick={downloadExport}
                     className="flex-1 rounded-lg bg-white/10 py-2.5 text-sm font-semibold text-white/70 transition hover:bg-white/20">
-                    Download
+                    {tr("Download", "הורדה")}
                   </button>
                 </div>
                 <button onClick={downloadZip} disabled={zipBusy}
                   className="mt-2 w-full rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 py-2.5 text-sm font-semibold text-white transition hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50">
-                  {zipBusy ? "Building ZIP…" : "⬇ Download ZIP (5 files + README)"}
+                  {zipBusy ? tr("Building ZIP…", "בונה ZIP…") : tr("⬇ Download ZIP (5 files + README)", "⬇ הורדת ZIP (5 קבצים + README)")}
                 </button>
-                <p className="mt-2 text-center text-xs text-white/60">Bundles design-tokens.css, tailwind.config.ts, design.md, shadcn-theme.json, tokens.json + README</p>
+                <p className="mt-2 text-center text-xs text-white/60">{tr("Bundles design-tokens.css, tailwind.config.ts, design.md, shadcn-theme.json, tokens.json + README", "כולל את design-tokens.css, tailwind.config.ts, design.md, shadcn-theme.json, tokens.json + README")}</p>
               </div>
             </div>
           </div>

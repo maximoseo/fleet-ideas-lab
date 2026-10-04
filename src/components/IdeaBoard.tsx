@@ -2,16 +2,39 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DOMAIN_LABEL, DOMAIN_COLOR, type FleetIdea } from "@/lib/fleet";
+import { useLang, pick, type Bi, type Lang } from "@/components/i18n";
+import { localizeIdea } from "@/lib/fleet.he";
 
 export type PipelineStatus = "backlog" | "planned" | "building" | "shipped" | "archived";
 
-export const PIPELINE_COLUMNS: { id: PipelineStatus; label: string; hint: string }[] = [
-  { id: "backlog", label: "Backlog", hint: "Not started" },
-  { id: "planned", label: "Planned", hint: "Scoped, queued" },
-  { id: "building", label: "Building", hint: "In progress" },
-  { id: "shipped", label: "Shipped", hint: "Live" },
-  { id: "archived", label: "Archived", hint: "Parked" },
+export const PIPELINE_COLUMNS: { id: PipelineStatus; label: Bi; hint: Bi }[] = [
+  { id: "backlog", label: { en: "Backlog", he: "בצבר" }, hint: { en: "Not started", he: "טרם התחיל" } },
+  { id: "planned", label: { en: "Planned", he: "מתוכנן" }, hint: { en: "Scoped, queued", he: "הוגדר, בתור" } },
+  { id: "building", label: { en: "Building", he: "בבנייה" }, hint: { en: "In progress", he: "בתהליך" } },
+  { id: "shipped", label: { en: "Shipped", he: "נשלח" }, hint: { en: "Live", he: "חי" } },
+  { id: "archived", label: { en: "Archived", he: "בארכיון" }, hint: { en: "Parked", he: "מושהה" } },
 ];
+
+// Display-only status words (the stored PipelineStatus keys never change).
+const STATUS_LABEL: Record<PipelineStatus, Bi> = {
+  backlog: { en: "backlog", he: "בצבר" },
+  planned: { en: "planned", he: "מתוכנן" },
+  building: { en: "building", he: "בבנייה" },
+  shipped: { en: "shipped", he: "נשלח" },
+  archived: { en: "archived", he: "בארכיון" },
+};
+
+// Hebrew display labels for the domain chip. English comes from DOMAIN_LABEL itself.
+const DOMAIN_LABEL_HE: Record<string, string> = {
+  seo: "SEO", content: "תוכן", local: "מקומי", analytics: "אנליטיקס", automation: "אוטומציה", design: "עיצוב", outreach: "פנייה", technical: "טכני",
+  geo: "GEO", whm: "WHM", competitor: "מתחרים", reporting: "דוחות", "client-ops": "תפעול לקוחות",
+};
+function domainLabel(d: string, lang: Lang): string {
+  return lang === "he" ? (DOMAIN_LABEL_HE[d] ?? DOMAIN_LABEL[d]) : DOMAIN_LABEL[d];
+}
+
+// Sentinel so a non-Error failure renders in the current language instead of freezing one.
+const LOAD_FAILED = "__load_failed__";
 
 const COLUMN_ACCENT: Record<PipelineStatus, string> = {
   backlog: "#8c82ab",
@@ -36,6 +59,7 @@ function normalizeStatus(s: unknown): PipelineStatus {
 }
 
 export default function IdeaBoard() {
+  const { lang, tr } = useLang();
   const [ideas, setIdeas] = useState<BoardIdea[]>([]);
   const [persisted, setPersisted] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
@@ -57,7 +81,7 @@ export default function IdeaBoard() {
       setIdeas(all);
       setPersisted(data.persisted !== false);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load pipeline");
+      setError(e instanceof Error ? e.message : LOAD_FAILED);
     } finally {
       setLoading(false);
     }
@@ -98,10 +122,10 @@ export default function IdeaBoard() {
         const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error || "HTTP " + res.status);
       }
-      setToast(`${idea.slug}: ${from} → ${to}`);
+      setToast(`${idea.slug}: ${pick(STATUS_LABEL[from], lang)} ${tr("→", "←")} ${pick(STATUS_LABEL[to], lang)}`);
     } catch (e) {
       setIdeas((prev) => prev.map((i) => (i.slug === idea.slug ? { ...i, pipelineStatus: from } : i)));
-      setToast(`✗ ${idea.slug} stayed ${from} — ${e instanceof Error ? e.message : "transition failed"}`);
+      setToast(tr(`✗ ${idea.slug} stayed ${from} — ${e instanceof Error ? e.message : "transition failed"}`, `✗ ${idea.slug} נשאר ${pick(STATUS_LABEL[from], lang)} — ${e instanceof Error ? e.message : "המעבר נכשל"}`));
     } finally {
       setPending(null);
       setTimeout(() => setToast(null), 3000);
@@ -121,12 +145,12 @@ export default function IdeaBoard() {
   if (error) {
     return (
       <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-        <p className="text-sm text-white/75">Pipeline board could not load ({error}).</p>
+        <p className="text-sm text-white/75">{tr("Pipeline board could not load (" + (error === LOAD_FAILED ? "Failed to load pipeline" : error) + ").", "לא ניתן לטעון את לוח הצנרת (" + (error === LOAD_FAILED ? "הטעינה נכשלה" : error) + ").")}</p>
         <button
           onClick={load}
           className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10"
         >
-          Retry
+          {tr("Retry", "ניסוי חוזר")}
         </button>
       </div>
     );
@@ -136,7 +160,7 @@ export default function IdeaBoard() {
     <div className="mt-6">
       {!persisted ? (
         <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-100">
-          Pipeline persistence offline — statuses are static
+          {tr("Pipeline persistence offline — statuses are static", "שמירת הצנרת אינה זמינה — הסטטוסים סטטיים")}
         </div>
       ) : null}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
@@ -145,7 +169,7 @@ export default function IdeaBoard() {
           return (
             <section
               key={col.id}
-              aria-label={col.label + " column"}
+              aria-label={tr(col.label.en + " column", "עמודת " + col.label.he)}
               className="flex min-h-[120px] flex-col rounded-2xl border border-white/10 bg-white/[0.02]"
             >
               <header
@@ -154,7 +178,7 @@ export default function IdeaBoard() {
               >
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full" style={{ background: COLUMN_ACCENT[col.id] }} aria-hidden />
-                  <h2 className="text-[12px] font-bold uppercase tracking-widest text-white/80">{col.label}</h2>
+                  <h2 className="text-[12px] font-bold uppercase tracking-widest text-white/80">{pick(col.label, lang)}</h2>
                 </div>
                 <span className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[11px] font-bold text-white/70">
                   {cards.length}
@@ -162,9 +186,9 @@ export default function IdeaBoard() {
               </header>
               <div className="flex flex-1 flex-col gap-2 p-2">
                 {cards.length === 0 ? (
-                  <p className="px-2 py-4 text-center text-[11px] text-white/60">No ideas {col.hint.toLowerCase()}</p>
+                  <p className="px-2 py-4 text-center text-[11px] text-white/60">{tr("No ideas " + col.hint.en.toLowerCase(), "אין רעיונות בשלב: " + col.hint.he)}</p>
                 ) : (
-                  cards.map((idea) => (
+                  cards.map((raw) => localizeIdea(raw, lang)).map((idea) => (
                     <BoardCard
                       key={idea.slug}
                       idea={idea}
@@ -196,6 +220,7 @@ function BoardCard({
   disabled: boolean;
   onTransition: (to: PipelineStatus) => void;
 }) {
+  const { lang, tr } = useLang();
   const idx = STATUS_ORDER.indexOf(idea.pipelineStatus);
   const prev = idx > 0 ? STATUS_ORDER[idx - 1] : null;
   const next = idx < STATUS_ORDER.length - 1 ? STATUS_ORDER[idx + 1] : null;
@@ -210,19 +235,19 @@ function BoardCard({
             background: DOMAIN_COLOR[idea.domain] + "14",
           }}
         >
-          {DOMAIN_LABEL[idea.domain]}
+          {domainLabel(idea.domain, lang)}
         </span>
         <span className="rounded-full bg-white/10 px-2 py-0.5 text-[10px] font-bold text-white/70">
           {idea.priority} · {idea.effort}
         </span>
-        <span className="ml-auto rounded-full bg-violet-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-violet-200">
-          Gap {idea.gapScore}%
+        <span className="ms-auto rounded-full bg-violet-500/15 px-2 py-0.5 font-mono text-[10px] font-bold text-violet-200">
+          {tr("Gap ", "פער ")}{idea.gapScore}%
         </span>
       </div>
       <h3 className="mt-1.5 text-[13px] font-bold leading-tight text-white">{idea.title}</h3>
       {/* Desktop: status select */}
       <label className="mt-2 hidden sm:block">
-        <span className="sr-only">Pipeline status for {idea.title}</span>
+        <span className="sr-only">{tr("Pipeline status for " + idea.title, "סטטוס בצנרת עבור " + idea.title)}</span>
         <select
           value={idea.pipelineStatus}
           disabled={disabled}
@@ -231,7 +256,7 @@ function BoardCard({
         >
           {STATUS_ORDER.map((s) => (
             <option key={s} value={s} className="bg-[var(--bg)] text-white">
-              {s}
+              {pick(STATUS_LABEL[s], lang)}
             </option>
           ))}
         </select>
@@ -242,20 +267,20 @@ function BoardCard({
           type="button"
           disabled={disabled || !prev}
           onClick={() => prev && onTransition(prev)}
-          aria-label={`Move ${idea.title} to ${prev || "previous"}`}
+          aria-label={tr(`Move ${idea.title} to ${prev || "previous"}`, `העברת ${idea.title} אל ${prev ? pick(STATUS_LABEL[prev], lang) : "הקודם"}`)}
           className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white/70 disabled:opacity-30"
         >
-          ←
+          <span aria-hidden className="inline-block rtl:rotate-180">←</span>
         </button>
-        <span className="text-[11px] font-bold uppercase tracking-widest text-white/50">{idea.pipelineStatus}</span>
+        <span className="text-[11px] font-bold uppercase tracking-widest text-white/50">{pick(STATUS_LABEL[idea.pipelineStatus], lang)}</span>
         <button
           type="button"
           disabled={disabled || !next}
           onClick={() => next && onTransition(next)}
-          aria-label={`Move ${idea.title} to ${next || "next"}`}
+          aria-label={tr(`Move ${idea.title} to ${next || "next"}`, `העברת ${idea.title} אל ${next ? pick(STATUS_LABEL[next], lang) : "הבא"}`)}
           className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg border border-white/15 bg-white/5 text-white/70 disabled:opacity-30"
         >
-          →
+          <span aria-hidden className="inline-block rtl:rotate-180">→</span>
         </button>
       </div>
     </article>

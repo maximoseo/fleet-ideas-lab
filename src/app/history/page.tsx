@@ -12,20 +12,22 @@ import {
   setReopenEntry,
   type HistoryEntry,
 } from "@/lib/history";
+import { useLang } from "@/components/i18n";
 
-function timeAgo(iso: string): string {
+function timeAgo(iso: string, tr: (en: string, he: string) => string): string {
   const diff = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return tr("just now", "הרגע");
+  if (mins < 60) return tr(`${mins}m ago`, `לפני ${mins} ד׳`);
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
+  if (hours < 24) return tr(`${hours}h ago`, `לפני ${hours} ש׳`);
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  return tr(`${days}d ago`, `לפני ${days} י׳`);
 }
 
 export default function HistoryPage() {
   const router = useRouter();
+  const { tr } = useLang();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [url, setUrl] = useState("");
   const [analyzing, setAnalyzing] = useState(false);
@@ -65,7 +67,7 @@ export default function HistoryPage() {
       });
       const d = await res.json() as Record<string, unknown>;
       if (!res.ok) {
-        setError((d.error as string) || "Failed");
+        setError((d.error as string) || tr("Failed", "הפעולה נכשלה"));
         setAnalyzing(false);
         return;
       }
@@ -101,10 +103,10 @@ export default function HistoryPage() {
       setReopenEntry(entry);
       setUrl("");
     } catch {
-      setError("Network error");
+      setError(tr("Network error", "שגיאת רשת"));
     }
     setAnalyzing(false);
-  }, [url, sync]);
+  }, [url, sync, tr]);
 
   const handleRemove = useCallback((id: string) => {
     removeFromHistory(id);
@@ -153,9 +155,9 @@ export default function HistoryPage() {
   if (!hydrated) {
     return (
       <div className="min-h-screen bg-[var(--bg)] text-white">
-        <SiteHeader subtitle="All analyzed sites · compare · share" />
+        <SiteHeader subtitle={tr("All analyzed sites · compare · share", "כל האתרים שנותחו · השוואה · שיתוף")} />
         <main className="mx-auto max-w-5xl px-6 py-8">
-          <div className="py-20 text-center text-sm text-white/65">Loading history…</div>
+          <div className="py-20 text-center text-sm text-white/65">{tr("Loading history…", "טוען היסטוריה…")}</div>
         </main>
       </div>
     );
@@ -163,7 +165,7 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-white">
-      <SiteHeader subtitle="All analyzed sites · compare · share · reopen" />
+      <SiteHeader subtitle={tr("All analyzed sites · compare · share · reopen", "כל האתרים שנותחו · השוואה · שיתוף · פתיחה מחדש")} />
 
       <main className="mx-auto max-w-5xl px-6 py-8">
         {/* Analyze new */}
@@ -172,7 +174,7 @@ export default function HistoryPage() {
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && void analyze()}
-            placeholder="Analyze a new site…"
+            placeholder={tr("Analyze a new site…", "ניתוח אתר חדש…")}
             dir="ltr"
             className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-violet-500"
           />
@@ -181,11 +183,11 @@ export default function HistoryPage() {
             disabled={analyzing}
             className="rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50"
           >
-            {analyzing ? "Analyzing…" : "Analyze"}
+            {analyzing ? tr("Analyzing…", "מנתח…") : tr("Analyze", "ניתוח")}
           </button>
         </div>
         {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
-        <p className="mb-6 text-xs text-white/60">Keeps last 20 analyses (FIFO) · synced to your account when logged in.</p>
+        <p className="mb-6 text-xs text-white/60">{tr("Keeps last 20 analyses (FIFO) · synced to your account when logged in.", "נשמרים 20 הניתוחים האחרונים (FIFO) · מסונכרן עם החשבון שלך כשמחוברים.")}</p>
 
         {/* Toolbar — hidden when there is nothing to act on */}
         {entries.length > 0 && (
@@ -197,19 +199,19 @@ export default function HistoryPage() {
               }}
               className={`min-h-[40px] rounded-full px-4 py-2 text-sm font-medium transition ${compareMode ? "bg-violet-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}
             >
-              {compareMode ? "✓ Compare mode" : "Compare"}
+              {compareMode ? tr("✓ Compare mode", "✓ מצב השוואה") : tr("Compare", "השוואה")}
             </button>
             {compareMode && selected.length === 2 && (
-              <span className="text-xs text-green-400">2 selected — see comparison below</span>
+              <span className="text-xs text-green-400">{tr("2 selected — see comparison below", "נבחרו 2 — ההשוואה מוצגת למטה")}</span>
             )}
             {compareMode && selected.length < 2 && (
-              <span className="text-xs text-white/65">Select 2 sites to compare</span>
+              <span className="text-xs text-white/65">{tr("Select 2 sites to compare", "בחרו 2 אתרים להשוואה")}</span>
             )}
             <button
               onClick={handleClear}
-              className="ml-auto rounded-full bg-white/10 px-4 py-1.5 text-xs text-white/65 transition hover:bg-red-500/20 hover:text-red-400"
+              className="ms-auto rounded-full bg-white/10 px-4 py-1.5 text-xs text-white/65 transition hover:bg-red-500/20 hover:text-red-400"
             >
-              Clear all
+              {tr("Clear all", "ניקוי הכול")}
             </button>
           </div>
         )}
@@ -217,7 +219,7 @@ export default function HistoryPage() {
         {/* Comparison view */}
         {compareMode && compareEntries.length === 2 && (
           <div className="mb-8 rounded-2xl border border-violet-500/30 bg-violet-500/5 p-5">
-            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-violet-200">Side-by-side comparison</h3>
+            <h3 className="mb-4 text-sm font-bold uppercase tracking-wider text-violet-200">{tr("Side-by-side comparison", "השוואה זו לצד זו")}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               {compareEntries.map((e) => (
                 <div key={e.id} className="rounded-xl border border-white/10 bg-white/5 p-4">
@@ -246,7 +248,7 @@ export default function HistoryPage() {
                       </span>
                     )}
                   </div>
-                  <p className="mt-1 text-[10px] text-white/60">Fonts: {(e.fonts ?? []).slice(0, 3).join(", ") || "none"}</p>
+                  <p className="mt-1 text-[10px] text-white/60">{tr("Fonts", "גופנים")}: {(e.fonts ?? []).slice(0, 3).join(", ") || tr("none", "אין")}</p>
                 </div>
               ))}
             </div>
@@ -257,8 +259,8 @@ export default function HistoryPage() {
         {entries.length === 0 ? (
           <div className="py-20 text-center">
             <p className="text-4xl">🕘</p>
-            <p className="mt-3 text-sm font-medium text-white/75">No analyses yet</p>
-            <p className="mt-1 text-[13px] text-white/65">Paste a URL above — or analyze from Redesign / Audit / Mockup. The report lands here.</p>
+            <p className="mt-3 text-sm font-medium text-white/75">{tr("No analyses yet", "אין ניתוחים עדיין")}</p>
+            <p className="mt-1 text-[13px] text-white/65">{tr("Paste a URL above — or analyze from Redesign / Audit / Mockup. The report lands here.", "הדביקו URL למעלה, או נתחו מתוך עיצוב מחדש / ביקורת / מוקאפ. הדוח יופיע כאן.")}</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -290,7 +292,7 @@ export default function HistoryPage() {
                         {e.slopScore}
                       </span>
                     )}
-                    <span className="text-[10px] text-white/60">{timeAgo(e.created_at || e.analyzedAt || new Date().toISOString())}</span>
+                    <span className="text-[10px] text-white/60">{timeAgo(e.created_at || e.analyzedAt || new Date().toISOString(), tr)}</span>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-1.5">
@@ -300,9 +302,9 @@ export default function HistoryPage() {
                       handleReopen(e);
                     }}
                     className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-violet-500"
-                    title="Reopen — restore this analysis"
+                    title={tr("Reopen — restore this analysis", "פתיחה מחדש — שחזור הניתוח")}
                   >
-                    Reopen
+                    {tr("Reopen", "פתיחה מחדש")}
                   </button>
                   <button
                     onClick={(ev) => {
@@ -310,7 +312,7 @@ export default function HistoryPage() {
                       shareEntry(e);
                     }}
                     className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/75 transition hover:bg-white/20"
-                    title="Copy share link"
+                    title={tr("Copy share link", "העתקת קישור שיתוף")}
                   >
                     🔗
                   </button>
@@ -320,7 +322,7 @@ export default function HistoryPage() {
                       handleRemove(e.id);
                     }}
                     className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/65 transition hover:bg-red-500/20 hover:text-red-400"
-                    title="Remove"
+                    title={tr("Remove", "הסרה")}
                   >
                     🗑
                   </button>

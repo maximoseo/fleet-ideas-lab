@@ -8,6 +8,7 @@ import type { Prototype, SiteProfile } from "@/lib/types";
 import SiteHeader from "@/components/SiteHeader";
 import { pushHistory, getReopenEntry } from "@/lib/history";
 import { detectBuilders, adaptCssForBuilders, type BuilderDetection } from "@/lib/wp-detect";
+import { useLang } from "@/components/i18n";
 
 /**
  * Redesign flow.
@@ -30,9 +31,9 @@ interface AnalyzeResponse extends SiteAnalysis {
 }
 
 /** Build a preview document: clone site HTML and inject the variation CSS (builder-adapted). */
-function buildPreviewDoc(siteHtml: string, css: string, detection: BuilderDetection | null): string {
+function buildPreviewDoc(siteHtml: string, css: string, detection: BuilderDetection | null, emptyMsg: string): string {
   const adapted = detection ? adaptCssForBuilders(css, detection) : css;
-  if (!siteHtml) return `<!doctype html><html><head><meta charset="utf-8"><style>${adapted}</style></head><body><p style="padding:2rem;color:#888">No page HTML available for preview.</p></body></html>`;
+  if (!siteHtml) return `<!doctype html><html><head><meta charset="utf-8"><style>${adapted}</style></head><body><p style="padding:2rem;color:#888">${emptyMsg}</p></body></html>`;
   // Inject <style> before </head> or prepend
   if (siteHtml.includes("</head>")) {
     return siteHtml.replace("</head>", `<style data-preview>${adapted}</style></head>`);
@@ -48,6 +49,7 @@ function PreviewIframe({ html, viewport }: { html: string; viewport: Viewport })
 }
 
 export default function RedesignPage() {
+  const { tr, locale } = useLang();
   const [step, setStep] = useState<Step>("input");
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
@@ -104,13 +106,13 @@ export default function RedesignPage() {
     if (chosen) return chosen.html;
     if (!variation) return "";
     const html = site?.html || "";
-    return buildPreviewDoc(html, variation.css, builderDetection);
-  }, [chosen, variation, site?.html, builderDetection]);
+    return buildPreviewDoc(html, variation.css, builderDetection, tr("No page HTML available for preview.", "אין HTML של העמוד לתצוגה מקדימה."));
+  }, [chosen, variation, site?.html, builderDetection, tr]);
 
   const originalDoc = useMemo(() => {
     // For compare slider when preview is CSS-based, original is the raw site HTML without injection
-    return site?.html || "<!doctype html><html><body><p>No original HTML</p></body></html>";
-  }, [site?.html]);
+    return site?.html || `<!doctype html><html><body><p>${tr("No original HTML", "אין HTML מקורי")}</p></body></html>`;
+  }, [site?.html, tr]);
 
   const generateAll = useCallback(async (profile: SiteProfile) => {
     setSlots([{ status: "loading" }, { status: "loading" }, { status: "loading" }]);
@@ -131,7 +133,7 @@ export default function RedesignPage() {
         setSlots((prev) => { const n = [...prev]; n[index] = { status: "error", error: msg }; return n; });
       try {
         const first = await call({ profile, index, count: 3 });
-        if (!first.res.ok) return fail(first.data.error || `Failed (${first.res.status})`);
+        if (!first.res.ok) return fail(first.data.error || tr(`Failed (${first.res.status})`, `נכשל (${first.res.status})`));
 
         let chatId: string = first.data.chatId;
         let attempt: number = first.data.attempt || 1;
@@ -142,7 +144,7 @@ export default function RedesignPage() {
         while (Date.now() - started < DEADLINE_MS) {
           await new Promise((r) => setTimeout(r, POLL_MS));
           const { res, data } = await call({ profile, index, count: 3, chatId, attempt });
-          if (!res.ok) return fail(data.error || `Failed (${res.status})`);
+          if (!res.ok) return fail(data.error || tr(`Failed (${res.status})`, `נכשל (${res.status})`));
 
           if (data.prototype) {
             setSlots((prev) => { const n = [...prev]; n[index] = { status: "done", prototype: data.prototype, meta }; return n; });
@@ -153,12 +155,12 @@ export default function RedesignPage() {
             attempt = data.attempt || attempt + 1;
           }
         }
-        fail("Timed out waiting for the generation.");
+        fail(tr("Timed out waiting for the generation.", "תם הזמן להמתנה ליצירה."));
       } catch {
-        fail("Network error");
+        fail(tr("Network error", "שגיאת רשת"));
       }
     }));
-  }, []);
+  }, [tr]);
 
   useEffect(() => {
     try {
@@ -195,7 +197,7 @@ export default function RedesignPage() {
   }, []);
 
   const analyze = useCallback(async () => {
-    if (!url.trim()) { setError("Enter a URL first"); return; }
+    if (!url.trim()) { setError(tr("Enter a URL first", "יש להזין כתובת URL")); return; }
     setError("");
     setStep("analyzing");
     setSlots(EMPTY_SLOTS);
@@ -206,17 +208,17 @@ export default function RedesignPage() {
         body: JSON.stringify({ url: url.trim() }),
       });
       const data: AnalyzeResponse & { error?: string } = await res.json();
-      if (!res.ok) { setError(data.error || "Analysis failed"); setStep("input"); return; }
+      if (!res.ok) { setError(data.error || tr("Analysis failed", "הניתוח נכשל")); setStep("input"); return; }
       setSite(data);
       setVariations(generateVariations(data));
       try { pushHistory({ url: data.url, title: data.title, platform: data.platform, colors: data.colors, fonts: data.fonts, screenshots: data.screenshots, profile: data.profile, html: data.html }); } catch {}
       setStep("generating");
       void generateAll(data.profile);
     } catch {
-      setError("Network error — try again");
+      setError(tr("Network error — try again", "שגיאת רשת — יש לנסות שוב"));
       setStep("input");
     }
-  }, [url, generateAll]);
+  }, [url, generateAll, tr]);
 
   const connectWp = useCallback(async () => {
     setWpConnecting(true); setWpStatus(null);
@@ -232,10 +234,10 @@ export default function RedesignPage() {
         setSelectedPages([data.pages[0].id]);
       }
     } catch {
-      setWpStatus({ ok: false, error: "Connection failed" });
+      setWpStatus({ ok: false, error: tr("Connection failed", "ההתחברות נכשלה") });
     }
     setWpConnecting(false);
-  }, [wpUrl, url, wpUser, wpPass]);
+  }, [wpUrl, url, wpUser, wpPass, tr]);
 
   const push = useCallback(async () => {
     if (!selectedPage || (!chosen && !variation)) return;
@@ -259,10 +261,10 @@ export default function RedesignPage() {
       setInjectResult(data);
       if (res.ok) setStep("done");
     } catch {
-      setInjectResult({ ok: false, error: "Push failed" });
+      setInjectResult({ ok: false, error: tr("Push failed", "השליחה נכשלה") });
     }
     setInjecting(false);
-  }, [chosen, variation, effectiveCss, selectedPage, wpUrl, url, wpUser, wpPass, injectMode, confirmSlug, site]);
+  }, [chosen, variation, effectiveCss, selectedPage, wpUrl, url, wpUser, wpPass, injectMode, confirmSlug, site, tr]);
 
   const pushBatch = useCallback(async () => {
     const ids = batchMode ? selectedPages : [selectedPage];
@@ -285,16 +287,16 @@ export default function RedesignPage() {
       setBatchResult(data);
       if (res.ok && data.failCount === 0) setStep("done");
     } catch {
-      setBatchResult({ ok: false, message: "Batch failed" });
+      setBatchResult({ ok: false, message: tr("Batch failed", "האצווה נכשלה") });
     }
     setBatching(false);
-  }, [chosen, variation, effectiveCss, selectedPage, selectedPages, batchMode, wpUrl, url, wpUser, wpPass, injectMode, site]);
+  }, [chosen, variation, effectiveCss, selectedPage, selectedPages, batchMode, wpUrl, url, wpUser, wpPass, injectMode, site, tr]);
 
   const pushTheme = useCallback(async () => {
     const cssToInject = chosen ? "" : (effectiveCss || variation?.css || "");
     // For prototype html, extract CSS to inject at theme level as fallback draft is per-page; theme CSS is css-only
     if (!cssToInject) {
-      setThemeResult({ ok: false, error: "Theme injection needs a CSS variation. Use a Quick CSS tweak or create a per-page draft for prototypes." });
+      setThemeResult({ ok: false, error: tr("Theme injection needs a CSS variation. Use a Quick CSS tweak or create a per-page draft for prototypes.", "הזרקה לתבנית דורשת וריאציית CSS. יש להשתמש בשינוי CSS מהיר או ליצור טיוטה לכל עמוד עבור אבות-טיפוס.") });
       return;
     }
     setThemeInjecting(true); setThemeResult(null);
@@ -307,10 +309,10 @@ export default function RedesignPage() {
       setThemeResult(data);
       if (res.ok) setInjectResult({ ok: true, mode: "theme", message: data.message, backup: data.backup });
     } catch {
-      setThemeResult({ ok: false, error: "Theme push failed" });
+      setThemeResult({ ok: false, error: tr("Theme push failed", "השליחה לתבנית נכשלה") });
     }
     setThemeInjecting(false);
-  }, [chosen, variation, effectiveCss, wpUrl, url, wpUser, wpPass]);
+  }, [chosen, variation, effectiveCss, wpUrl, url, wpUser, wpPass, tr]);
 
   const fetchRevisions = useCallback(async () => {
     if (!selectedPage) return;
@@ -337,13 +339,13 @@ export default function RedesignPage() {
         setInjectResult({ ok: true, mode: "restore", message: data.message });
         await fetchRevisions();
       } else {
-        setInjectResult({ ok: false, error: data.error || "Restore failed" });
+        setInjectResult({ ok: false, error: data.error || tr("Restore failed", "השחזור נכשל") });
       }
     } catch {
-      setInjectResult({ ok: false, error: "Restore failed" });
+      setInjectResult({ ok: false, error: tr("Restore failed", "השחזור נכשל") });
     }
     setRestoring(null);
-  }, [selectedPage, wpUrl, url, wpUser, wpPass, fetchRevisions]);
+  }, [selectedPage, wpUrl, url, wpUser, wpPass, fetchRevisions, tr]);
 
   const profile = site?.profile;
   const doneCount = slots.filter((s) => s.status === "done").length;
@@ -351,26 +353,26 @@ export default function RedesignPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-white">
-      <SiteHeader subtitle="Analyse a site → redesign prototypes → WordPress draft" />
+      <SiteHeader subtitle={tr("Analyse a site → redesign prototypes → WordPress draft", "ניתוח אתר ← אבות-טיפוס לעיצוב מחדש ← טיוטה ב-WordPress")} />
 
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12">
         {/* ── input ── */}
         {step === "input" && (
           <div className="mx-auto max-w-xl">
-            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>Redesign an existing site</h2>
+            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>{tr("Redesign an existing site", "עיצוב מחדש לאתר קיים")}</h2>
             <p className="mb-6 text-sm leading-relaxed text-white/55">
-              Enter a URL. We read the site&rsquo;s real colours, fonts, copy and prices — then generate three genuinely different redesign prototypes from it.
+              {tr("Enter a URL. We read the site’s real colours, fonts, copy and prices — then generate three genuinely different redesign prototypes from it.", "יש להזין כתובת URL. אנחנו קוראים את הצבעים, הגופנים, הטקסטים והמחירים האמיתיים של האתר — ויוצרים ממנו שלושה אבות-טיפוס שונים באמת לעיצוב מחדש.")}
             </p>
             <div className="rounded-2xl border border-white/10 bg-white/[.03] p-4 sm:p-5">
-              <label htmlFor="dl-url" className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.1em] text-white/45">Website URL</label>
+              <label htmlFor="dl-url" className="mb-2 block text-[12px] font-semibold uppercase tracking-[0.1em] text-white/45">{tr("Website URL", "כתובת האתר (URL)")}</label>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <input id="dl-url" value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && analyze()}
                   type="url" inputMode="url" placeholder="https://client-site.com" dir="ltr"
                   className="min-h-[48px] flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-violet-500" />
-                <button onClick={analyze} className="min-h-[48px] rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">Analyse</button>
+                <button onClick={analyze} className="min-h-[48px] rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">{tr("Analyse", "ניתוח")}</button>
               </div>
               <p className="mt-3 flex items-center gap-2 text-[12px] text-white/65">
-                <span aria-hidden>⏱</span> Takes 1–3 min · No login needed
+                <span aria-hidden>⏱</span> {tr("Takes 1–3 min · No login needed", "נמשך 1–3 דקות · ללא צורך בהתחברות")}
               </p>
               {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
             </div>
@@ -381,9 +383,9 @@ export default function RedesignPage() {
           <div className="mx-auto max-w-xl py-20 text-center">
             <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
             <p className="mt-4 text-sm text-white/75">
-              {step === "analyzing" ? "Reading the site…" : "Generating three prototypes…"}
+              {step === "analyzing" ? tr("Reading the site…", "קוראים את האתר…") : tr("Generating three prototypes…", "יוצרים שלושה אבות-טיפוס…")}
             </p>
-            <p className="mt-1 text-xs text-white/65">Full-page generation takes 1–3 minutes.</p>
+            <p className="mt-1 text-xs text-white/65">{tr("Full-page generation takes 1–3 minutes.", "יצירת עמוד מלא נמשכת 1–3 דקות.")}</p>
           </div>
         )}
 
@@ -402,7 +404,7 @@ export default function RedesignPage() {
                   ))}
                   <span className="rounded bg-white/5 px-2 py-1 text-white/50">{profile.platform.platform}</span>
                   <span className={`rounded px-2 py-1 ${profile.source === "firecrawl" ? "bg-emerald-500/10 text-emerald-200" : "bg-amber-500/15 text-amber-200"}`}>
-                    {profile.source === "firecrawl" ? `extraction confidence ${profile.confidence.toFixed(2)}` : `low confidence (${profile.confidence.toFixed(2)}) — read from raw HTML`}
+                    {profile.source === "firecrawl" ? tr(`extraction confidence ${profile.confidence.toFixed(2)}`, `רמת ביטחון בחילוץ ${profile.confidence.toFixed(2)}`) : tr(`low confidence (${profile.confidence.toFixed(2)}) — read from raw HTML`, `רמת ביטחון נמוכה (${profile.confidence.toFixed(2)}) — נקרא מ-HTML גולמי`)}
                   </span>
                   {builderDetection && (
                     <span className="rounded bg-violet-500/15 px-2 py-1 text-violet-200 border border-violet-500/20">{builderDetection.label}</span>
@@ -415,8 +417,8 @@ export default function RedesignPage() {
                   <p key={h} className="mt-1 max-w-2xl text-xs text-violet-200/70">· {h}</p>
                 ))}
                 <p className="mt-2 text-xs text-white/65">
-                  Real content found: {profile.copy.headings.length} headings · {profile.copy.quotes.length} quotes · {profile.copy.prices.length} prices
-                  {profile.copy.quotes.length === 0 && " — no testimonials will be shown, none will be invented"}
+                  {tr(`Real content found: ${profile.copy.headings.length} headings · ${profile.copy.quotes.length} quotes · ${profile.copy.prices.length} prices`, `תוכן אמיתי שנמצא: ${profile.copy.headings.length} כותרות · ${profile.copy.quotes.length} ציטוטים · ${profile.copy.prices.length} מחירים`)}
+                  {profile.copy.quotes.length === 0 && tr(" — no testimonials will be shown, none will be invented", " — לא יוצגו המלצות ולא יומצאו כאלה")}
                 </p>
               </div>
               <div className="flex flex-col items-end gap-2">
@@ -430,23 +432,23 @@ export default function RedesignPage() {
                 </div>
                 <label className="flex items-center gap-2 text-xs text-white/50">
                   <input type="checkbox" checked={compare} onChange={(e) => setCompare(e.target.checked)} className="accent-violet-500" />
-                  Show the current site beside it
+                  {tr("Show the current site beside it", "הצגת האתר הנוכחי לצדו")}
                 </label>
-                <button onClick={() => setStep("input")} className="text-xs text-white/65 transition hover:text-white/70">← Analyse another site</button>
+                <button onClick={() => setStep("input")} className="text-xs text-white/65 transition hover:text-white/70">{tr("← Analyse another site", "→ ניתוח אתר נוסף")}</button>
               </div>
             </div>
 
             <div className={`grid gap-6 ${compare ? "lg:grid-cols-2" : ""}`}>
               {compare && (
                 <section className="lg:sticky lg:top-6 lg:self-start">
-                  <h3 className="mb-2 text-sm font-semibold text-white/70">Current site</h3>
+                  <h3 className="mb-2 text-sm font-semibold text-white/70">{tr("Current site", "האתר הנוכחי")}</h3>
                   {profile.screenshots.desktop ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={profile.screenshots.desktop} alt={`Current design of ${profile.title}`}
+                    <img src={profile.screenshots.desktop} alt={tr(`Current design of ${profile.title}`, `העיצוב הנוכחי של ${profile.title}`)}
                       className="w-full rounded-lg border border-white/10" />
                   ) : (
                     <div className="rounded-lg border border-white/10 bg-white/5 p-8 text-center text-sm text-white/65">
-                      No screenshot available for the current site.
+                      {tr("No screenshot available for the current site.", "אין צילום מסך זמין לאתר הנוכחי.")}
                     </div>
                   )}
                 </section>
@@ -458,11 +460,11 @@ export default function RedesignPage() {
                     {slot.status === "loading" && (
                       <div className="flex items-center gap-3 py-10 text-sm text-white/50">
                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-500 border-t-transparent" />
-                        Generating direction {i + 1} of 3…
+                        {tr(`Generating direction ${i + 1} of 3…`, `יוצרים כיוון ${i + 1} מתוך 3…`)}
                       </div>
                     )}
                     {slot.status === "error" && (
-                      <p className="py-6 text-sm text-red-400">Direction {i + 1} failed: {slot.error}</p>
+                      <p className="py-6 text-sm text-red-400">{tr(`Direction ${i + 1} failed:`, `כיוון ${i + 1} נכשל:`)} {slot.error}</p>
                     )}
                     {slot.status === "done" && slot.prototype && (
                       <>
@@ -472,10 +474,10 @@ export default function RedesignPage() {
                             <p className="mt-0.5 text-xs text-white/45">{slot.prototype.rationale}</p>
                           </div>
                           <div className="flex flex-wrap gap-1.5 text-[11px]">
-                            <span className="rounded bg-white/5 px-2 py-0.5 text-white/50">slop {slot.prototype.slopScore}/100</span>
-                            <span className="rounded bg-white/5 px-2 py-0.5 text-white/50">{slot.prototype.metrics.nodes} nodes</span>
+                            <span className="rounded bg-white/5 px-2 py-0.5 text-white/50">{tr(`slop ${slot.prototype.slopScore}/100`, `ציון slop ${slot.prototype.slopScore}/100`)}</span>
+                            <span className="rounded bg-white/5 px-2 py-0.5 text-white/50">{tr(`${slot.prototype.metrics.nodes} nodes`, `${slot.prototype.metrics.nodes} צמתים`)}</span>
                             {slot.prototype.honestyFailed && (
-                              <span className="rounded bg-red-500/15 px-2 py-0.5 text-red-300 border border-red-500/30">content check failed</span>
+                              <span className="rounded bg-red-500/15 px-2 py-0.5 text-red-300 border border-red-500/30">{tr("content check failed", "בדיקת התוכן נכשלה")}</span>
                             )}
                           </div>
                         </div>
@@ -484,7 +486,7 @@ export default function RedesignPage() {
 
                         {slot.prototype.warnings.length > 0 && (
                           <details className="mt-3">
-                            <summary className="cursor-pointer text-xs text-amber-200/80">{slot.prototype.warnings.length} note(s) from the automatic checks</summary>
+                            <summary className="cursor-pointer text-xs text-amber-200/80">{tr(`${slot.prototype.warnings.length} note(s) from the automatic checks`, `${slot.prototype.warnings.length} הערות מהבדיקות האוטומטיות`)}</summary>
                             <ul className="mt-2 space-y-1 text-xs text-white/50">
                               {slot.prototype.warnings.map((w) => <li key={w}>· {w}</li>)}
                             </ul>
@@ -495,14 +497,14 @@ export default function RedesignPage() {
                           <button
                             onClick={() => { setChosen(slot.prototype!); setVariation(null); setStep("wp-connect"); }}
                             disabled={slot.prototype.honestyFailed}
-                            title={slot.prototype.honestyFailed ? "This prototype failed the content-honesty check and cannot be sent to WordPress." : undefined}
+                            title={slot.prototype.honestyFailed ? tr("This prototype failed the content-honesty check and cannot be sent to WordPress.", "אב-טיפוס זה נכשל בבדיקת יושרת התוכן ולא ניתן לשלוח אותו ל-WordPress.") : undefined}
                             className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:cursor-not-allowed disabled:opacity-40">
-                            Use this → WordPress
+                            {tr("Use this → WordPress", "שימוש באפשרות זו ב-WordPress")}
                           </button>
                           <a href={`data:text/html;charset=utf-8,${encodeURIComponent(slot.prototype.html)}`}
                             download={`${slot.prototype.directionId}.html`}
                             className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/70 transition hover:bg-white/20">
-                            Download HTML
+                            {tr("Download HTML", "הורדת HTML")}
                           </a>
                         </div>
                       </>
@@ -514,18 +516,17 @@ export default function RedesignPage() {
                   <div className={`rounded-xl border p-4 ${allFailed ? "border-amber-500/40 bg-amber-500/5" : "border-white/10"}`}>
                     {allFailed && (
                       <p className="mb-3 text-sm text-amber-200">
-                        No prototype could be generated. The options below need no AI — they restyle the
-                        existing page instead of redesigning it.
+                        {tr("No prototype could be generated. The options below need no AI — they restyle the existing page instead of redesigning it.", "לא ניתן היה ליצור אב-טיפוס. האפשרויות שלהלן אינן דורשות AI — הן מעצבות מחדש את העמוד הקיים במקום לעצב אותו מחדש לגמרי.")}
                       </p>
                     )}
                     <button onClick={() => setShowQuick((s) => !s)} className="text-sm text-white/50 transition hover:text-white/80">
-                      {showQuick || allFailed ? "▾" : "▸"} Quick CSS tweak (no AI) — recolours the existing page instead of redesigning it
+                      {showQuick || allFailed ? "▾" : "▸"} {tr("Quick CSS tweak (no AI) — recolours the existing page instead of redesigning it", "שינוי CSS מהיר (ללא AI) — צובע מחדש את העמוד הקיים במקום לעצב אותו מחדש")}
                     </button>
                     {(showQuick || allFailed) && (
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         {variations.map((v) => (
                           <button key={v.id} onClick={() => { setVariation(v); setChosen(null); setStep("wp-connect"); }}
-                            className="rounded-lg border border-white/10 bg-white/5 p-3 text-left transition hover:border-violet-500/50">
+                            className="rounded-lg border border-white/10 bg-white/5 p-3 text-start transition hover:border-violet-500/50">
                             <div className="text-sm font-semibold">{v.name}</div>
                             <p className="mt-0.5 text-xs text-white/45">{v.tagline}</p>
                           </button>
@@ -542,23 +543,23 @@ export default function RedesignPage() {
         {/* ── WordPress connect ── */}
         {step === "wp-connect" && (
           <div className="mx-auto max-w-xl">
-            <button onClick={() => setStep("prototypes")} className="mb-4 text-sm text-white/65 transition hover:text-white/70">← Back to prototypes</button>
-            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>Connect WordPress</h2>
+            <button onClick={() => setStep("prototypes")} className="mb-4 text-sm text-white/65 transition hover:text-white/70">{tr("← Back to prototypes", "→ חזרה לאבות-הטיפוס")}</button>
+            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>{tr("Connect WordPress", "חיבור WordPress")}</h2>
             <p className="mb-6 text-sm text-white/50">
-              Create an <span className="text-violet-200">Application Password</span> in WP admin → Users → Profile. Credentials are used for this request only and are never stored.
+              {tr("Create an ", "יש ליצור ")}<span className="text-violet-200">Application Password</span>{tr(" in WP admin → Users → Profile. Credentials are used for this request only and are never stored.", " בממשק הניהול של WP ← משתמשים ← פרופיל. פרטי הגישה משמשים לבקשה זו בלבד ואינם נשמרים.")}
             </p>
             <div className="space-y-3">
-              <input value={wpUrl} onChange={(e) => setWpUrl(e.target.value)} placeholder="Site URL (defaults to the analysed URL)" dir="ltr"
+              <input value={wpUrl} onChange={(e) => setWpUrl(e.target.value)} placeholder={tr("Site URL (defaults to the analysed URL)", "כתובת האתר (ברירת מחדל: הכתובת שנותחה)")} dir="ltr"
                 className="w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-violet-500" />
               <div className="grid gap-3 sm:grid-cols-2">
-                <input value={wpUser} onChange={(e) => setWpUser(e.target.value)} placeholder="WordPress username" dir="ltr" autoComplete="off"
+                <input value={wpUser} onChange={(e) => setWpUser(e.target.value)} placeholder={tr("WordPress username", "שם משתמש ב-WordPress")} dir="ltr" autoComplete="off"
                   className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-violet-500" />
-                <input value={wpPass} onChange={(e) => setWpPass(e.target.value)} placeholder="Application password" type="password" dir="ltr" autoComplete="off"
+                <input value={wpPass} onChange={(e) => setWpPass(e.target.value)} placeholder={tr("Application password", "סיסמת אפליקציה")} type="password" dir="ltr" autoComplete="off"
                   className="rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none focus:border-violet-500" />
               </div>
               <button onClick={connectWp} disabled={wpConnecting}
                 className="w-full rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50">
-                {wpConnecting ? "Connecting…" : "Connect"}
+                {wpConnecting ? tr("Connecting…", "מתחבר…") : tr("Connect", "התחברות")}
               </button>
             </div>
 
@@ -566,19 +567,19 @@ export default function RedesignPage() {
               <div className={`mt-4 rounded-xl border p-4 text-sm ${wpStatus.ok ? "border-green-500/30 bg-green-500/5" : "border-red-500/30 bg-red-500/5"}`}>
                 {wpStatus.ok ? (
                   <>
-                    <p className="font-semibold text-green-400">Connected to {wpStatus.siteName || "WordPress"}</p>
+                    <p className="font-semibold text-green-400">{tr(`Connected to ${wpStatus.siteName || "WordPress"}`, `מחובר אל ${wpStatus.siteName || "WordPress"}`)}</p>
                     <p className="mt-1 text-white/50">
-                      WordPress {wpStatus.wpVersion || ""} · {wpStatus.authenticated ? (wpStatus.canEdit ? "authenticated with edit rights" : "authenticated, limited rights") : "not authenticated"}
+                      WordPress {wpStatus.wpVersion || ""} · {wpStatus.authenticated ? (wpStatus.canEdit ? tr("authenticated with edit rights", "מאומת עם הרשאות עריכה") : tr("authenticated, limited rights", "מאומת, הרשאות מוגבלות")) : tr("not authenticated", "לא מאומת")}
                     </p>
-                    {builderDetection && <p className="mt-1 text-xs text-violet-200">Builder: {builderDetection.label}</p>}
-                    <p className="mt-1 text-xs text-white/65">{wpStatus.pages?.length ?? 0} pages found (up to 100)</p>
+                    {builderDetection && <p className="mt-1 text-xs text-violet-200">{tr("Builder:", "בונה עמודים:")} {builderDetection.label}</p>}
+                    <p className="mt-1 text-xs text-white/65">{tr(`${wpStatus.pages?.length ?? 0} pages found (up to 100)`, `נמצאו ${wpStatus.pages?.length ?? 0} עמודים (עד 100)`)}</p>
                     {wpStatus.authenticated && (wpStatus.pages?.length ?? 0) > 0 && (
                       <button onClick={() => setStep("wp-inject")} className="mt-3 w-full rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white transition hover:bg-violet-500">
-                        Choose the page →
+                        {tr("Choose the page →", "בחירת העמוד ←")}
                       </button>
                     )}
                     {wpStatus.authenticated && (wpStatus.pages?.length ?? 0) === 0 && (
-                      <p className="mt-2 text-yellow-400">No published pages found on this site.</p>
+                      <p className="mt-2 text-yellow-400">{tr("No published pages found on this site.", "לא נמצאו עמודים שפורסמו באתר זה.")}</p>
                     )}
                   </>
                 ) : (
@@ -592,22 +593,22 @@ export default function RedesignPage() {
         {/* ── push (preview + batch + theme + revisions) ── */}
         {step === "wp-inject" && (chosen || variation) && (
           <div className="mx-auto max-w-3xl">
-            <button onClick={() => setStep("wp-connect")} className="mb-4 text-sm text-white/65 transition hover:text-white/70">← Back</button>
+            <button onClick={() => setStep("wp-connect")} className="mb-4 text-sm text-white/65 transition hover:text-white/70">{tr("← Back", "→ חזרה")}</button>
             <h2 className="mb-1 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>
-              Send “{chosen?.directionName || variation?.name}” to WordPress
+              {tr("Send “", "שליחת “")}{chosen?.directionName || variation?.name}{tr("” to WordPress", "” ל-WordPress")}
             </h2>
             {builderDetection && (
-              <p className="mb-4 text-xs text-violet-200">Builder: {builderDetection.label} — selectors adapted for this stack.</p>
+              <p className="mb-4 text-xs text-violet-200">{tr("Builder:", "בונה עמודים:")} {builderDetection.label} {tr("— selectors adapted for this stack.", "— הסלקטורים הותאמו לסטאק זה.")}</p>
             )}
 
             {/* ── Preview iframe before inject ── */}
             <div className="mb-6 rounded-xl border border-white/10 bg-white/[0.02] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-white/80">Preview before you inject</h3>
+                <h3 className="text-sm font-semibold text-white/80">{tr("Preview before you inject", "תצוגה מקדימה לפני ההזרקה")}</h3>
                 <div className="flex items-center gap-2">
                   <label className="flex items-center gap-1.5 text-xs text-white/50">
                     <input type="checkbox" checked={showPreview} onChange={(e) => setShowPreview(e.target.checked)} className="accent-violet-500" />
-                    Show preview
+                    {tr("Show preview", "הצגת תצוגה מקדימה")}
                   </label>
                   <div className="flex gap-1 rounded bg-white/5 p-1">
                     {(Object.keys(VIEWPORTS) as Viewport[]).map((v) => (
@@ -622,60 +623,60 @@ export default function RedesignPage() {
                   {!chosen && site?.html ? (
                     <>
                       {/* Compare slider: original vs preview */}
-                      <div className="relative overflow-hidden rounded-lg border border-white/10 bg-white" style={{ height: 520 }}>
+                      <div dir="ltr" className="relative overflow-hidden rounded-lg border border-white/10 bg-white" style={{ height: 520 }}>
                         {/* Original at base */}
                         <iframe
                           srcDoc={originalDoc}
-                          title="Original page"
+                          title={tr("Original page", "העמוד המקורי")}
                           // untrusted markup: no allow-scripts (see PrototypeFrame.tsx)
                           sandbox="allow-same-origin"
                           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", border: 0 }}
                         />
                         {/* Preview clipped */}
                         <div
-                          className="absolute inset-y-0 left-0 overflow-hidden border-r-2 border-violet-500"
+                          className="absolute inset-y-0 start-0 overflow-hidden border-e-2 border-violet-500"
                           style={{ width: `${comparePos}%` }}
                         >
                           <iframe
                             srcDoc={previewDoc}
-                            title="Preview with new CSS"
+                            title={tr("Preview with new CSS", "תצוגה מקדימה עם ה-CSS החדש")}
                             // untrusted markup: no allow-scripts (see PrototypeFrame.tsx)
                             sandbox="allow-same-origin"
                             style={{ width: "100%", height: "100%", border: 0 }}
                           />
-                          <span className="absolute left-2 top-2 rounded bg-violet-600 px-2 py-0.5 text-[11px] font-semibold text-white">Preview</span>
+                          <span className="absolute start-2 top-2 rounded bg-violet-600 px-2 py-0.5 text-[11px] font-semibold text-white">{tr("Preview", "תצוגה מקדימה")}</span>
                         </div>
-                        <span className="absolute right-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white">Original</span>
+                        <span className="absolute end-2 top-2 rounded bg-black/60 px-2 py-0.5 text-[11px] text-white">{tr("Original", "מקור")}</span>
                         {/* Handle */}
                         <div className="absolute top-1/2 -translate-y-1/2 rounded-full bg-violet-600 p-1 shadow-lg" style={{ left: `calc(${comparePos}% - 12px)` }}>
                           <span className="block h-5 w-5 flex items-center justify-center text-[10px] text-white">↔</span>
                         </div>
                       </div>
-                      <div className="mt-3 flex items-center gap-3">
-                        <span className="text-xs text-white/65">Original</span>
+                      <div dir="ltr" className="mt-3 flex items-center gap-3">
+                        <span className="text-xs text-white/65">{tr("Original", "מקור")}</span>
                         <input type="range" min={0} max={100} value={comparePos} onChange={(e) => setComparePos(Number(e.target.value))} className="flex-1 accent-violet-500" />
-                        <span className="text-xs text-white/65">Preview</span>
+                        <span className="text-xs text-white/65">{tr("Preview", "תצוגה מקדימה")}</span>
                       </div>
-                      <p className="mt-2 text-xs text-white/65">This clones the live page HTML and applies the selected CSS inside the iframe — nothing is written to WordPress until you click inject.</p>
+                      <p className="mt-2 text-xs text-white/65">{tr("This clones the live page HTML and applies the selected CSS inside the iframe — nothing is written to WordPress until you click inject.", "פעולה זו משכפלת את ה-HTML של העמוד החי ומחילה את ה-CSS שנבחר בתוך ה-iframe — דבר לא נכתב ל-WordPress עד הלחיצה על הזרקה.")}</p>
                     </>
                   ) : (
                     <>
                       <PreviewIframe html={previewDoc} viewport={viewport} />
-                      <p className="mt-2 text-xs text-white/65">Prototype preview — this is the full generated document.</p>
+                      <p className="mt-2 text-xs text-white/65">{tr("Prototype preview — this is the full generated document.", "תצוגה מקדימה של אב-טיפוס — זהו המסמך המלא שנוצר.")}</p>
                     </>
                   )}
                 </>
               ) : (
-                <p className="text-sm text-white/65">Preview hidden. Toggle to see the styled page before injection.</p>
+                <p className="text-sm text-white/65">{tr("Preview hidden. Toggle to see the styled page before injection.", "התצוגה המקדימה מוסתרת. יש להפעיל כדי לראות את העמוד המעוצב לפני ההזרקה.")}</p>
               )}
             </div>
 
             {/* ── Target pages ── */}
             <div className="mb-4 flex items-center justify-between">
-              <label className="text-sm font-medium text-white/75">Target page{batchMode ? "s (batch)" : ""}</label>
+              <label className="text-sm font-medium text-white/75">{batchMode ? tr("Target pages (batch)", "עמודי יעד (אצווה)") : tr("Target page", "עמוד יעד")}</label>
               <label className="flex items-center gap-2 text-xs text-white/50">
                 <input type="checkbox" checked={batchMode} onChange={(e) => { setBatchMode(e.target.checked); setBatchResult(null); }} className="accent-violet-500" />
-                Batch — select multiple pages
+                {tr("Batch — select multiple pages", "אצווה — בחירת מספר עמודים")}
               </label>
             </div>
 
@@ -689,17 +690,17 @@ export default function RedesignPage() {
             ) : (
               <div className="mb-5 rounded-xl border border-white/10 bg-white/[0.02] p-3">
                 <div className="mb-2 flex gap-2">
-                  <button onClick={() => setSelectedPages((wpStatus?.pages || []).map((p) => p.id))} className="text-xs text-violet-200 hover:text-violet-200">Select all</button>
+                  <button onClick={() => setSelectedPages((wpStatus?.pages || []).map((p) => p.id))} className="text-xs text-violet-200 hover:text-violet-200">{tr("Select all", "בחירת הכול")}</button>
                   <span className="text-xs text-white/20">·</span>
-                  <button onClick={() => setSelectedPages([])} className="text-xs text-white/65 hover:text-white/75">Clear</button>
-                  <span className="ml-auto text-xs text-white/65">{selectedPages.length} selected</span>
+                  <button onClick={() => setSelectedPages([])} className="text-xs text-white/65 hover:text-white/75">{tr("Clear", "ניקוי")}</button>
+                  <span className="ms-auto text-xs text-white/65">{tr(`${selectedPages.length} selected`, `${selectedPages.length} נבחרו`)}</span>
                 </div>
                 <div className="max-h-56 overflow-auto space-y-1">
                   {(wpStatus?.pages || []).map((p) => (
                     <label key={p.id} className="flex items-center gap-2 rounded px-2 py-1.5 text-sm hover:bg-white/5">
                       <input type="checkbox" checked={selectedPages.includes(p.id)} onChange={(e) => setSelectedPages((prev) => e.target.checked ? [...prev, p.id] : prev.filter((id) => id !== p.id))} className="accent-violet-500" />
                       <span className="text-white/80">{p.title}</span>
-                      <span className="ml-auto text-xs text-white/60">#{p.id}</span>
+                      <span className="ms-auto text-xs text-white/60">#{p.id}</span>
                     </label>
                   ))}
                 </div>
@@ -708,14 +709,14 @@ export default function RedesignPage() {
 
             <div className="mb-4 grid gap-3 sm:grid-cols-2">
               <button onClick={() => { setInjectMode("draft"); setThemeMode(false); }}
-                className={`rounded-xl border p-4 text-left transition ${injectMode === "draft" && !themeMode ? "border-green-500 bg-green-500/10" : "border-white/15 bg-white/5 hover:border-white/30"}`}>
-                <div className="text-sm font-bold text-green-400">Draft — recommended</div>
-                <p className="mt-1 text-xs text-white/50">Creates a new draft page{batchMode ? "s" : ""}. The live page is not touched. {batchMode && "Concurrency 3."}</p>
+                className={`rounded-xl border p-4 text-start transition ${injectMode === "draft" && !themeMode ? "border-green-500 bg-green-500/10" : "border-white/15 bg-white/5 hover:border-white/30"}`}>
+                <div className="text-sm font-bold text-green-400">{tr("Draft — recommended", "טיוטה — מומלץ")}</div>
+                <p className="mt-1 text-xs text-white/50">{tr(`Creates a new draft page${batchMode ? "s" : ""}. The live page is not touched.`, `${batchMode ? "נוצרים עמודי טיוטה חדשים" : "נוצר עמוד טיוטה חדש"}. העמוד החי לא נפגע.`)} {batchMode && tr("Concurrency 3.", "מקביליות 3.")}</p>
               </button>
               <button onClick={() => { setInjectMode("inject"); setThemeMode(false); }}
-                className={`rounded-xl border p-4 text-left transition ${injectMode === "inject" && !themeMode ? "border-yellow-500 bg-yellow-500/10" : "border-white/15 bg-white/5 hover:border-white/30"}`}>
-                <div className="text-sm font-bold text-yellow-400">Overwrite the live page</div>
-                <p className="mt-1 text-xs text-white/50">Replaces the published content now. A revision is recorded first. {batchMode && "Use with care."}</p>
+                className={`rounded-xl border p-4 text-start transition ${injectMode === "inject" && !themeMode ? "border-yellow-500 bg-yellow-500/10" : "border-white/15 bg-white/5 hover:border-white/30"}`}>
+                <div className="text-sm font-bold text-yellow-400">{tr("Overwrite the live page", "דריסת העמוד החי")}</div>
+                <p className="mt-1 text-xs text-white/50">{tr("Replaces the published content now. A revision is recorded first.", "מחליף את התוכן שפורסם מיד. תחילה נשמרת גרסה.")} {batchMode && tr("Use with care.", "יש לנהוג בזהירות.")}</p>
               </button>
             </div>
 
@@ -723,28 +724,28 @@ export default function RedesignPage() {
             <div className="mb-6 rounded-xl border border-violet-500/20 bg-violet-500/[0.04] p-4">
               <label className="flex items-center gap-2 text-sm font-semibold text-violet-200">
                 <input type="checkbox" checked={themeMode} onChange={(e) => setThemeMode(e.target.checked)} className="accent-violet-500" />
-                Inject as theme Additional CSS (Customizer)
+                {tr("Inject as theme Additional CSS (Customizer)", "הזרקה כ-Additional CSS של התבנית (Customizer)")}
               </label>
-              <p className="mt-1 text-xs text-white/65">Uses WordPress Customizer <code className="text-violet-200">customize_save</code> → <code className="text-violet-200">additional CSS</code>. Applies to every page. Per-page draft is kept as fallback.</p>
+              <p className="mt-1 text-xs text-white/65">{tr("Uses WordPress Customizer ", "משתמש ב-WordPress Customizer ")}<code className="text-violet-200" dir="ltr">customize_save</code> {tr("→", "←")} <code className="text-violet-200" dir="ltr">additional CSS</code>{tr(". Applies to every page. Per-page draft is kept as fallback.", ". חל על כל העמודים. טיוטה לכל עמוד נשמרת כגיבוי.")}</p>
               {themeMode && (
                 <button onClick={pushTheme} disabled={themeInjecting || (!variation && !chosen)}
                   className="mt-3 w-full rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:opacity-40">
-                  {themeInjecting ? "Injecting to theme…" : "Inject to theme Additional CSS"}
+                  {themeInjecting ? tr("Injecting to theme…", "מזריק לתבנית…") : tr("Inject to theme Additional CSS", "הזרקה ל-Additional CSS של התבנית")}
                 </button>
               )}
               {themeResult && (
                 <div className={`mt-3 rounded-lg border p-3 text-xs ${themeResult.ok ? "border-green-500/30 bg-green-500/5 text-green-300" : "border-red-500/30 bg-red-500/5 text-red-300"}`}>
                   {themeResult.ok ? themeResult.message : themeResult.error}
-                  {themeResult.via && <span className="ml-2 text-white/65">via {themeResult.via}</span>}
+                  {themeResult.via && <span className="ms-2 text-white/65">{tr("via", "דרך")} {themeResult.via}</span>}
                 </div>
               )}
             </div>
 
             {injectMode === "inject" && !batchMode && !themeMode && (
               <div className="mb-6 rounded-xl border border-yellow-500/30 bg-yellow-500/5 p-4">
-                <p className="text-sm text-yellow-300">This changes what visitors see immediately.</p>
+                <p className="text-sm text-yellow-300">{tr("This changes what visitors see immediately.", "פעולה זו משנה מיד את מה שהמבקרים רואים.")}</p>
                 <label htmlFor="slug" className="mb-2 mt-3 block text-xs text-white/75">
-                  Type the target page&apos;s slug exactly to confirm. The server checks it against the page ID you selected.
+                  {tr("Type the target page's slug exactly to confirm. The server checks it against the page ID you selected.", "יש להקליד את ה-slug של עמוד היעד בדיוק כדי לאשר. השרת בודק אותו מול מזהה העמוד שנבחר.")}
                 </label>
                 <input id="slug" value={confirmSlug} onChange={(e) => setConfirmSlug(e.target.value)} placeholder="page-slug" dir="ltr"
                   className="w-full rounded-lg border border-yellow-500/30 bg-black/30 px-3 py-2 text-sm text-white placeholder-white/25 outline-none focus:border-yellow-500" />
@@ -756,15 +757,15 @@ export default function RedesignPage() {
               <div className="space-y-3">
                 <button onClick={batchMode ? pushBatch : push} disabled={batching || injecting || (batchMode ? selectedPages.length === 0 : !selectedPage) || (injectMode === "inject" && !batchMode && !confirmSlug.trim())}
                   className={`w-full rounded-xl py-4 text-sm font-bold text-white transition active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-40 ${injectMode === "draft" ? "bg-green-600 hover:bg-green-500" : "bg-yellow-600 hover:bg-yellow-500"}`}>
-                  {batching || injecting ? "Sending…" : batchMode ? `${injectMode === "draft" ? "Create drafts" : "Overwrite"} ${selectedPages.length} page(s) (concurrency 3)` : injectMode === "draft" ? "Create the draft" : "Overwrite the live page"}
+                  {batching || injecting ? tr("Sending…", "שולח…") : batchMode ? tr(`${injectMode === "draft" ? "Create drafts" : "Overwrite"} ${selectedPages.length} page(s) (concurrency 3)`, `${injectMode === "draft" ? "יצירת טיוטות" : "דריסה"} של ${selectedPages.length} עמודים (מקביליות 3)`) : injectMode === "draft" ? tr("Create the draft", "יצירת הטיוטה") : tr("Overwrite the live page", "דריסת העמוד החי")}
                 </button>
                 {batchResult && (
                   <div className={`rounded-xl border p-4 text-sm ${batchResult.ok ? "border-green-500/30 bg-green-500/5" : "border-amber-500/30 bg-amber-500/5"}`}>
-                    <p className={batchResult.ok ? "text-green-300" : "text-amber-200"}>{batchResult.message || (batchResult.ok ? "Batch done" : "Batch had failures")}</p>
+                    <p className={batchResult.ok ? "text-green-300" : "text-amber-200"}>{batchResult.message || (batchResult.ok ? tr("Batch done", "האצווה הושלמה") : tr("Batch had failures", "באצווה היו כשלים"))}</p>
                     {batchResult.results && (
                       <ul className="mt-2 space-y-1 text-xs text-white/75">
                         {batchResult.results.map((r) => (
-                          <li key={r.pageId} className={r.ok ? "text-white/75" : "text-red-400"}>#{r.pageId} {r.ok ? "✓" : `✗ ${r.error}`} {r.draftEditUrl && <a href={r.draftEditUrl} target="_blank" rel="noopener noreferrer" className="ml-2 text-violet-200 underline">Edit</a>}</li>
+                          <li key={r.pageId} className={r.ok ? "text-white/75" : "text-red-400"}>#{r.pageId} {r.ok ? "✓" : `✗ ${r.error}`} {r.draftEditUrl && <a href={r.draftEditUrl} target="_blank" rel="noopener noreferrer" className="ms-2 text-violet-200 underline">{tr("Edit", "עריכה")}</a>}</li>
                         ))}
                       </ul>
                     )}
@@ -783,23 +784,23 @@ export default function RedesignPage() {
             {/* Revisions */}
             <div className="mt-8 rounded-xl border border-white/10 bg-white/[0.02] p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-white/70">Revisions</h3>
+                <h3 className="text-sm font-semibold text-white/70">{tr("Revisions", "גרסאות")}</h3>
                 <button onClick={fetchRevisions} disabled={revisionsLoading} className="rounded bg-white/10 px-3 py-1.5 text-xs text-white/75 hover:bg-white/15 disabled:opacity-40">
-                  {revisionsLoading ? "Loading…" : "Load revisions"}
+                  {revisionsLoading ? tr("Loading…", "טוען…") : tr("Load revisions", "טעינת גרסאות")}
                 </button>
               </div>
               {revisions.length === 0 ? (
-                <p className="text-xs text-white/65">No revisions loaded. Click “Load revisions” to list WordPress revisions for the selected page. One-click restore below.</p>
+                <p className="text-xs text-white/65">{tr("No revisions loaded. Click “Load revisions” to list WordPress revisions for the selected page. One-click restore below.", "לא נטענו גרסאות. יש ללחוץ על ״טעינת גרסאות״ כדי להציג את גרסאות WordPress של העמוד שנבחר. שחזור בלחיצה אחת יופיע כאן.")}</p>
               ) : (
                 <ul className="space-y-2">
                   {revisions.map((r) => (
                     <li key={r.id} className="flex items-center gap-3 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs text-white/70">#{r.id} · {new Date(r.date).toLocaleString()}</div>
+                        <div className="text-xs text-white/70">#{r.id} · {new Date(r.date).toLocaleString(locale)}</div>
                         {r.excerpt && <div className="truncate text-xs text-white/60">{r.excerpt}</div>}
                       </div>
                       <button onClick={() => restoreRevision(r.id)} disabled={restoring === r.id} className="shrink-0 rounded bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-500 disabled:opacity-40">
-                        {restoring === r.id ? "Restoring…" : "Restore"}
+                        {restoring === r.id ? tr("Restoring…", "משחזר…") : tr("Restore", "שחזור")}
                       </button>
                     </li>
                   ))}
@@ -813,24 +814,24 @@ export default function RedesignPage() {
         {step === "done" && injectResult?.ok && (
           <div className="mx-auto max-w-xl text-center">
             <h2 className="mt-3 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>
-              {injectResult.mode === "draft" ? "Draft created" : injectResult.mode === "theme" ? "Theme CSS updated" : injectResult.mode === "restore" ? "Revision restored" : "Live page updated"}
+              {injectResult.mode === "draft" ? tr("Draft created", "הטיוטה נוצרה") : injectResult.mode === "theme" ? tr("Theme CSS updated", "ה-CSS של התבנית עודכן") : injectResult.mode === "restore" ? tr("Revision restored", "הגרסה שוחזרה") : tr("Live page updated", "העמוד החי עודכן")}
             </h2>
             <p className="mt-2 text-sm text-white/75">{injectResult.message}</p>
             <div className="mt-6 space-y-3">
               {injectResult.draftEditUrl && (
                 <a href={injectResult.draftEditUrl} target="_blank" rel="noopener noreferrer" dir="ltr"
-                  className="block rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">Open the draft in WP admin ↗</a>
+                  className="block rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">{tr("Open the draft in WP admin ↗", "פתיחת הטיוטה בממשק הניהול של WP ↗")}</a>
               )}
               {injectResult.pageUrl && (
                 <a href={injectResult.pageUrl} target="_blank" rel="noopener noreferrer" dir="ltr"
-                  className="block rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">View the live page ↗</a>
+                  className="block rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">{tr("View the live page ↗", "צפייה בעמוד החי ↗")}</a>
               )}
               <button onClick={() => { setStep("prototypes"); setInjectResult(null); setBatchResult(null); setThemeResult(null); }}
-                className="w-full rounded-xl bg-white/10 py-3.5 text-sm font-semibold text-white/70 transition hover:bg-white/20">Back to the prototypes</button>
+                className="w-full rounded-xl bg-white/10 py-3.5 text-sm font-semibold text-white/70 transition hover:bg-white/20">{tr("Back to the prototypes", "חזרה לאבות-הטיפוס")}</button>
             </div>
             {batchResult?.results && (
-              <div className="mt-6 text-left rounded-xl border border-white/10 bg-white/[0.02] p-4">
-                <h4 className="text-sm font-semibold text-white/70">Batch results</h4>
+              <div className="mt-6 text-start rounded-xl border border-white/10 bg-white/[0.02] p-4">
+                <h4 className="text-sm font-semibold text-white/70">{tr("Batch results", "תוצאות האצווה")}</h4>
                 <ul className="mt-2 space-y-1 text-xs text-white/75">
                   {batchResult.results.map((r) => (
                     <li key={r.pageId} className={r.ok ? "text-white/75" : "text-red-400"}>#{r.pageId} {r.ok ? "✓" : `✗ ${r.error}`}</li>
@@ -839,8 +840,8 @@ export default function RedesignPage() {
               </div>
             )}
             {Boolean(injectResult.backup) && (
-              <details className="mt-6 text-left">
-                <summary className="cursor-pointer text-xs text-white/65 hover:text-white/75">Original content backup (JSON)</summary>
+              <details className="mt-6 text-start">
+                <summary className="cursor-pointer text-xs text-white/65 hover:text-white/75">{tr("Original content backup (JSON)", "גיבוי התוכן המקורי (JSON)")}</summary>
                 <pre dir="ltr" className="mt-2 max-h-48 overflow-auto rounded-lg bg-black/40 p-3 text-[10px] text-white/50">{JSON.stringify(injectResult.backup as object, null, 2)}</pre>
               </details>
             )}

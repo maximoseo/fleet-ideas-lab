@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 import { STYLES, type StyleId, type StyleTokens } from "@/lib/styles";
 import SiteHeader from "@/components/SiteHeader";
 import { pushHistory } from "@/lib/history";
+import { useLang } from "@/components/i18n";
 
 interface SectionImage { src: string; alt: string }
 interface SectionButton { label: string; href?: string }
@@ -48,6 +49,7 @@ type Viewport = "desktop" | "mobile";
 
 /* ── Content-real Section renderer using StyleTokens ── */
 function SectionMockup({ section, style, copy }: { section: DetectedSection; style: StyleTokens; copy?: MockupData["copy"] }) {
+  const { tr } = useLang();
   const p = {
     bg: style.bg,
     surface: style.surface,
@@ -97,7 +99,7 @@ function SectionMockup({ section, style, copy }: { section: DetectedSection; sty
   if (section.type === "hero") {
     return (
       <div style={{ ...wrap, background: `linear-gradient(135deg, ${p.bg}, ${p.surface})`, padding: "48px 32px", textAlign: "center" }}>
-        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 800, fontSize: 28, color: p.text, marginBottom: 12, lineHeight: 1.15 }}>{headings[0] || copy?.h1 || "Untitled hero"}</div>
+        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 800, fontSize: 28, color: p.text, marginBottom: 12, lineHeight: 1.15 }}>{headings[0] || copy?.h1 || tr("Untitled hero", "הירו ללא כותרת")}</div>
         {headings[1] && <div style={{ color: p.muted, fontSize: 14, marginBottom: 10 }}>{headings[1]}</div>}
         {paragraphs[0] && <div style={{ color: p.muted, fontSize: 14, maxWidth: 560, margin: "0 auto 20px", lineHeight: 1.6 }}>{paragraphs[0].slice(0, 180)}</div>}
         <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -130,7 +132,7 @@ function SectionMockup({ section, style, copy }: { section: DetectedSection; sty
                 <div style={{ width: 32, height: 32, borderRadius: 8, background: `${p.accent}22`, marginBottom: 12 }} />
               )}
               <div style={{ fontWeight: 600, color: p.text, fontSize: 13, marginBottom: 6, fontFamily: `${p.fontDisplay}, sans-serif` }}>{h}</div>
-              <div style={{ color: p.muted, fontSize: 12, lineHeight: 1.5 }}>{paragraphs[i]?.slice(0, 90) || "Real site copy — no lorem."}</div>
+              <div style={{ color: p.muted, fontSize: 12, lineHeight: 1.5 }}>{paragraphs[i]?.slice(0, 90) || tr("Real site copy — no lorem.", "טקסט אמיתי מהאתר — בלי lorem.")}</div>
             </div>
           ))}
         </div>
@@ -154,7 +156,7 @@ function SectionMockup({ section, style, copy }: { section: DetectedSection; sty
               </div>
             </div>
           ))}
-          {qs.length === 0 && <div style={{ color: p.muted, fontSize: 12 }}>No testimonials found on source — none invented.</div>}
+          {qs.length === 0 && <div style={{ color: p.muted, fontSize: 12 }}>{tr("No testimonials found on source — none invented.", "לא נמצאו המלצות באתר המקור — לא הומצא דבר.")}</div>}
         </div>
       </div>
     );
@@ -264,6 +266,7 @@ function SectionMockup({ section, style, copy }: { section: DetectedSection; sty
 
 /* ── Component previews (buttons/cards/forms/nav with site copy) ── */
 function ComponentPreviews({ style, copy, sections }: { style: StyleTokens; copy?: MockupData["copy"]; sections: DetectedSection[] }) {
+  const { tr } = useLang();
   const p = style;
   const buttons = sections.flatMap((s) => s.buttons ?? []).slice(0, 6);
   const fallbackButtons = copy?.ctaLabels.slice(0, 4).map((l) => ({ label: l })) ?? [];
@@ -275,28 +278,28 @@ function ComponentPreviews({ style, copy, sections }: { style: StyleTokens; copy
     <div style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
       {/* Buttons */}
       <div style={{ background: p.surface, border: `1px solid ${p.border}`, borderRadius: p.radius, padding: 20 }}>
-        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>Buttons — {copy?.siteName || "site"} copy</div>
+        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>{tr(`Buttons — ${copy?.siteName || "site"} copy`, `כפתורים — הטקסט של ${copy?.siteName || "האתר"}`)}</div>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           {btns.slice(0, 4).map((b, i) => (
             <span key={b.label + i} style={{ padding: i === 0 ? "10px 20px" : "8px 16px", borderRadius: p.radiusBtn, fontSize: 13, fontWeight: 600, background: i === 0 ? p.accentStrong : "transparent", color: i === 0 ? "#fff" : p.accent, border: i === 0 ? "none" : `1.5px solid ${p.accent}`, fontFamily: `${p.fontBody}, sans-serif` }}>{b.label}</span>
           ))}
-          {btns.length === 0 && <span style={{ color: p.textMuted, fontSize: 12 }}>No buttons found — none invented.</span>}
+          {btns.length === 0 && <span style={{ color: p.textMuted, fontSize: 12 }}>{tr("No buttons found — none invented.", "לא נמצאו כפתורים — לא הומצא דבר.")}</span>}
         </div>
         <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
-          <span style={{ padding: "6px 12px", borderRadius: p.radiusBtn, fontSize: 11, background: `${p.accent}18`, color: p.textMuted, border: `1px solid ${p.border}` }}>Hover: {p.accent}</span>
-          <span style={{ padding: "6px 12px", borderRadius: p.radiusBtn, fontSize: 11, background: p.bg, color: p.textMuted, border: `1px solid ${p.border}` }}>Focus ring</span>
+          <span style={{ padding: "6px 12px", borderRadius: p.radiusBtn, fontSize: 11, background: `${p.accent}18`, color: p.textMuted, border: `1px solid ${p.border}` }}>{tr("Hover", "ריחוף")}: {p.accent}</span>
+          <span style={{ padding: "6px 12px", borderRadius: p.radiusBtn, fontSize: 11, background: p.bg, color: p.textMuted, border: `1px solid ${p.border}` }}>{tr("Focus ring", "טבעת פוקוס")}</span>
         </div>
       </div>
 
       {/* Cards */}
       <div style={{ background: p.surface, border: `1px solid ${p.border}`, borderRadius: p.radius, padding: 20 }}>
-        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>Cards</div>
+        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>{tr("Cards", "כרטיסים")}</div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           {[0, 1].map((i) => (
             <div key={i} style={{ background: p.bg, border: `1px solid ${p.border}`, borderRadius: p.radius, padding: 14 }}>
               {images[i] ? <img src={images[i].src} alt="" style={{ width: "100%", height: 70, objectFit: "cover", borderRadius: p.radius, marginBottom: 8 }} onError={(e) => ((e.target as HTMLImageElement).style.display = "none")} /> : <div style={{ height: 48, borderRadius: p.radius, background: `${p.accent}14`, marginBottom: 8 }} />}
-              <div style={{ fontWeight: 600, color: p.textPrimary, fontSize: 12, fontFamily: `${p.fontDisplay}, sans-serif`, marginBottom: 4 }}>{headings[i] || `Card ${i + 1}`}</div>
-              <div style={{ color: p.textMuted, fontSize: 11, lineHeight: 1.5 }}>{copy?.paragraphs[i]?.slice(0, 70) || "Real paragraph from the site."}</div>
+              <div style={{ fontWeight: 600, color: p.textPrimary, fontSize: 12, fontFamily: `${p.fontDisplay}, sans-serif`, marginBottom: 4 }}>{headings[i] || `${tr("Card", "כרטיס")} ${i + 1}`}</div>
+              <div style={{ color: p.textMuted, fontSize: 11, lineHeight: 1.5 }}>{copy?.paragraphs[i]?.slice(0, 70) || tr("Real paragraph from the site.", "פסקה אמיתית מהאתר.")}</div>
             </div>
           ))}
         </div>
@@ -304,7 +307,7 @@ function ComponentPreviews({ style, copy, sections }: { style: StyleTokens; copy
 
       {/* Form */}
       <div style={{ background: p.surface, border: `1px solid ${p.border}`, borderRadius: p.radius, padding: 20 }}>
-        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>Form</div>
+        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>{tr("Form", "טופס")}</div>
         {(() => {
           const fields = sections.find((s) => s.formFields && s.formFields.length)?.formFields ?? ["name", "email", "message"];
           return (
@@ -323,7 +326,7 @@ function ComponentPreviews({ style, copy, sections }: { style: StyleTokens; copy
 
       {/* Nav */}
       <div style={{ background: p.surface, border: `1px solid ${p.border}`, borderRadius: p.radius, padding: 20 }}>
-        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>Navigation</div>
+        <div style={{ fontFamily: `${p.fontDisplay}, sans-serif`, fontWeight: 700, color: p.textPrimary, fontSize: 13, marginBottom: 12 }}>{tr("Navigation", "ניווט")}</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 0, border: `1px solid ${p.border}`, borderRadius: p.radius, overflow: "hidden" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "10px 14px", background: p.bg, borderBottom: `1px solid ${p.border}` }}>
             <span style={{ fontWeight: 700, color: p.textPrimary, fontFamily: `${p.fontDisplay}, sans-serif`, fontSize: 12 }}>{copy?.siteName || "Site"}</span>
@@ -340,6 +343,7 @@ function ComponentPreviews({ style, copy, sections }: { style: StyleTokens; copy
 
 /* ── Main page ── */
 export default function MockupPage() {
+  const { tr } = useLang();
   const [step, setStep] = useState<"input" | "loading" | "result">("input");
   const [url, setUrl] = useState("");
   const [error, setError] = useState("");
@@ -349,7 +353,7 @@ export default function MockupPage() {
   const [showOriginal, setShowOriginal] = useState(false);
 
   const analyze = useCallback(async () => {
-    if (!url.trim()) { setError("Enter a URL first"); return; }
+    if (!url.trim()) { setError(tr("Enter a URL first", "יש להזין כתובת URL")); return; }
     setError("");
     setStep("loading");
     try {
@@ -359,7 +363,7 @@ export default function MockupPage() {
         body: JSON.stringify({ url: url.trim() }),
       });
       const d = await res.json() as Record<string, unknown>;
-      if (!res.ok) { setError((d.error as string) || "Failed"); setStep("input"); return; }
+      if (!res.ok) { setError((d.error as string) || tr("Failed", "הפעולה נכשלה")); setStep("input"); return; }
       setData(d as unknown as MockupData);
       try {
         const aRes = await fetch("/api/analyze", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: url.trim() }) });
@@ -368,24 +372,24 @@ export default function MockupPage() {
       } catch {}
       setStep("result");
     } catch {
-      setError("Network error");
+      setError(tr("Network error", "שגיאת רשת"));
       setStep("input");
     }
-  }, [url]);
+  }, [url, tr]);
 
   const style = STYLES[selectedStyle];
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-white">
-      <SiteHeader subtitle="Full-page mockups — content-real" />
+      <SiteHeader subtitle={tr("Full-page mockups — content-real", "מוקאפים לעמוד מלא — עם תוכן אמיתי")} />
       <main className="mx-auto max-w-6xl px-6 py-8">
         {step === "input" && (
           <div className="mx-auto max-w-xl">
-            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>Generate full-page mockups</h2>
-            <p className="mb-6 text-sm text-white/50">Paste a URL — sections are extracted with real headings, images, buttons and forms, then re-skinned in your chosen style. No lorem.</p>
+            <h2 className="mb-2 text-2xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>{tr("Generate full-page mockups", "יצירת מוקאפים לעמוד מלא")}</h2>
+            <p className="mb-6 text-sm text-white/50">{tr("Paste a URL — sections are extracted with real headings, images, buttons and forms, then re-skinned in your chosen style. No lorem.", "הדביקו כתובת URL — המקטעים מחולצים עם כותרות, תמונות, כפתורים וטפסים אמיתיים, ואז מעוצבים מחדש בסגנון שבחרתם. בלי lorem.")}</p>
             <div className="flex gap-2">
               <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && analyze()} placeholder="https://example.com" dir="ltr" className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-violet-500" />
-              <button onClick={analyze} className="rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">Generate</button>
+              <button onClick={analyze} className="rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">{tr("Generate", "יצירה")}</button>
             </div>
             {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
           </div>
@@ -394,8 +398,8 @@ export default function MockupPage() {
         {step === "loading" && (
           <div className="mx-auto max-w-xl py-20 text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-violet-500/30 border-t-violet-500" />
-            <p className="text-lg font-semibold">Analyzing {url}…</p>
-            <p className="mt-1 text-sm text-white/65">Firecrawl branding + DOM fallback · Microlink screenshots · section extraction</p>
+            <p className="text-lg font-semibold">{tr("Analyzing", "מנתח")} {url}…</p>
+            <p className="mt-1 text-sm text-white/65">{tr("Firecrawl branding + DOM fallback · Microlink screenshots · section extraction", "Firecrawl branding + DOM fallback · צילומי מסך של Microlink · חילוץ מקטעים")}</p>
           </div>
         )}
 
@@ -403,14 +407,14 @@ export default function MockupPage() {
           <div>
             {/* Controls */}
             <div className="mb-6 flex flex-wrap items-center gap-3">
-              <button onClick={() => { setStep("input"); setData(null); }} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/20">New site</button>
+              <button onClick={() => { setStep("input"); setData(null); }} className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/75 transition hover:bg-white/20">{tr("New site", "אתר חדש")}</button>
               <div className="flex gap-1.5">
                 {(["desktop", "mobile"] as const).map((vp) => (
-                  <button key={vp} onClick={() => setViewport(vp)} className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition ${viewport === vp ? "bg-violet-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>{vp === "desktop" ? "🖥 Desktop" : "📱 Mobile"}</button>
+                  <button key={vp} onClick={() => setViewport(vp)} className={`rounded-full px-4 py-1.5 text-sm font-medium capitalize transition ${viewport === vp ? "bg-violet-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>{vp === "desktop" ? tr("🖥 Desktop", "🖥 דסקטופ") : tr("📱 Mobile", "📱 מובייל")}</button>
                 ))}
               </div>
-              <button onClick={() => setShowOriginal(!showOriginal)} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${showOriginal ? "bg-green-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>{showOriginal ? "✓ Original" : "Original"}</button>
-              <div className="ml-auto flex gap-1.5 flex-wrap">
+              <button onClick={() => setShowOriginal(!showOriginal)} className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${showOriginal ? "bg-green-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>{showOriginal ? tr("✓ Original", "✓ מקור") : tr("Original", "מקור")}</button>
+              <div className="ms-auto flex gap-1.5 flex-wrap">
                 {Object.values(STYLES).map((s) => (
                   <button key={s.id} onClick={() => setSelectedStyle(s.id)} className={`rounded-full px-3 py-1.5 text-xs font-medium transition ${selectedStyle === s.id ? "bg-violet-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>{s.name.split(" ")[0]}</button>
                 ))}
@@ -419,10 +423,10 @@ export default function MockupPage() {
 
             {/* PrototypeFrame-style viewport label */}
             <div className="mb-3 flex items-center gap-2 text-xs text-white/60">
-              <span className="rounded bg-white/10 px-2 py-0.5">{viewport === "desktop" ? "Desktop 1280" : "Mobile 390"}</span>
+              <span className="rounded bg-white/10 px-2 py-0.5">{viewport === "desktop" ? tr("Desktop 1280", "דסקטופ 1280") : tr("Mobile 390", "מובייל 390")}</span>
               <span>{data.title}</span>
               <span className="text-white/20">·</span>
-              <span>{data.sectionCount} sections</span>
+              <span>{data.sectionCount} {tr("sections", "מקטעים")}</span>
             </div>
 
             {/* Original screenshots */}
@@ -430,26 +434,26 @@ export default function MockupPage() {
               <div className="mb-6 grid gap-4 md:grid-cols-2">
                 {data.screenshots.desktop && (
                   <div>
-                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/65">Original — Desktop</h3>
+                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/65">{tr("Original — Desktop", "מקור — דסקטופ")}</h3>
                     <div className="overflow-hidden rounded-xl border border-white/10 bg-white">
-                      <img src={data.screenshots.desktop} alt="Original desktop" className="w-full object-contain object-top" style={{ maxHeight: 520 }} />
+                      <img src={data.screenshots.desktop} alt={tr("Original desktop", "מקור — דסקטופ")} className="w-full object-contain object-top" style={{ maxHeight: 520 }} />
                     </div>
                   </div>
                 )}
                 {data.screenshots.mobile && (
                   <div>
-                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/65">Original — Mobile</h3>
+                    <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/65">{tr("Original — Mobile", "מקור — מובייל")}</h3>
                     <div className="mx-auto overflow-hidden rounded-xl border border-white/10 bg-white" style={{ maxWidth: 390 }}>
-                      <img src={data.screenshots.mobile} alt="Original mobile" className="w-full object-contain object-top" style={{ maxHeight: 520 }} />
+                      <img src={data.screenshots.mobile} alt={tr("Original mobile", "מקור — מובייל")} className="w-full object-contain object-top" style={{ maxHeight: 520 }} />
                     </div>
                   </div>
                 )}
-                {!data.screenshots.desktop && !data.screenshots.mobile && <p className="text-sm text-white/65">No screenshots available for this URL.</p>}
+                {!data.screenshots.desktop && !data.screenshots.mobile && <p className="text-sm text-white/65">{tr("No screenshots available for this URL.", "אין צילומי מסך זמינים עבור כתובת זו.")}</p>}
               </div>
             )}
 
             {/* Scrollable mockup — sections with PrototypeFrame scaling */}
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/65">{data.sectionCount} sections — &ldquo;{style.name}&rdquo; · {viewport === "mobile" ? "390px" : "1280px"}</h3>
+            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-white/65">{data.sectionCount} {tr("sections", "מקטעים")} — &ldquo;{style.name}&rdquo; · {viewport === "mobile" ? "390px" : "1280px"}</h3>
             <div className={viewport === "mobile" ? "mx-auto max-w-[390px] space-y-4" : "space-y-4"}>
               {data.sections.map((section, i) => (
                 <div key={i}>
@@ -464,11 +468,11 @@ export default function MockupPage() {
             </div>
 
             {/* Component previews */}
-            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/65">Component previews — real copy · {style.name}</h3>
+            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/65">{tr("Component previews — real copy", "תצוגות מקדימות של רכיבים — טקסט אמיתי")} · {style.name}</h3>
             <ComponentPreviews style={style} copy={data.copy} sections={data.sections} />
 
             {/* Style comparison */}
-            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/65">All 5 styles — hero</h3>
+            <h3 className="mb-3 mt-10 text-sm font-semibold uppercase tracking-wider text-white/65">{tr("All 5 styles — hero", "כל 5 הסגנונות — הירו")}</h3>
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {Object.values(STYLES).map((s) => {
                 const hero = data.sections.find((sec) => sec.type === "hero") || data.sections[0];

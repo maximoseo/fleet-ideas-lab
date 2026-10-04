@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import LangToggle from "@/components/LangToggle";
+import { useLang } from "@/components/i18n";
 
 interface SharedData {
   url: string;
@@ -23,6 +25,7 @@ function isSafeHttpUrl(raw: unknown): boolean {
 }
 
 export default function SharePage() {
+  const { tr } = useLang();
   const [data, setData] = useState<SharedData | null>(null);
   const [error, setError] = useState("");
 
@@ -42,8 +45,12 @@ export default function SharePage() {
     <div className="min-h-screen bg-[var(--bg)] text-white">
       <header className="border-b border-white/10 px-6 py-4">
         <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <h1 className="text-xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>🔗 Shared Analysis</h1>
-          <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/70 transition hover:bg-white/20">← Fleet Ideas Lab</Link>
+          <h1 className="text-xl font-bold" style={{ fontFamily: "Rubik, sans-serif" }}>🔗 {tr("Shared Analysis", "ניתוח משותף")}</h1>
+          {/* Public page without SiteHeader: language switch sits at the end of the header row. */}
+          <div className="flex items-center gap-2">
+            <LangToggle />
+            <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-white/70 transition hover:bg-white/20">{tr("← Fleet Ideas Lab", "→ Fleet Ideas Lab")}</Link>
+          </div>
         </div>
       </header>
 
@@ -51,7 +58,13 @@ export default function SharePage() {
         {error && (
           <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-6 text-center">
             <p className="text-4xl">😕</p>
-            <p className="mt-3 text-sm text-red-400">{error}</p>
+            <p className="mt-3 text-sm text-red-400">
+              {error === "No shared data found"
+                ? tr("No shared data found", "לא נמצאו נתונים משותפים")
+                : error === "Could not decode shared data"
+                  ? tr("Could not decode shared data", "לא ניתן לפענח את הנתונים המשותפים")
+                  : error}
+            </p>
           </div>
         )}
 
@@ -71,7 +84,7 @@ export default function SharePage() {
             )}
 
             <div className="mt-4">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Color Palette</h3>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">{tr("Color Palette", "פלטת צבעים")}</h3>
               <div className="flex flex-wrap gap-2">
                 {data.colors.map(c => (
                   <div key={c} className="text-center">
@@ -83,8 +96,8 @@ export default function SharePage() {
             </div>
 
             <div className="mt-4">
-              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Fonts</h3>
-              <p className="text-sm text-white/75">{data.fonts.join(", ") || "None detected"}</p>
+              <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">{tr("Fonts", "גופנים")}</h3>
+              <p className="text-sm text-white/75">{data.fonts.join(", ") || tr("None detected", "לא זוהו")}</p>
             </div>
 
             <div className="mt-4 flex items-center gap-2">
@@ -93,10 +106,10 @@ export default function SharePage() {
 
             <div className="mt-6 flex gap-2">
               <a href={`/redesign`} className="flex-1 rounded-lg bg-violet-600 py-2.5 text-center text-sm font-semibold text-white transition hover:bg-violet-500">
-                ✨ Redesign this site
+                ✨ {tr("Redesign this site", "עיצוב מחדש לאתר הזה")}
               </a>
               <a href={`/audit`} className="flex-1 rounded-lg bg-white/10 py-2.5 text-center text-sm font-semibold text-white/70 transition hover:bg-white/20">
-                🔍 Run slop audit
+                🔍 {tr("Run slop audit", "הרצת ביקורת slop")}
               </a>
             </div>
           </div>

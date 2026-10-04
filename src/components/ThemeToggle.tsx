@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useLang } from "@/components/i18n";
 
 type Theme = "dark" | "light";
 
@@ -30,6 +31,7 @@ function readTheme(): Theme {
  * and aria-pressed was wrong for one frame.
  */
 export default function ThemeToggle() {
+  const { tr } = useLang();
   const theme = useSyncExternalStore<Theme>(subscribeTheme, readTheme, () => "dark");
 
   function toggle() {
@@ -45,7 +47,7 @@ export default function ThemeToggle() {
     <button
       type="button"
       onClick={toggle}
-      aria-label={theme === "light" ? "Switch to dark theme" : "Switch to light theme"}
+      aria-label={theme === "light" ? tr("Switch to dark theme", "מעבר לערכת נושא כהה") : tr("Switch to light theme", "מעבר לערכת נושא בהירה")}
       aria-pressed={theme === "light"}
       className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/75 hover:bg-white/10 hover:text-white"
     >

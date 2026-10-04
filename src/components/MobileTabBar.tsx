@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {useState} from "react";
-import { useLang, type I18nKey } from "@/components/i18n";
+import { useLang, pick, type Bi, type I18nKey } from "@/components/i18n";
 import { isPublicRoute } from "@/lib/publicRoute";
 
 const TABS: ReadonlyArray<{ href: string; key: I18nKey; icon: (a: boolean) => React.ReactNode }> = [
@@ -49,21 +49,21 @@ const TABS: ReadonlyArray<{ href: string; key: I18nKey; icon: (a: boolean) => Re
   },
 ] as const;
 
-const MORE: ReadonlyArray<{ href: string; key: I18nKey; hint: string; external?: boolean }> = [
-  { href: "/changelog", key: "nav.changelog", hint: "Pipeline transitions" },
-  { href: "/experiments", key: "nav.experiments", hint: "WP injection registry" },
-  { href: "/audit", key: "nav.audit", hint: "Audit a client site" },
-  { href: "/generate", key: "nav.generate", hint: "Tokens & CSS" },
-  { href: "/redesign", key: "nav.redesign", hint: "Redesign a live site" },
-  { href: "/mockup", key: "nav.mockup", hint: "Full-page mockups" },
-  { href: "/history", key: "nav.history", hint: "Past analyses" },
-  { href: "/prototypes/", key: "nav.prototypes", hint: "Client gallery", external: true },
+const MORE: ReadonlyArray<{ href: string; key: I18nKey; hint: Bi; external?: boolean }> = [
+  { href: "/changelog", key: "nav.changelog", hint: { en: "Pipeline transitions", he: "מעברי צנרת" } },
+  { href: "/experiments", key: "nav.experiments", hint: { en: "WP injection registry", he: "רישום הזרקות WordPress" } },
+  { href: "/audit", key: "nav.audit", hint: { en: "Audit a client site", he: "ביקורת לאתר לקוח" } },
+  { href: "/generate", key: "nav.generate", hint: { en: "Tokens & CSS", he: "טוקנים ו-CSS" } },
+  { href: "/redesign", key: "nav.redesign", hint: { en: "Redesign a live site", he: "עיצוב מחדש לאתר חי" } },
+  { href: "/mockup", key: "nav.mockup", hint: { en: "Full-page mockups", he: "מוקאפים לעמוד מלא" } },
+  { href: "/history", key: "nav.history", hint: { en: "Past analyses", he: "ניתוחים קודמים" } },
+  { href: "/prototypes/", key: "nav.prototypes", hint: { en: "Client gallery", he: "גלריית לקוחות" }, external: true },
   // Fleet Ideas Lab extras — notifications + update are native routes exposed via deep links; keep web header fallback
 ];
 
 export default function MobileTabBar() {
   const pathname = usePathname();
-  const { t } = useLang();
+  const { t, tr, lang } = useLang();
   // Derived, not reset from an effect: the sheet belongs to the route it was
   // opened on, so a navigation closes it without a second render pass.
   const [openedOn, setOpenedOn] = useState<string | null>(null);
@@ -100,15 +100,15 @@ export default function MobileTabBar() {
               {MORE.map((m) => (
                 <Link key={m.href} href={m.href} {...(m.external ? { target: "_blank" as const, rel: "noopener noreferrer" as const } : {})} className={`flex min-h-[48px] items-center justify-between rounded-xl px-4 text-[15px] font-medium transition ${isActive(m.href) ? "bg-violet-600 text-white" : "text-white/80 hover:bg-white/10"}`}>
                   <span>{t(m.key)} {m.external ? "↗" : ""}</span>
-                  <span className={`text-[11px] ${isActive(m.href) ? "text-white/80" : "text-white/65"}`}>{m.hint}</span>
+                  <span className={`text-[11px] ${isActive(m.href) ? "text-white/80" : "text-white/65"}`}>{pick(m.hint, lang)}</span>
                 </Link>
               ))}
             </div>
-            <div className="mt-3 border-t border-white/10 pt-3 text-center text-[11px] text-white/60">Protected by Cloudflare Turnstile \u00b7 Encrypted dl_session</div>
+            <div className="mt-3 border-t border-white/10 pt-3 text-center text-[11px] text-white/60">{tr("Protected by Cloudflare Turnstile · Encrypted dl_session", "מוגן על ידי Cloudflare Turnstile · dl_session מוצפן")}</div>
           </div>
         </div>
       ) : null}
-      <nav className="fil-chrome fixed inset-x-0 bottom-0 z-[60] border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden" aria-label="Primary mobile">
+      <nav className="fil-chrome fixed inset-x-0 bottom-0 z-[60] border-t pb-[env(safe-area-inset-bottom)] backdrop-blur-lg lg:hidden" aria-label={tr("Primary mobile", "ראשי לנייד")}>
         <div className="grid grid-cols-6">
           {TABS.map((tab) => {
             const active = isActive(tab.href);

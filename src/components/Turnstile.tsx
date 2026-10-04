@@ -8,6 +8,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { useLang } from "@/components/i18n";
 
 declare global {
   interface Window {
@@ -83,6 +84,7 @@ export const Turnstile = forwardRef<
     theme?: "dark" | "light";
   }
 >(function Turnstile({ siteKey, onToken, theme = "dark" }, ref) {
+  const { tr } = useLang();
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetId = useRef<string | null>(null);
   const [failed, setFailed] = useState(false);
@@ -149,8 +151,10 @@ export const Turnstile = forwardRef<
       <div ref={containerRef} style={{ minHeight: 65 }} />
       {failed && (
         <div style={{ fontSize: 12, color: "#f59e0b", padding: "8px 0" }}>
-          Security check unavailable. Reload the page to try again — if it keeps
-          failing, the site owner needs to look at the Turnstile configuration.
+          {tr(
+            "Security check unavailable. Reload the page to try again — if it keeps failing, the site owner needs to look at the Turnstile configuration.",
+            "בדיקת האבטחה אינה זמינה. טענו את הדף מחדש כדי לנסות שוב — אם הבעיה נמשכת, בעלי האתר צריכים לבדוק את הגדרות Turnstile.",
+          )}
         </div>
       )}
     </div>

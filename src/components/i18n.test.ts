@@ -54,3 +54,16 @@ describe("chrome dictionary", () => {
     expect(translate("en", "does.not.exist")).toBe("does.not.exist");
   });
 });
+
+import { localeFor, pick } from "./i18n";
+
+describe("bilingual helpers", () => {
+  it("picks the requested side of a pair", () => {
+    expect(pick({ en: "Save", he: "שמירה" }, "en")).toBe("Save");
+    expect(pick({ en: "Save", he: "שמירה" }, "he")).toBe("שמירה");
+  });
+  it("uses a Hebrew locale only for Hebrew", () => {
+    expect(localeFor("en")).toBe("en-GB");
+    expect(localeFor("he")).toBe("he-IL");
+  });
+});

@@ -8,6 +8,8 @@ import TrustLine from "@/components/TrustLine";
 import { STYLES } from "@/lib/styles";
 import { DOMAIN_LABEL, DOMAIN_COLOR, FLEET_PROJECTS } from "@/lib/fleet";
 import { buildImprovePromptForProject } from "@/lib/agentPrompt";
+import { localizeProject } from "@/lib/fleet.he";
+import { useLang, pick, type Bi, type Lang } from "@/components/i18n";
 
 const VIOLET = STYLES.violet;
 
@@ -40,28 +42,48 @@ interface ProbeRow {
   error: string | null;
 }
 
-const STATE_META: Record<LiveState | "unknown", { label: string; color: string }> = {
-  healthy: { label: "Healthy", color: "#a78bfa" },
-  degraded: { label: "Degraded", color: "#e8b14c" },
-  down: { label: "Down", color: "#f2637e" },
-  unknown: { label: "Unknown", color: "#8c82ab" },
+const STATE_META: Record<LiveState | "unknown", { label: Bi; color: string }> = {
+  healthy: { label: { en: "Healthy", he: "תקין" }, color: "#a78bfa" },
+  degraded: { label: { en: "Degraded", he: "מדורדר" }, color: "#e8b14c" },
+  down: { label: { en: "Down", he: "מושבת" }, color: "#f2637e" },
+  unknown: { label: { en: "Unknown", he: "לא ידוע" }, color: "#8c82ab" },
 };
 
-function fmtTime(iso: string | null | undefined) {
+// Raw state/health values rendered as labels (stored values stay unchanged)
+const RAW_LABEL: Record<string, Bi> = {
+  healthy: { en: "healthy", he: "תקין" },
+  stale: { en: "stale", he: "מיושן" },
+  degraded: { en: "degraded", he: "מדורדר" },
+  down: { en: "down", he: "מושבת" },
+  unknown: { en: "unknown", he: "לא ידוע" },
+};
+
+const DOMAIN_HE: Record<string, string> = {
+  seo: "SEO", content: "תוכן", local: "מקומי", analytics: "אנליטיקס", automation: "אוטומציה", design: "עיצוב", outreach: "פנייה ללקוחות", technical: "טכני",
+  geo: "GEO", whm: "WHM", competitor: "מתחרים", reporting: "דוחות", "client-ops": "תפעול לקוחות",
+};
+function domainLabel(d: string, lang: Lang) {
+  return lang === "he" ? DOMAIN_HE[d] ?? DOMAIN_LABEL[d] ?? d : DOMAIN_LABEL[d] || d;
+}
+
+const LOAD_FAILED = "Failed to load dashboard";
+
+function fmtTime(iso: string | null | undefined, locale: string) {
   if (!iso) return "—";
   try {
-    return new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
+    return new Date(iso).toLocaleString(locale, { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
   } catch {
     return iso;
   }
 }
 
-function freshness(updated: string | undefined): { band: "good" | "warn" | "bad"; label: string; days: number | null } {
-  if (!updated) return { band: "bad", label: "no deploy date on record", days: null };
+function freshness(updated: string | undefined, tr: (en: string, he: string) => string): { band: "good" | "warn" | "bad"; label: string; days: number | null } {
+  if (!updated) return { band: "bad", label: tr("no deploy date on record", "אין תאריך פריסה מתועד"), days: null };
   const days = Math.floor((Date.now() - new Date(updated + "T00:00:00Z").getTime()) / 86400000);
-  if (days <= 3) return { band: "good", label: `${updated} (${days}d ago)`, days };
-  if (days <= 7) return { band: "warn", label: `${updated} (${days}d ago)`, days };
-  return { band: "bad", label: `${updated} (${days}d ago)`, days };
+  const label = tr(`${updated} (${days}d ago)`, `${updated} (לפני ${days} ימים)`);
+  if (days <= 3) return { band: "good", label, days };
+  if (days <= 7) return { band: "warn", label, days };
+  return { band: "bad", label, days };
 }
 
 const BAND_STYLE: Record<"good" | "warn" | "bad", string> = {
@@ -72,6 +94,7 @@ const BAND_STYLE: Record<"good" | "warn" | "bad", string> = {
 const BAND_DOT: Record<"good" | "warn" | "bad", string> = { good: "#a78bfa", warn: "#e8b14c", bad: "#f2637e" };
 
 export default function DashboardDetailPage() {
+  const { lang, t, tr, locale } = useLang();
   const params = useParams<{ slug: string }>();
   const slug = typeof params?.slug === "string" ? params.slug : "";
 
@@ -117,7 +140,7 @@ export default function DashboardDetailPage() {
         setProbesPersisted(false);
       }
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to load dashboard");
+      setError(e instanceof Error ? e.message : LOAD_FAILED);
     } finally {
       setLoading(false);
     }
@@ -133,10 +156,10 @@ export default function DashboardDetailPage() {
     try {
       const res = await fetch(`/api/fleet/probe?slug=${encodeURIComponent(slug)}`);
       if (!res.ok) throw new Error("HTTP " + res.status);
-      setToast("Probe finished — reloading data");
+      setToast(tr("Probe finished — reloading data", "הבדיקה הסתיימה — טוענים נתונים מחדש"));
       await load();
     } catch (e) {
-      setToast("✗ Probe failed — " + (e instanceof Error ? e.message : "unknown error"));
+      setToast(tr("✗ Probe failed — ", "✗ הבדיקה נכשלה — ") + (e instanceof Error ? e.message : tr("unknown error", "שגיאה לא ידועה")));
     } finally {
       setProbing(false);
       setTimeout(() => setToast(null), 3000);
@@ -149,9 +172,9 @@ export default function DashboardDetailPage() {
     const brief = buildImprovePromptForProject(project as unknown as never);
     try {
       await navigator.clipboard.writeText(brief);
-      setToast("IMPROVE brief copied (" + slug + ")");
+      setToast(tr("IMPROVE brief copied (", "תקציר IMPROVE הועתק (") + slug + ")");
     } catch {
-      setToast("✗ Copy failed — clipboard unavailable (select the text manually)");
+      setToast(tr("✗ Copy failed — clipboard unavailable (select the text manually)", "✗ ההעתקה נכשלה — הלוח אינו זמין (אפשר לסמן את הטקסט ידנית)"));
     }
     setTimeout(() => setToast(null), 2600);
     try {
@@ -170,16 +193,16 @@ export default function DashboardDetailPage() {
   }
 
   const state: LiveState | "unknown" = item?.live ? item.live.state : "unknown";
-  const fresh = useMemo(() => freshness(item?.updated), [item?.updated]);
+  const fresh = useMemo(() => freshness(item?.updated, tr), [item?.updated, tr]);
   const isCustomDomain = !!item?.url && item.url.replace(/\/$/, "").endsWith(".maximo-seo.ai");
   const hasImproveBrief = FLEET_PROJECTS.some((p) => p.slug === slug);
 
   return (
     <div className="min-h-screen" style={{ background: VIOLET.bg, color: VIOLET.textPrimary }}>
-      <SiteHeader subtitle={item ? item.name : "Dashboard detail"} />
+      <SiteHeader subtitle={item ? item.name : tr("Dashboard detail", "פרטי הדשבורד")} />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-6 sm:py-8 pb-[calc(88px+env(safe-area-inset-bottom))] lg:pb-10">
         <Link href="/" className="text-[13px] font-semibold text-violet-200 hover:text-violet-200">
-          ← Fleet inventory
+          {tr("← Fleet inventory", "→ מלאי הצי")}
         </Link>
 
         {loading ? (
@@ -189,23 +212,35 @@ export default function DashboardDetailPage() {
           </div>
         ) : error ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <p className="text-sm text-white/75">Could not load this dashboard ({error}).</p>
+            <p className="text-sm text-white/75">{tr("Could not load this dashboard (", "לא ניתן לטעון את הדשבורד (")}{error === LOAD_FAILED ? tr(LOAD_FAILED, "טעינת הדשבורד נכשלה") : error}).</p>
             <button
               onClick={load}
               className="mt-3 inline-flex min-h-[44px] items-center rounded-full border border-white/15 px-5 text-sm font-semibold text-white hover:bg-white/10"
             >
-              Retry
+              {t("action.retry")}
             </button>
           </div>
         ) : notFound || !item ? (
           <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.03] p-10 text-center">
-            <p className="text-lg font-bold text-white">No dashboard named “{slug}” in the fleet inventory.</p>
+            <p className="text-lg font-bold text-white">{tr(`No dashboard named “${slug}” in the fleet inventory.`, `אין דשבורד בשם ״${slug}״ במלאי הצי.`)}</p>
             <p className="mt-2 text-sm text-white/50">
-              The slug may be wrong or the dashboard was removed. Check the{" "}
-              <Link href="/" className="text-violet-200 underline">
-                fleet inventory
-              </Link>{" "}
-              for the current list.
+              {lang === "he" ? (
+                <>
+                  ייתכן שה-slug שגוי או שהדשבורד הוסר. אפשר לעיין ב
+                  <Link href="/" className="text-violet-200 underline">
+                    מלאי הצי
+                  </Link>{" "}
+                  לרשימה העדכנית.
+                </>
+              ) : (
+                <>
+                  The slug may be wrong or the dashboard was removed. Check the{" "}
+                  <Link href="/" className="text-violet-200 underline">
+                    fleet inventory
+                  </Link>{" "}
+                  for the current list.
+                </>
+              )}
             </p>
           </div>
         ) : (
@@ -222,7 +257,7 @@ export default function DashboardDetailPage() {
                       {item.url.replace("https://", "")} ↗
                     </a>
                   ) : (
-                    <p className="mt-1 text-[13px] text-white/65">No production URL on record.</p>
+                    <p className="mt-1 text-[13px] text-white/65">{tr("No production URL on record.", "אין URL של פרודקשן מתועד.")}</p>
                   )}
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {(item.domains || []).map((d) => (
@@ -235,7 +270,7 @@ export default function DashboardDetailPage() {
                           background: (DOMAIN_COLOR[d] || "#8c82ab") + "14",
                         }}
                       >
-                        {DOMAIN_LABEL[d] || d}
+                        {domainLabel(d, lang)}
                       </span>
                     ))}
                     {(item.capabilities || []).map((c) => (
@@ -244,9 +279,9 @@ export default function DashboardDetailPage() {
                       </span>
                     ))}
                   </div>
-                  {item.plainExplainer ? (
+                  {localizeProject(item, lang).plainExplainer ? (
                     <p className="mt-3 max-w-2xl rounded-xl border border-violet-500/20 bg-violet-500/10 px-3 py-2 text-[13px] leading-5 text-violet-100">
-                      <span className="font-bold">In plain English:</span> {item.plainExplainer}
+                      <span className="font-bold">{tr("In plain English:", "במילים פשוטות:")}</span> {localizeProject(item, lang).plainExplainer}
                     </p>
                   ) : null}
                 </div>
@@ -254,12 +289,12 @@ export default function DashboardDetailPage() {
             </div>
 
             {/* LIVE panel */}
-            <section aria-label="Live health" className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+            <section aria-label={tr("Live health", "בריאות בזמן אמת")} className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-sm font-bold text-white">Live</h2>
+                <h2 className="text-sm font-bold text-white">{t("section.live")}</h2>
                 {!liveHealth ? (
                   <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[11px] font-semibold text-amber-100">
-                    static snapshot — live probes offline
+                    {tr("static snapshot — live probes offline", "תמונת מצב סטטית — בדיקות החיות כבויות")}
                   </span>
                 ) : null}
               </div>
@@ -269,32 +304,32 @@ export default function DashboardDetailPage() {
                     <div className="flex items-center gap-2">
                       <span className="h-2.5 w-2.5 rounded-full" style={{ background: STATE_META[state].color }} aria-hidden />
                       <span className="text-[14px] font-bold" style={{ color: STATE_META[state].color }}>
-                        {STATE_META[state].label}
+                        {pick(STATE_META[state].label, lang)}
                       </span>
                     </div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Current state</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">{tr("Current state", "מצב נוכחי")}</div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
                     <div className="font-mono text-[14px] font-bold text-white">{item.live.lastStatus ?? "—"}</div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Last HTTP status</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">{tr("Last HTTP status", "סטטוס HTTP אחרון")}</div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
                     <div className="font-mono text-[14px] font-bold text-white">
                       {item.live.latencyMs != null ? item.live.latencyMs + " ms" : "—"}
                     </div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Latency</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">{tr("Latency", "השהיה")}</div>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/20 px-4 py-3">
-                    <div className="font-mono text-[14px] font-bold text-white">{fmtTime(item.live.checkedAt)}</div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">Last check</div>
+                    <div className="font-mono text-[14px] font-bold text-white">{fmtTime(item.live.checkedAt, locale)}</div>
+                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/65">{tr("Last check", "בדיקה אחרונה")}</div>
                   </div>
                 </div>
               ) : (
                 <p className="mt-3 text-[13px] text-white/50">
-                  No live probe data for this dashboard yet
+                  {tr("No live probe data for this dashboard yet", "עדיין אין נתוני בדיקה חיים לדשבורד הזה")}
                   {item.health ? (
                     <>
-                      {" "}— static health from the last audit: <span className="font-semibold text-white/70">{item.health}</span>.
+                      {" "}{tr("— static health from the last audit:", "— בריאות סטטית מהביקורת האחרונה:")} <span className="font-semibold text-white/70">{RAW_LABEL[item.health] ? pick(RAW_LABEL[item.health], lang) : item.health}</span>.
                     </>
                   ) : (
                     "."
@@ -304,27 +339,27 @@ export default function DashboardDetailPage() {
             </section>
 
             {/* Scorecard */}
-            <section aria-label="Scorecard" className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <section aria-label={tr("Scorecard", "כרטיס ציונים")} className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div className={`rounded-xl border px-4 py-3 ${BAND_STYLE[isCustomDomain ? "good" : "warn"]}`}>
                 <div className="flex items-center gap-2 text-[13px] font-bold">
                   <span className="h-2 w-2 rounded-full" style={{ background: BAND_DOT[isCustomDomain ? "good" : "warn"] }} aria-hidden />
-                  Custom domain
+                  {tr("Custom domain", "דומיין מותאם")}
                 </div>
-                <div className="mt-1 text-[12px]">{isCustomDomain ? "yes — *.maximo-seo.ai" : "no — not on a maximo-seo.ai alias"}</div>
+                <div className="mt-1 text-[12px]">{isCustomDomain ? tr("yes — *.maximo-seo.ai", "כן — *.maximo-seo.ai") : tr("no — not on a maximo-seo.ai alias", "לא — לא על alias של maximo-seo.ai")}</div>
               </div>
               <div className={`rounded-xl border px-4 py-3 ${BAND_STYLE[item.live ? (item.live.state === "healthy" ? "good" : item.live.state === "degraded" ? "warn" : "bad") : "warn"]}`}>
                 <div className="flex items-center gap-2 text-[13px] font-bold">
                   <span className="h-2 w-2 rounded-full" style={{ background: BAND_DOT[item.live ? (item.live.state === "healthy" ? "good" : item.live.state === "degraded" ? "warn" : "bad") : "warn"] }} aria-hidden />
-                  Reachable
+                  {tr("Reachable", "נגישות")}
                 </div>
                 <div className="mt-1 text-[12px]">
-                  {item.live ? (item.live.state === "healthy" ? "yes — last probe healthy" : item.live.state) : "no live data"}
+                  {item.live ? (item.live.state === "healthy" ? tr("yes — last probe healthy", "כן — הבדיקה האחרונה תקינה") : pick(RAW_LABEL[item.live.state], lang)) : tr("no live data", "אין נתונים חיים")}
                 </div>
               </div>
               <div className={`rounded-xl border px-4 py-3 ${BAND_STYLE[fresh.band]}`}>
                 <div className="flex items-center gap-2 text-[13px] font-bold">
                   <span className="h-2 w-2 rounded-full" style={{ background: BAND_DOT[fresh.band] }} aria-hidden />
-                  Deploy freshness
+                  {tr("Deploy freshness", "עדכניות הפריסה")}
                 </div>
                 <div className="mt-1 text-[12px]">{fresh.label}</div>
               </div>
@@ -334,7 +369,7 @@ export default function DashboardDetailPage() {
             <div className="mt-5 flex flex-wrap gap-2">
               {item.url ? (
                 <a href={item.url} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-[44px] items-center rounded-full bg-white px-5 text-[13px] font-semibold text-[#0f0b1a] hover:bg-white/90">
-                  Open site ↗
+                  {t("action.openSite")} ↗
                 </a>
               ) : null}
               <button
@@ -343,50 +378,50 @@ export default function DashboardDetailPage() {
                 className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-5 text-[13px] font-semibold text-violet-200 hover:bg-violet-500/20 disabled:opacity-50"
               >
                 {probing ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-violet-300 border-t-transparent" aria-hidden /> : null}
-                {probing ? "Probing…" : "Re-run probe"}
+                {probing ? tr("Probing…", "בודקים…") : t("action.rerunProbe")}
               </button>
               {hasImproveBrief ? (
                 <button
                   onClick={copyImprove}
                   className="inline-flex min-h-[44px] items-center rounded-full border border-amber-500/20 bg-amber-500/10 px-5 text-[13px] font-bold text-amber-100 hover:bg-amber-500/15"
                 >
-                  Copy improve prompt
+                  {t("action.copyImprove")}
                 </button>
               ) : null}
             </div>
 
             {/* Probe history */}
-            <section aria-label="Probe history" className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-              <h2 className="text-sm font-bold text-white">Probe history <span className="font-mono text-white/65">(last {probes.length})</span></h2>
+            <section aria-label={tr("Probe history", "היסטוריית בדיקות")} className="mt-6 rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+              <h2 className="text-sm font-bold text-white">{t("section.probeHistory")} <span className="font-mono text-white/65">{tr(`(last ${probes.length})`, `(${probes.length} אחרונות)`)}</span></h2>
               {!probesPersisted ? (
                 <p className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-[13px] font-semibold text-amber-100">
-                  Probe persistence offline — history unavailable.
+                  {tr("Probe persistence offline — history unavailable.", "שמירת הבדיקות כבויה — ההיסטוריה אינה זמינה.")}
                 </p>
               ) : probes.length === 0 ? (
-                <p className="mt-3 text-[13px] text-white/50">No probes recorded for this dashboard yet — use Re-run probe to capture one now.</p>
+                <p className="mt-3 text-[13px] text-white/50">{tr("No probes recorded for this dashboard yet — use Re-run probe to capture one now.", "עדיין לא נרשמו בדיקות לדשבורד הזה — אפשר להריץ בדיקה מחדש כדי לתעד אחת עכשיו.")}</p>
               ) : (
                 <div className="mt-3 overflow-x-auto">
-                  <table className="w-full min-w-[480px] text-left text-[12px]">
+                  <table className="w-full min-w-[480px] text-start text-[12px]">
                     <thead>
                       <tr className="border-b border-white/10 text-[10px] uppercase tracking-widest text-white/65">
-                        <th className="py-2 pr-3 font-semibold">Result</th>
-                        <th className="py-2 pr-3 font-semibold">HTTP</th>
-                        <th className="py-2 pr-3 font-semibold">Latency</th>
-                        <th className="py-2 pr-3 font-semibold">Checked</th>
-                        <th className="py-2 font-semibold">Error</th>
+                        <th className="py-2 pe-3 font-semibold">{tr("Result", "תוצאה")}</th>
+                        <th className="py-2 pe-3 font-semibold">HTTP</th>
+                        <th className="py-2 pe-3 font-semibold">{tr("Latency", "השהיה")}</th>
+                        <th className="py-2 pe-3 font-semibold">{tr("Checked", "נבדק")}</th>
+                        <th className="py-2 font-semibold">{tr("Error", "שגיאה")}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {probes.map((p, i) => (
                         <tr key={p.checked_at + "-" + i} className="border-b border-white/5">
-                          <td className="py-2 pr-3">
+                          <td className="py-2 pe-3">
                             <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold ${p.ok ? "border-violet-500/30 bg-violet-500/10 text-violet-200" : "border-red-500/30 bg-red-500/10 text-red-300"}`}>
-                              {p.ok ? "✓ ok" : "✗ fail"}
+                              {p.ok ? tr("✓ ok", "✓ תקין") : tr("✗ fail", "✗ כשל")}
                             </span>
                           </td>
-                          <td className="py-2 pr-3 font-mono text-white/70">{p.status ?? "—"}</td>
-                          <td className="py-2 pr-3 font-mono text-white/70">{p.latency_ms != null ? p.latency_ms + " ms" : "—"}</td>
-                          <td className="py-2 pr-3 font-mono text-white/50">{fmtTime(p.checked_at)}</td>
+                          <td className="py-2 pe-3 font-mono text-white/70">{p.status ?? "—"}</td>
+                          <td className="py-2 pe-3 font-mono text-white/70">{p.latency_ms != null ? p.latency_ms + " ms" : "—"}</td>
+                          <td className="py-2 pe-3 font-mono text-white/50">{fmtTime(p.checked_at, locale)}</td>
                           <td className="max-w-[220px] truncate py-2 text-white/65" title={p.error || undefined}>{p.error || "—"}</td>
                         </tr>
                       ))}
