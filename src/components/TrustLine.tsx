@@ -1,7 +1,6 @@
 "use client";
 
 import { useLang } from "@/components/i18n";
-import VersionBadge from "@/components/VersionBadge";
 
 export default function TrustLine({ compact = false }: { compact?: boolean }) {
   const { tr } = useLang();
@@ -24,7 +23,6 @@ export default function TrustLine({ compact = false }: { compact?: boolean }) {
         <span className="text-white/25">·</span>
         <span className="text-white/45">{tr("Versions via", "גרסאות דרך")} <span className="font-mono text-[11px] text-white/75">/api/app/version</span></span>
       </span>
-      <VersionBadge inline />
       {!compact ? <span className="text-[11px] text-white/60">MaximoSEO · Fleet Ideas Lab</span> : null}
     </div>
   );

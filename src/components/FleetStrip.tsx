@@ -152,13 +152,13 @@ export default function FleetStrip() {
             The link keeps its own role and the wrapper carries listitem, which
             is what a screen reader needs to count the bars anyway.
           */}
-          <ul className="mt-4 flex list-none items-end gap-[3px] overflow-x-auto p-1">
+          <ul className="mt-4 flex list-none items-end gap-[3px] overflow-x-auto p-1.5">
             {rows.map((r) => {
               const meta = BAND_META[r.band];
               const rawState = liveHealth ? (r.live ? r.live.state : "unknown") : r.health || "unknown";
               const stateLabel = STATE_LABEL[rawState] ? pick(STATE_LABEL[rawState], lang) : rawState;
               return (
-                <li key={r.slug} className="min-w-[6px] flex-1">
+                <li key={r.slug} className="min-w-[20px] flex-1">
                 <Link
                   href={`/dashboard/${r.slug}`}
                   aria-label={`${r.name}: ${stateLabel}`}

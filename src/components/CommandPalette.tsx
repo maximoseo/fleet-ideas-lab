@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useLang, type Lang } from "@/components/i18n";
 import { FLEET_PROJECTS, FLEET_IDEAS, FLEET_COUNT, GAP_SCORES, DOMAIN_LABEL, type FleetDomain } from "@/lib/fleet";
 import { localizeIdea } from "@/lib/fleet.he";
+import { WHATS_NEW_OPEN_EVENT } from "@/components/WhatsNew";
+import { WEB_VERSION } from "@/lib/releaseNotes";
 
 type Entry = { id: string; kind: "dashboard" | "idea" | "gap"; label: string; sub: string; href: string; score?: number };
 
@@ -73,6 +75,13 @@ export default function CommandPalette({ open, onClose }: { open: boolean; onClo
         </div>
         <div className="flex items-center justify-between border-t border-white/10 bg-white/[0.03] px-4 py-2 text-[11px] text-white/60">
           <span>{tr(`${FLEET_COUNT} dashboards · ${counts.idea} ideas · ${counts.gap} gaps · recent + search`, `${FLEET_COUNT} דשבורדים · ${counts.idea} רעיונות · ${counts.gap} פערים · אחרונים + חיפוש`)}</span>
+          <button
+            type="button"
+            onClick={() => { onClose(); window.dispatchEvent(new Event(WHATS_NEW_OPEN_EVENT)); }}
+            className="min-h-[32px] rounded-full border border-white/10 bg-white/5 px-3 text-[11px] font-semibold text-white/75 hover:bg-white/10"
+          >
+            {tr("What's new", "מה חדש")} · <span dir="ltr">v{WEB_VERSION}</span>
+          </button>
           <span className="hidden sm:inline">{tr("Type to filter · Enter to jump", "הקלידו לסינון · Enter לקפיצה")}</span>
         </div>
       </div>
