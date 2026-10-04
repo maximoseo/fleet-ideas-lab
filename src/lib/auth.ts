@@ -1,12 +1,13 @@
 import { cookies } from 'next/headers';
 import { createHmac, timingSafeEqual } from 'crypto';
-import { authSecrets, passwordVersion, serverEnv } from './env';
+import { authSecrets, passwordVersion, passwordVersions, serverEnv } from './env';
 
 /**
- * Stateless session auth, ported from site-intel-dashboard.
+ * Stateless session auth, ported from site-intel-dashboard (cookie and helper names
+ * keep the legacy `dl_session` / design-lab prefix; renaming the cookie would sign everyone out).
  *
  * Differences from the source app, deliberate:
- *  - No `requirePermission` / RBAC: design-lab has no user table and no roles.
+ *  - No `requirePermission` / RBAC: there is no user table and no roles.
  *  - No shared-password family login: this app can write to customer WordPress
  *    sites, so it takes one explicit username+password pair and nothing else.
  */
@@ -65,9 +66,10 @@ export function verifySessionToken(token: string | undefined | null): SessionUse
       pv?: string | null;
     };
     if (!data.u || !data.exp || data.exp < Math.floor(Date.now() / 1000)) return null;
-    // Forced logout after password rotation: the token's password version must match the live one.
-    const pv = passwordVersion();
-    if (pv && data.pv !== pv) return null;
+    // Forced logout after password rotation: the token's password version must match a live one
+    // (one per accepted signing secret, so rotation keeps old tokens working).
+    const pvs = passwordVersions();
+    if (pvs.length && !pvs.includes(data.pv ?? '')) return null;
     return { username: data.u };
   } catch {
     return null;
@@ -84,9 +86,9 @@ export class AuthError extends Error {
 /**
  * Guard for API route handlers.
  *
- * IMPORTANT: `src/middleware.ts` does NOT run on `/api/*` — both its matcher and
- * its allowlist exclude it. Every API route must call this itself. Adding the
- * middleware alone leaves the API completely public.
+ * `src/middleware.ts` covers `/api/*` too: only the explicit allowlist in
+ * `src/lib/publicRoutes.json` is reachable without a session (CI asserts it).
+ * Every route handler still calls this itself, deliberately, as defence in depth.
  */
 export async function requireUser(): Promise<SessionUser> {
   const jar = await cookies();

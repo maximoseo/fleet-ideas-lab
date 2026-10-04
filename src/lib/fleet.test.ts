@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ALL_DOMAINS,
   FLEET_COUNT,
+  FLEET_GENERATED_POOL,
+  FLEET_IDEAS,
   FLEET_INVENTORY,
   FLEET_PROJECTS,
   getSlugs,
@@ -62,5 +64,16 @@ describe("healthLevel", () => {
   it("puts 100 at the top and 0 at the bottom", () => {
     expect(healthLevel(100)).toBe("excellent");
     expect(healthLevel(0)).toBe("critical");
+  });
+});
+
+describe("static idea copy", () => {
+  it("carries no percentage claim in whyNow, because none of them has a source", () => {
+    // fleet.ts once said "GBP suspensions up 40% YoY" and "20% drop/90d" with no citation, and the
+    // operator read them as facts. Derived coverage figures belong in `evidence`, where they show
+    // their arithmetic. If a claim really needs a number, add a source field first and relax this.
+    for (const i of [...FLEET_IDEAS, ...FLEET_GENERATED_POOL]) {
+      expect(i.whyNow, i.slug).not.toMatch(/\d+\s?%/);
+    }
   });
 });

@@ -300,7 +300,7 @@ export default function IdeasPage() {
             ))}
             <span className="px-2 text-[10px] text-violet-200/70">BUILD: new dashboard · IMPROVE: optimize existing</span>
           </div>
-        <div className="sticky top-[56px] z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mt-5 space-y-3 backdrop-blur-xl bg-[#0f0b1a]/85 border-y border-white/5">
+        <div className="sticky top-[56px] z-20 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 mt-5 space-y-3 backdrop-blur-xl bg-[color-mix(in_srgb,var(--bg)_85%,transparent)] border-y border-white/5">
           <div className="flex flex-wrap gap-2">
             <button onClick={() => setFavOnly((v) => !v)} className={`min-h-[32px] rounded-full px-3 text-[12px] font-bold transition border ${favOnly ? "bg-amber-500 text-black border-amber-500" : "bg-white/[0.04] text-white/75 border-white/10 hover:text-white"}`}>\u2605 {favs.size}{favOnly ? " \u00b7 Favorites" : ""}</button>
             <div className="flex flex-wrap gap-1.5 rounded-full border border-white/10 bg-white/[0.04] p-1">
@@ -457,7 +457,7 @@ export default function IdeasPage() {
         {/* Send to Bot picker */}
         {notifyPicker ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setNotifyPicker(null)}>
-            <div className="w-full max-w-lg rounded-2xl border border-sky-500/30 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-full max-w-lg rounded-2xl border border-sky-500/30 bg-[var(--bg)] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className="inline-flex rounded-full bg-sky-500/15 border border-sky-500/30 px-3 py-1 text-[11px] font-bold text-sky-100">📨 SEND TO BOT</div>
               <h3 className="mt-3 text-lg font-bold text-white">Send &quot;{notifyPicker.title}&quot; to Telegram?</h3>
               <p className="mt-2 text-sm leading-5 text-white/75">This sends the full {notifyMode.toUpperCase()} brief (up to 4096 chars) directly to the live bot via <span className="font-mono text-sky-100">POST /api/fleet/notify</span>. You&apos;ll see it instantly in the configured Telegram chat.</p>
@@ -485,7 +485,7 @@ export default function IdeasPage() {
         {/* Scaffold confirmation — distinct for new vs enhancement */}
         {confirmIdea ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setConfirmIdea(null)}>
-            <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-[var(--bg)] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <div className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold ${confirmIdea.kind === "new" ? "bg-emerald-500 text-white" : "bg-amber-500 text-black"}`}>{confirmIdea.kind === "new" ? "NEW DASHBOARD" : "ENHANCEMENT → " + (confirmIdea.targetSlug || "")}</div>
               <h3 className="mt-3 text-lg font-bold text-white">{confirmIdea.kind === "new" ? "Create new dashboard: " + confirmIdea.slug + "?" : "Add feature tab to " + (confirmIdea.targetSlug || "") + "?"}</h3>
               <p className="mt-2 text-sm leading-5 text-white/75">

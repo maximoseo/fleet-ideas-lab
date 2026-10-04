@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { authCookieOptions, createSessionToken, sessionUsername, validateCredentials } from '@/lib/auth';
 import { appChannelRateLimit, checkThrottle, clientKey, recordFailure, recordSuccess } from '@/lib/rateLimit';
 import { appTokenMatches } from '@/lib/appToken';
+import { verifyTurnstile } from '@/lib/turnstile';
+import { createHash } from 'crypto';
 
 export const runtime = 'nodejs';
 
@@ -10,47 +12,19 @@ function noStore(res: NextResponse) {
   return res;
 }
 
+/**
+ * Never log the typed username verbatim: a mistyped password in the username field
+ * would land in the logs. A short hash still lets repeated attempts be correlated.
+ */
+function userTag(username: string): string {
+  return createHash('sha256').update(username.trim().toLowerCase()).digest('hex').slice(0, 12);
+}
+
 function audit(event: string, fields: Record<string, unknown>) {
   // Structured auth audit event — never logs credentials.
   const line = JSON.stringify({ event, ...fields, ts: new Date().toISOString() });
   if (event.endsWith('failure') || event.endsWith('throttled')) console.warn(line);
   else console.info(line);
-}
-
-const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
-
-/**
- * Turnstile verification.
- *
- * Hardened vs the site-intel original, which does `if (!secret) return true`
- * and therefore silently disables bot protection when the variable is missing
- * in production. Here a missing secret fails CLOSED in production and is only
- * bypassed in local dev.
- */
-async function verifyTurnstile(token: string | undefined, ip: string | null): Promise<boolean> {
-  const secret = process.env.TURNSTILE_SECRET_KEY;
-  const isProd = process.env.VERCEL_ENV === 'production' || process.env.NODE_ENV === 'production';
-  if (!secret) {
-    // No secret configured — allow (dev/preview fallback). In production this is a WARN but not a block.
-    if (isProd) console.warn('[login] TURNSTILE_SECRET_KEY not set in production — allowing login (configure Cloudflare Turnstile to harden)');
-    return true;
-  }
-  if (!token) {
-    console.warn('[login] turnstileToken missing — rejecting (TURNSTILE_SECRET_KEY is set)');
-    return false;
-  }
-  try {
-    const form = new URLSearchParams();
-    form.set('secret', secret);
-    form.set('response', token);
-    if (ip) form.set('remoteip', ip);
-    const res = await fetch(TURNSTILE_VERIFY_URL, { method: 'POST', body: form });
-    const data = (await res.json()) as { success?: boolean };
-    return data.success === true;
-  } catch (err) {
-    console.error('[login] turnstile verify failed:', err);
-    return false; // fail closed
-  }
 }
 
 export async function POST(req: Request) {
@@ -63,7 +37,7 @@ export async function POST(req: Request) {
 
     const lockedSec = await checkThrottle(key);
     if (lockedSec > 0) {
-      audit('auth.login.throttled', { username, key });
+      audit('auth.login.throttled', { user: userTag(username), key });
       return noStore(
         NextResponse.json(
           { error: 'Too many attempts. Try again later.' },
@@ -93,7 +67,7 @@ export async function POST(req: Request) {
     if (isTrustedApp) {
       const appLimit = await appChannelRateLimit();
       if (!appLimit.allowed) {
-        audit('auth.login.appchannel_throttled', { username, key });
+        audit('auth.login.appchannel_throttled', { user: userTag(username), key });
         return noStore(
           NextResponse.json(
             { error: 'Too many attempts. Try again later.' },
@@ -116,7 +90,7 @@ export async function POST(req: Request) {
 
     if (!validateCredentials(username, password)) {
       const lockSec = await recordFailure(key);
-      audit('auth.login.failure', { username, key });
+      audit('auth.login.failure', { user: userTag(username), key });
       if (lockSec > 0) {
         return noStore(
           NextResponse.json(
@@ -130,7 +104,7 @@ export async function POST(req: Request) {
 
     await recordSuccess(key);
     const user = sessionUsername(username);
-    audit('auth.login.success', { username, key });
+    audit('auth.login.success', { user: userTag(username), key });
 
     const res = NextResponse.json({ ok: true, user });
     res.cookies.set(authCookieOptions(createSessionToken(user)));

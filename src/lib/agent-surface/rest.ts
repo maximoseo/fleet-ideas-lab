@@ -5,9 +5,15 @@ import { parseInput } from "./schema";
 import { RouteError } from "./types";
 import type { AgentContext, AppInfo, Route } from "./types";
 
-/** Version reported by /api/v1/health: the git sha Vercel stamped on the build. */
+/**
+ * Version reported by /api/v1/health, most specific first: the git sha Vercel stamped
+ * on a git-integrated build, a sha passed at deploy time (GIT_COMMIT_SHA at runtime,
+ * or BUILD_SHA inlined by next.config.ts from --build-env), and finally the Vercel
+ * deployment id, which at least pins the answer to one deployment. "unknown" means
+ * none of them was available, so nobody can tell what is running.
+ */
 export function buildVersion(): string {
-  return (process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || "unknown").slice(0, 40);
+  return (process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || process.env.BUILD_SHA || process.env.VERCEL_DEPLOYMENT_ID || "unknown").slice(0, 40);
 }
 
 /** Write routes get `confirm: true` added to their schema exactly once, here. */

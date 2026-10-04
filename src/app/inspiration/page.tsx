@@ -149,7 +149,7 @@ export default function InspirationPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0c0a14] text-white">
+    <div className="min-h-screen bg-[var(--bg)] text-white">
       <SiteHeader subtitle="Design references" />
 
       <main className="mx-auto max-w-6xl px-6 py-8">
@@ -233,7 +233,7 @@ export default function InspirationPage() {
         {selectedItem && (
           <>
             <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSelectedItem(null)} aria-label="Close" />
-            <div className="fixed inset-x-4 top-[10vh] z-50 mx-auto max-h-[80vh] max-w-2xl overflow-y-auto rounded-2xl border border-white/15 bg-[#161322] p-6 shadow-2xl">
+            <div className="fixed inset-x-4 top-[10vh] z-50 mx-auto max-h-[80vh] max-w-2xl overflow-y-auto rounded-2xl border border-white/15 bg-[var(--panel)] p-6 shadow-2xl">
               <div className="mb-4 flex items-start justify-between">
                 <div>
                   <h3 className="text-lg font-bold">{selectedItem.title}</h3>

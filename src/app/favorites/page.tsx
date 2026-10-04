@@ -137,7 +137,7 @@ export default function FavoritesPage() {
         {toast ? <div className="fixed bottom-20 lg:bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0f0b1a] shadow-xl">{toast}</div> : null}
         {confirmIdea ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={()=>setConfirmIdea(null)}>
-            <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e)=>e.stopPropagation()}>
+            <div className="w-full max-w-lg rounded-2xl border border-white/15 bg-[var(--bg)] p-6 shadow-2xl" onClick={(e)=>e.stopPropagation()}>
               <div className={`inline-flex rounded-full px-3 py-1 text-[11px] font-bold ${confirmIdea.kind==="new"?"bg-emerald-500 text-white":"bg-amber-500 text-black"}`}>{confirmIdea.kind==="new"?"NEW DASHBOARD":"ENHANCEMENT \u2192 "+(confirmIdea.targetSlug||"")}</div>
               <h3 className="mt-3 text-lg font-bold text-white">{confirmIdea.kind==="new"?"Create new dashboard: "+confirmIdea.slug+"?":"Add feature tab to "+(confirmIdea.targetSlug||"")+"?"}</h3>
               <p className="mt-2 text-sm leading-5 text-white/75">{confirmIdea.kind==="new"?"This will scaffold a new Next.js project at /root/projects/"+confirmIdea.slug+" (or /tmp/"+confirmIdea.slug+" on Vercel \u2014 ephemeral).":"This will scaffold at /root/projects/"+confirmIdea.slug+" as a feature branch for "+(confirmIdea.targetSlug||"")+" \u2014 merge as tab inside "+(confirmIdea.targetSlug||"")+"."}</p>

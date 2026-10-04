@@ -118,7 +118,7 @@ export default function InventoryPage() {
               {[
                 { k: "Total", v: stats.total },
                 { k: "Live", v: stats.live },
-                { k: "Avg Health", v: `${stats.avgHealth}` },
+                { k: "Avg Health (snapshot)", v: `${stats.avgHealth}` },
               ].map((s) => (
                 <div key={s.k} className="rounded-xl border border-white/10 bg-black/20 px-4 py-3 text-center min-w-[84px]">
                   <div className="text-lg font-black text-white">{s.v}</div>
@@ -281,7 +281,7 @@ export default function InventoryPage() {
         {invToast ? <div className="fixed bottom-20 lg:bottom-6 left-1/2 z-50 -translate-x-1/2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-[#0f0b1a] shadow-xl">{invToast}</div> : null}
         {improveSlug ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={() => setImproveSlug(null)}>
-            <div className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/15 bg-[#0f0b1a] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
+            <div className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/15 bg-[var(--bg)] p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               {(() => { const pr = FLEET_PROJECTS.find((x) => x.slug === improveSlug); if (!pr) return null; const brief = buildImprovePromptForProject(pr as unknown as never); return (<>
                 <div className="inline-flex rounded-full bg-amber-500 px-3 py-1 text-[11px] font-bold text-black">IMPROVE → {pr.slug}</div>
                 <h3 className="mt-3 text-lg font-bold text-white">Improve {pr.name}</h3>

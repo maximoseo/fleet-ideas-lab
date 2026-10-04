@@ -1,11 +1,13 @@
 import { z } from 'zod';
+import { createHmac } from 'crypto';
 
 /**
  * Server-side environment validation.
  *
- * Ported from site-intel-dashboard, with the Supabase / CRON_SECRET checks removed:
- * design-lab has no database and no cron jobs, and keeping those checks would crash
- * the production boot on variables nothing in this app ever reads.
+ * Ported from site-intel-dashboard. This app now has a database (Supabase) and cron
+ * jobs, but the validation below deliberately covers only the auth variables: the
+ * Supabase and CRON_SECRET checks of the source app were removed and are not
+ * enforced at boot, so a missing one fails at the route that needs it.
  *
  * Fail-closed policy:
  *  - Real production (VERCEL_ENV=production, or NODE_ENV=production outside Vercel):
@@ -56,15 +58,15 @@ export function serverEnv(): ServerEnv {
     else if (secret.length < MIN_SECRET_LEN) problems.push(`DASHBOARD_AUTH_SECRET must be at least ${MIN_SECRET_LEN} chars`);
     else if (secret.length < 32) {
       // Advisory only — never block boot on strength alone.
-      console.warn('[design-lab] WARNING: DASHBOARD_AUTH_SECRET is short (<32 chars); consider rotating to a longer random value.');
+      console.warn('[fleet-ideas-lab] WARNING: DASHBOARD_AUTH_SECRET is short (<32 chars); consider rotating to a longer random value.');
     }
     if (!(parsed.DASHBOARD_AUTH_PASSWORD || '').trim()) problems.push('DASHBOARD_AUTH_PASSWORD is required');
-    // Deliberate hardening vs the source app: site-intel lets a missing Turnstile
-    // secret silently disable the bot check. This app writes to customer WordPress
-    // sites, so a forgotten variable must fail loudly instead of failing open.
+    // A missing Turnstile secret only warns: the captcha is recommended, not required
+    // (OPERATIONS.md §2, src/lib/turnstile.ts). Making it fatal here would lock the
+    // web login out of a deployment that has not set the variable yet.
     if (!(parsed.TURNSTILE_SECRET_KEY || '').trim()) console.warn('[fleet-ideas-lab] WARNING: TURNSTILE_SECRET_KEY not set — captcha disabled until configured.');
     if (problems.length) {
-      throw new Error(`[design-lab] Invalid production configuration: ${problems.join('; ')}`);
+      throw new Error(`[fleet-ideas-lab] Invalid production configuration: ${problems.join('; ')}`);
     }
   }
   cached = parsed;
@@ -85,25 +87,35 @@ export function authSecrets(): string[] {
   if (list.length) return list;
   if (isRealProduction()) {
     // serverEnv() above already throws in this case; belt-and-suspenders:
-    throw new Error('[design-lab] No valid DASHBOARD_AUTH_SECRET configured');
+    throw new Error('[fleet-ideas-lab] No valid DASHBOARD_AUTH_SECRET configured');
   }
   if (!process.env.__DL_DEV_SESSION_SECRET) {
     // Per-boot random secret for dev/preview only — never a repo-known constant.
     process.env.__DL_DEV_SESSION_SECRET = `dev-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`;
-    console.warn('[design-lab] WARNING: DASHBOARD_AUTH_SECRET unset — using a random per-boot secret (sessions reset on restart).');
+    console.warn('[fleet-ideas-lab] WARNING: DASHBOARD_AUTH_SECRET unset — using a random per-boot secret (sessions reset on restart).');
   }
   return [process.env.__DL_DEV_SESSION_SECRET];
 }
 
-/** Short fingerprint of the current login password for session invalidation on rotation. */
+/**
+ * Session-invalidation tags for the current login password: one per signing secret
+ * (current first, then the rotation-window previous one), so a token minted under
+ * the previous secret stays valid while that secret is still accepted.
+ *
+ * Each tag is an HMAC of the password keyed by a signing secret. It used to be a
+ * 32-bit rolling hash of the password alone, and the tag travels in the session
+ * token body, which is readable base64: anyone holding a token could test password
+ * guesses offline against 2^32 values. Without the secret this tag is no oracle.
+ */
+export function passwordVersions(): string[] {
+  const p = (serverEnv().DASHBOARD_AUTH_PASSWORD || '').trim();
+  if (!p) return [];
+  return authSecrets().map((secret) => 'v2.' + createHmac('sha256', secret).update('pv|' + p).digest('base64url').slice(0, 16));
+}
+
+/** The tag new tokens carry (null when no password is configured). */
 export function passwordVersion(): string | null {
-  const env = serverEnv();
-  const p = (env.DASHBOARD_AUTH_PASSWORD || '').trim();
-  if (!p) return null;
-  // Non-reversible, non-secret-revealing version tag.
-  let h = 0;
-  for (let i = 0; i < p.length; i++) h = (h * 31 + p.charCodeAt(i)) >>> 0;
-  return `v${h.toString(36)}`;
+  return passwordVersions()[0] ?? null;
 }
 
 /** Reset cached env (tests only). */

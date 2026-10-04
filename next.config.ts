@@ -60,6 +60,11 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   // Local QA runs against http://127.0.0.1:3000 — allow dev resources from it.
   allowedDevOrigins: ["127.0.0.1", "localhost"],
+  // Build stamp for /api/v1/health. This project has no git integration, and a CLI
+  // deploy uploads no git metadata, so Vercel never sets VERCEL_GIT_COMMIT_SHA and
+  // the health endpoint reported "unknown". The deploy command passes the SHA
+  // instead: --build-env GIT_COMMIT_SHA=$(git rev-parse HEAD) (OPERATIONS.md §3).
+  env: { BUILD_SHA: process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || "" },
   async headers() {
     return [
       {

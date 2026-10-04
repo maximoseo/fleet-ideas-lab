@@ -1,24 +1,41 @@
 /**
- * Ideas Engine — deterministic audit / gap / generation
- * No invented metrics, no secrets. Data sources marked TBD unless confirmed in api-vault.
+ * Ideas Engine — deterministic audit / gap / generation.
+ *
+ * Everything here is a HEURISTIC over the curated inventory snapshot (declared
+ * capabilities, snapshot age, static health label). Nothing is measured usage or
+ * quality, and nothing is randomised: the same inventory and the same clock give
+ * the same output, and two projects that differ only in name score the same.
+ * (Until 2026-10-04 each score also added a hash of the project slug, which looked
+ * like variance but carried no information, and the age maths were anchored to a
+ * fixed date so freshness never decayed. Both are gone.)
  */
-import type { FleetProject, FleetDomain, DomainTag, Capability } from "./fleet";
+import type { FleetProject, DomainTag } from "./fleet";
 import { FLEET_INVENTORY, ALL_DOMAINS, ALL_CAPABILITIES } from "./fleet";
 
-function hashStr(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h;
-}
+/** Shown next to every score so nobody reads these as measurements. */
+export const AUDIT_BASIS =
+  "Heuristic: declared capabilities, inventory snapshot age and a static health label. Not measured usage or quality.";
+
 function clamp(n: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, n)); }
-function daysSince(iso: string): number {
-  const ref = new Date("2026-08-09T00:00:00Z").getTime();
-  // updated is YYYY-MM-DD, lastDeploy is ISO — handle both
+/** Whole days between `iso` (YYYY-MM-DD or full ISO) and `now`. Unparseable dates count as 999. */
+function daysSince(iso: string, now: number): number {
   const d = new Date(iso.includes("T") ? iso : iso + "T00:00:00Z").getTime();
   if (isNaN(d)) return 999;
-  return Math.max(0, Math.round((ref - d) / 86400000));
+  return Math.max(0, Math.round((now - d) / 86400000));
 }
 
+/**
+ * How old the inventory snapshot is: the newest `updated` date in it, and its age
+ * at `now`. The inventory is curated by hand, so this is the honest ceiling on how
+ * fresh any freshness score can be.
+ */
+export function inventorySnapshot(inventory: FleetProject[], now: number = Date.now()): { latestUpdated: string | null; ageDays: number | null } {
+  const dates = inventory.map((p) => p.updated).filter((u) => !isNaN(new Date(u.includes("T") ? u : u + "T00:00:00Z").getTime())).sort();
+  const latest = dates.length ? dates[dates.length - 1] : null;
+  return { latestUpdated: latest, ageDays: latest ? daysSince(latest, now) : null };
+}
+
+/** Heuristic scores, 0..100. See AUDIT_BASIS. */
 export interface AuditScore {
   slug: string;
   name: string;
@@ -50,27 +67,28 @@ const IMPROVEMENT_POOL: Record<string, string> = {
 };
 
 function scoreCoverage(pr: FleetProject): number {
-  const caps = pr.capabilities.length;
-  const base = clamp((caps / 5) * 60 + 30 + (hashStr(pr.slug) % 10), 25, 96);
+  // Declared capabilities out of the tracked set: a count, not a measurement.
+  const base = clamp((pr.capabilities.length / ALL_CAPABILITIES.length) * 60 + 30, 25, 96);
   const rare = pr.domains.some((d) => ["local","geo","whm"].includes(d)) ? 8 : 0;
   return clamp(Math.round(base + rare), 0, 100);
 }
-function scoreFreshness(pr: FleetProject): number {
-  const d = daysSince(pr.updated);
-  if (d <= 2) return 95 - (hashStr(pr.slug) % 5);
-  if (d <= 7) return 80 - (hashStr(pr.slug) % 10);
-  if (d <= 14) return 60 - (hashStr(pr.slug) % 10);
-  if (d <= 30) return 40 - (hashStr(pr.slug) % 10);
-  return 20 + (hashStr(pr.slug) % 15);
+function scoreFreshness(pr: FleetProject, now: number): number {
+  // Age of the last recorded update in the inventory snapshot, at `now`.
+  const d = daysSince(pr.updated, now);
+  if (d <= 2) return 95;
+  if (d <= 7) return 80;
+  if (d <= 14) return 60;
+  if (d <= 30) return 40;
+  return 20;
 }
 function scoreUsability(pr: FleetProject): number {
-  const capScore = clamp((pr.capabilities.length / 5) * 60 + 20, 20, 90);
+  const capScore = clamp((pr.capabilities.length / ALL_CAPABILITIES.length) * 60 + 20, 20, 90);
   const hasViz = (pr.capabilities as string[]).includes("visualization") ? 10 : 0;
   const hasAlerts = (pr.capabilities as string[]).includes("alerts") ? 5 : 0;
-  return clamp(Math.round(capScore + hasViz + hasAlerts + (hashStr(pr.slug + "u") % 10) - 5), 0, 100);
+  return clamp(Math.round(capScore + hasViz + hasAlerts), 0, 100);
 }
 function scoreBusinessValue(pr: FleetProject): number {
-  let base = 45 + (hashStr(pr.slug + "bv") % 15);
+  let base = 50;
   if (pr.domains.includes("reporting" as DomainTag)) base += 12;
   if ((pr.domains as string[]).includes("seo")) base += 10;
   if ((pr.domains as string[]).includes("analytics")) base += 8;
@@ -79,28 +97,28 @@ function scoreBusinessValue(pr: FleetProject): number {
   if (pr.health === "degraded") base -= 6;
   return clamp(Math.round(base), 0, 100);
 }
+/**
+ * Up to three suggestions, in priority order: the first domain's own item, a
+ * health fix when the label says so, then generic items ONLY for capabilities
+ * this project does not declare. (It used to pad every project with the same
+ * three generic lines, in hash order, whether or not it already had them.)
+ */
 function pickImprovements(pr: FleetProject): string[] {
   const cand: string[] = [];
-  for (const d of pr.domains.slice(0,1)) {
-    const v = IMPROVEMENT_POOL[d as string];
-    if (v && !cand.includes(v)) cand.push(v);
+  const push = (v: string | undefined) => { if (v && !cand.includes(v)) cand.push(v); };
+  for (const d of pr.domains.slice(0, 1)) push(IMPROVEMENT_POOL[d as string]);
+  if (pr.health === "stale") push(IMPROVEMENT_POOL["stale"]);
+  if (pr.health === "degraded") push(IMPROVEMENT_POOL["degraded"]);
+  for (const k of ["alerts", "reporting", "automation"] as const) {
+    if (!(pr.capabilities as string[]).includes(k)) push(IMPROVEMENT_POOL[k]);
   }
-  if (pr.health === "stale" && IMPROVEMENT_POOL["stale"] && !cand.includes(IMPROVEMENT_POOL["stale"])) cand.push(IMPROVEMENT_POOL["stale"]);
-  if (pr.health === "degraded" && IMPROVEMENT_POOL["degraded"] && !cand.includes(IMPROVEMENT_POOL["degraded"])) cand.push(IMPROVEMENT_POOL["degraded"]);
-  for (const k of ["alerts","reporting","automation"] as const) {
-    if (cand.length >= 4) break;
-    const v = IMPROVEMENT_POOL[k];
-    if (v && !cand.includes(v)) cand.push(v);
-  }
-  const uniq = [...new Set(cand)];
-  uniq.sort((a,b)=> hashStr(pr.slug+a) - hashStr(pr.slug+b));
-  return uniq.slice(0,3);
+  return cand.slice(0, 3);
 }
 
-export function auditFleet(inventory: FleetProject[]): AuditScore[] {
+export function auditFleet(inventory: FleetProject[], now: number = Date.now()): AuditScore[] {
   return inventory.map((pr)=>{
     const coverage = scoreCoverage(pr);
-    const freshness = scoreFreshness(pr);
+    const freshness = scoreFreshness(pr, now);
     const usability = scoreUsability(pr);
     const businessValue = scoreBusinessValue(pr);
     const overall = Math.round((coverage+freshness+usability+businessValue)/4);
@@ -149,7 +167,16 @@ const IDEA_POOL: Omit<DashboardIdea,"priority"|"effort">[] = [
   { slug:"geo-local-bridge", title:"Geo-Local Bridge (backup)", whyNow:"Triple gap geo x local x automation", domains:["geo","local","automation"] as DomainTag[], dataSources:["TBD (vault: geo prompts + GBP)"], widgets:["Geo vs local delta","Prompt-to-pack correlation","Action queue"], iaSketch:["Overview","Delta","Prompts","Actions"] },
   { slug:"whm-automation-runbook", title:"WHM Automation Runbook (backup)", whyNow:"Covers whm x automation x alerts", domains:["whm","automation","reporting"] as DomainTag[], dataSources:["TBD (vault: WHM + n8n)"], widgets:["Runbook list","Execution log","Alert routing"], iaSketch:["Runbooks","Executions","Alerts"] },
 ];
-function effortFor(slug:string): Effort { const mod = hashStr(slug)%4; return (["S","M","L","XL"] as Effort[])[mod]; }
+/**
+ * Rough size from the idea's own shape: more domains to join, a data source that
+ * still needs wiring (anything marked TBD) and a wide widget set all add work.
+ * An estimate, not a plan. (It used to be a hash of the slug, i.e. random.)
+ */
+function effortFor(idea: Omit<DashboardIdea, "priority" | "effort">): Effort {
+  const points = idea.domains.length + (idea.dataSources.some((d) => /TBD/i.test(d)) ? 1 : 0) + (idea.widgets.length > 4 ? 1 : 0);
+  return points <= 2 ? "S" : points === 3 ? "M" : points === 4 ? "L" : "XL";
+}
+const bySlug = (a: { slug: string }, b: { slug: string }) => (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
 function priorityFor(idx:number): Priority { if(idx<3) return "P0"; if(idx<6) return "P1"; if(idx<10) return "P2"; return "P3"; }
 export function generateIdeas(gaps: GapMatrix|null, inventory: FleetProject[]): DashboardIdea[] {
   const existing = new Set(inventory.map((pr)=>pr.slug));
@@ -161,10 +188,10 @@ export function generateIdeas(gaps: GapMatrix|null, inventory: FleetProject[]): 
       const ah = a.domains.filter((d)=> weak.has(d as string)).length;
       const bh = b.domains.filter((d)=> weak.has(d as string)).length;
       if(bh!==ah) return bh-ah;
-      return hashStr(a.slug)-hashStr(b.slug);
+      return bySlug(a, b);
     });
-  } else ranked.sort((a,b)=> hashStr(a.slug)-hashStr(b.slug));
-  return ranked.slice(0,12).map((idea,idx)=> ({...idea, effort: effortFor(idea.slug), priority: priorityFor(idx)}));
+  } else ranked.sort(bySlug);
+  return ranked.slice(0,12).map((idea,idx)=> ({...idea, effort: effortFor(idea), priority: priorityFor(idx)}));
 }
 export function runFullPipeline(inventory: FleetProject[]) {
   const audits = auditFleet(inventory);

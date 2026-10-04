@@ -10,6 +10,6 @@ Web (Next 16 / Tailwind 4) + Native Android APK (Kotlin + Compose).
 
 - **Operations** — access map, env table, web and APK release runbooks, retention policy and
   known limitations: [OPERATIONS.md](OPERATIONS.md).
-- **Tests** — `npm test` (96 web) and `cd android && ./gradlew testReleaseUnitTest` (8).
+- **Tests** — `npm test` (137 web) and `cd android && ./gradlew testReleaseUnitTest` (8).
 - **Gates** — `npm run typecheck`, `npm run lint`, `npm run check:version`,
   `node scripts/smoke-auth-matrix.mjs <baseUrl>`. All of them run in CI.

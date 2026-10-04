@@ -26,7 +26,7 @@
   --bg: #f5f3fa;
   --panel: #ffffff;
   --text: #191428;
-  --muted: #6a6088;
+  --muted: #5f5580;
   --line: #e3dcf2;
   --accent: #6d4fd8;
   --good: #6d5fd0;
@@ -115,8 +115,15 @@ body {
 :root[data-theme="light"] [class*="border-white/"] {
   border-color: var(--line) !important;
 }
-:root[data-theme="light"] [class*="bg-black/20"] {
+:root[data-theme="light"] [class*="bg-black/20"],
+:root[data-theme="light"] [class*="bg-black/30"] {
   background-color: rgba(25, 20, 40, 0.05) !important;
+}
+/* text-violet-50 is the near-white heading/input colour of the dark theme. The
+   text-violet-1/2/3 rules below do not match it, so on /login the title and the
+   typed username/password measured 1.00:1 (invisible) in light mode. */
+:root[data-theme="light"] [class*="text-violet-50"] {
+  color: var(--text) !important;
 }
 :root[data-theme="light"] [class*="placeholder:text-white"]::placeholder {
   color: var(--muted) !important;
@@ -185,6 +192,13 @@ body {
 @media (max-width: 1023px) {
   body {
     padding-bottom: calc(58px + env(safe-area-inset-bottom));
+  }
+  /* Public routes (/login, /share) render no tab bar (MobileTabBar returns null
+     there), so reserving room for it only added a 58px scroll and a strip of
+     body background under the page. Browsers without :has() drop this rule and
+     keep the reservation, which is the safe direction. */
+  body:not(:has(nav[aria-label="Primary mobile"])) {
+    padding-bottom: 0;
   }
 }
 
