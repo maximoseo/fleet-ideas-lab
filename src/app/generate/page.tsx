@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import SiteHeader from "@/components/SiteHeader";
+import { useSingleFlight } from "@/lib/useSingleFlight";
 import { pushHistory } from "@/lib/history";
 import { useLang } from "@/components/i18n";
 import {
@@ -47,7 +48,7 @@ export default function GeneratePage() {
   const [lovartBusy, setLovartBusy] = useState<string | null>(null);
   const [lovartResult, setLovartResult] = useState<Record<string, string>>({});
 
-  const analyze = useCallback(async () => {
+  const analyzeRaw = useCallback(async () => {
     if (!url.trim()) { setError(tr("Enter a URL first", "יש להזין כתובת URL")); return; }
     setError("");
     setStep("loading");
@@ -71,6 +72,8 @@ export default function GeneratePage() {
       setStep("input");
     }
   }, [url, tr]);
+  // One analysis at a time: a second click while the first is running would race and let the older result win.
+  const analyze = useSingleFlight(analyzeRaw);
 
   const getExport = useCallback((): string => {
     if (!data) return "";

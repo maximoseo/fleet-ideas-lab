@@ -4,7 +4,7 @@ import { useLang } from "@/components/i18n";
 import { WEB_VERSION } from "@/lib/releaseNotes";
 import { WHATS_NEW_OPEN_EVENT } from "@/components/WhatsNew";
 
-/** Shows the running web version; click to reopen the "What's new" window. */
+/** Shows the running web version on wide screens; click to reopen the "What's new" window. Every width can reach it from the command palette. */
 export default function VersionBadge() {
   const { tr } = useLang();
   return (

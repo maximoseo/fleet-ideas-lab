@@ -42,7 +42,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
   return (
     <header className="fil-chrome sticky top-0 z-50 border-b backdrop-blur">
       <div className="mx-auto flex h-14 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2.5">
+        <Link href="/" aria-label="Fleet Ideas Lab" className="flex shrink-0 items-center gap-2.5">
           <span
             className="flex h-7 w-7 items-center justify-center rounded-md text-[11px] font-black text-white"
             style={{ background: "linear-gradient(135deg,#7c3aed,#a855f7)" }}

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { STYLES, type StyleId, type StyleTokens } from "@/lib/styles";
 import SiteHeader from "@/components/SiteHeader";
+import { useSingleFlight } from "@/lib/useSingleFlight";
 import { pushHistory } from "@/lib/history";
 import { useLang } from "@/components/i18n";
 
@@ -352,7 +353,7 @@ export default function MockupPage() {
   const [viewport, setViewport] = useState<Viewport>("desktop");
   const [showOriginal, setShowOriginal] = useState(false);
 
-  const analyze = useCallback(async () => {
+  const analyzeRaw = useCallback(async () => {
     if (!url.trim()) { setError(tr("Enter a URL first", "יש להזין כתובת URL")); return; }
     setError("");
     setStep("loading");
@@ -376,6 +377,8 @@ export default function MockupPage() {
       setStep("input");
     }
   }, [url, tr]);
+  // One analysis at a time: a second click while the first is running would race and let the older result win.
+  const analyze = useSingleFlight(analyzeRaw);
 
   const style = STYLES[selectedStyle];
 
