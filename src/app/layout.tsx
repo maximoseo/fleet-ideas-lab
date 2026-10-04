@@ -3,8 +3,8 @@ import { Heebo, Rubik, JetBrains_Mono } from "next/font/google";
 import MobileTabBar from "@/components/MobileTabBar";
 import "./globals.css";
 
-const heebo = Heebo({ subsets: ["hebrew"], variable: "--font-heebo" });
-const rubik = Rubik({ subsets: ["hebrew"], variable: "--font-rubik" });
+const heebo = Heebo({ subsets: ["latin", "hebrew"], variable: "--font-heebo" });
+const rubik = Rubik({ subsets: ["latin", "hebrew"], variable: "--font-rubik" });
 const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {

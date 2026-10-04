@@ -3,13 +3,23 @@
 import { useCallback, useSyncExternalStore } from "react";
 
 /**
- * Chrome i18n — dictionary pattern. Translates CHROME strings only
- * (nav labels, section headers, buttons). Dashboard names, slugs and
- * data stay English by design.
+ * Interface i18n. English is the PRIMARY language (default on first visit, on the
+ * server render and whenever nothing is stored); Hebrew is a switchable option
+ * that also flips the document to dir=rtl.
  *
- * Usage: const { lang, t, setLang } = useLang();
- * Persistence: localStorage "fil-lang", applied before paint by the
- * inline script in layout.tsx (sets <html lang> and dir=rtl).
+ * Two ways to translate, both reactive to the toggle:
+ *   t("nav.ideas")                      shared chrome strings (the DICT below)
+ *   tr("Save changes", "שמירת שינויים")  inline English/Hebrew pair for page copy
+ * Usage: const { lang, t, tr, setLang } = useLang();
+ *
+ * Text that lives outside a component (module-level arrays of labels) is stored as
+ * a Bi pair and resolved at render with pick(bi, lang).
+ *
+ * What is NOT translated, on purpose: dashboard names and slugs, probe data, URLs,
+ * and content produced by AI or by clients' sites. Everything the interface itself
+ * says is translated.
+ * Persistence: localStorage "fil-lang", applied before paint by the inline script in
+ * layout.tsx (sets <html lang> and dir=rtl).
  */
 
 export type Lang = "en" | "he";
@@ -49,6 +59,18 @@ const DICT = {
 
 export type I18nKey = keyof typeof DICT;
 
+/** An English/Hebrew pair for text defined outside a component. */
+export type Bi = { en: string; he: string };
+
+export function pick(b: Bi, lang: Lang): string {
+  return lang === "he" ? b.he : b.en;
+}
+
+/** BCP-47 locale for Intl / toLocale*String calls. */
+export function localeFor(lang: Lang): string {
+  return lang === "he" ? "he-IL" : "en-GB";
+}
+
 export function translate(lang: Lang, key: I18nKey): string {
   const entry = DICT[key];
   return entry ? entry[lang] : key;
@@ -84,5 +106,7 @@ function subscribeLang(onChange: () => void) {
 export function useLang() {
   const lang = useSyncExternalStore<Lang>(subscribeLang, currentLang, () => "en");
   const t = useCallback((key: I18nKey) => translate(lang, key), [lang]);
-  return { lang, t, setLang: applyLang };
+  const tr = useCallback((en: string, he: string) => (lang === "he" ? he : en), [lang]);
+  const locale = localeFor(lang);
+  return { lang, t, tr, locale, setLang: applyLang };
 }
