@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { detectSlop, type SlopScore, type SlopCategory, type SlopSeverity } from "@/lib/slop-detector";
 import SiteHeader from "@/components/SiteHeader";
+import { useSingleFlight } from "@/lib/useSingleFlight";
 import { pushHistory, getReopenEntry } from "@/lib/history";
 import { useLang, pick, type Bi } from "@/components/i18n";
 
@@ -120,16 +121,7 @@ export default function AuditPage() {
     }
   }, [url, tr]);
   // One analysis at a time: a second click while the first is running would race and let the older result win.
-  const analyzeBusy = useRef(false);
-  const analyze = useCallback(async () => {
-    if (analyzeBusy.current) return;
-    analyzeBusy.current = true;
-    try {
-      await analyzeRaw();
-    } finally {
-      analyzeBusy.current = false;
-    }
-  }, [analyzeRaw]);
+  const analyze = useSingleFlight(analyzeRaw);
 
   const filtered = score?.results.filter(r =>
     filter === "all" ? true : r.pattern.category === filter

@@ -152,7 +152,7 @@ export default function FleetStrip() {
             The link keeps its own role and the wrapper carries listitem, which
             is what a screen reader needs to count the bars anyway.
           */}
-          <ul className="mt-4 flex list-none items-end gap-[3px] overflow-x-auto p-1.5">
+          <ul className="mt-4 flex list-none items-end gap-[3px] overflow-x-auto px-1.5 pb-2 pt-3">
             {rows.map((r) => {
               const meta = BAND_META[r.band];
               const rawState = liveHealth ? (r.live ? r.live.state : "unknown") : r.health || "unknown";

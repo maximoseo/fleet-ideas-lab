@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { STYLES, type StyleId, type StyleTokens } from "@/lib/styles";
 import SiteHeader from "@/components/SiteHeader";
+import { useSingleFlight } from "@/lib/useSingleFlight";
 import { pushHistory } from "@/lib/history";
 import { useLang } from "@/components/i18n";
 
@@ -377,16 +378,7 @@ export default function MockupPage() {
     }
   }, [url, tr]);
   // One analysis at a time: a second click while the first is running would race and let the older result win.
-  const analyzeBusy = useRef(false);
-  const analyze = useCallback(async () => {
-    if (analyzeBusy.current) return;
-    analyzeBusy.current = true;
-    try {
-      await analyzeRaw();
-    } finally {
-      analyzeBusy.current = false;
-    }
-  }, [analyzeRaw]);
+  const analyze = useSingleFlight(analyzeRaw);
 
   const style = STYLES[selectedStyle];
 
