@@ -35,7 +35,7 @@ const CSP = [
   "font-src 'self' data:",
   "connect-src 'self' https://challenges.cloudflare.com",
   "frame-src 'self' blob: https://challenges.cloudflare.com",
-  "frame-ancestors 'none'",
+  "frame-ancestors 'self' https://dashboards-panel.maximo-seo.ai",
   "base-uri 'self'",
   "form-action 'self'",
   "object-src 'none'",
