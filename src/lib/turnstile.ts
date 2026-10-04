@@ -1,16 +1,15 @@
 /**
  * Cloudflare Turnstile verification for the login form.
  *
- * Policy (documented in OPERATIONS.md §2): the captcha is RECOMMENDED, not
- * required. With no TURNSTILE_SECRET_KEY the check is skipped and a warning is
- * logged in production, so a missing variable disables bot protection quietly.
- * With a secret configured the check fails CLOSED: a missing token, a rejected
- * token or an unreachable verifier all refuse the login.
+ * Policy (OPERATIONS.md §2): in production the check FAILS CLOSED. A missing
+ * TURNSTILE_SECRET_KEY, a missing token, a rejected token or an unreachable
+ * verifier all refuse the web login (the Android app channel does not use this
+ * path). Outside production a missing secret skips the check so local runs and
+ * CI smoke tests work without Cloudflare. With a secret set it is enforced everywhere.
  *
- * (Until 2026-10-04 the comment on this logic claimed it "fails CLOSED in
- * production" with no secret, which the code never did. Making that true is a
- * deliberate decision, because it locks the web login out if the secret is not
- * set in the production environment. It is tracked in the diagnosis report as F7.)
+ * Until 2026-10-04 production without a secret skipped the check while a comment
+ * claimed it failed closed (diagnosis F7). The secret was confirmed present in the
+ * production environment before this was tightened.
  */
 const TURNSTILE_VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
 
@@ -25,7 +24,10 @@ export async function verifyTurnstile(token: string | undefined, ip: string | nu
   const secret = env.TURNSTILE_SECRET_KEY;
   const isProd = env.VERCEL_ENV === "production" || env.NODE_ENV === "production";
   if (!secret) {
-    if (isProd) console.warn("[login] TURNSTILE_SECRET_KEY not set in production — captcha skipped (configure Cloudflare Turnstile to enable it)");
+    if (isProd) {
+      console.error("[login] TURNSTILE_SECRET_KEY not set in production — refusing web login (fail closed)");
+      return false;
+    }
     return true;
   }
   if (!token) {

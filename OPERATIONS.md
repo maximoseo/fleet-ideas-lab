@@ -49,7 +49,7 @@ returning 401. Adding a public route is an explicit, test-covered decision.
 | `DASHBOARD_AUTH_SECRET_PREVIOUS` | optional | no | Rotation window — old tokens stay valid while set. |
 | `DASHBOARD_AUTH_USERNAME` | prod, preview | no | Empty means password-only login. |
 | `DASHBOARD_AUTH_PASSWORD` | prod, preview | yes in prod | Changing it force-logs-out everyone. |
-| `TURNSTILE_SECRET_KEY` | prod, preview | recommended | Missing = captcha skipped (fail-open) with a production warning in the logs. Set = fail-closed. Making it required is a decision, because a missing variable would lock the web login out. |
+| `TURNSTILE_SECRET_KEY` | prod, preview | yes in prod | Missing in production = web login refused (fail-closed). Outside production a missing value skips the check. The Android app channel (APP_TOKEN) is unaffected. |
 | `NEXT_PUBLIC_TURNSTILE_SITE_KEY` | prod, preview | yes | Widget `0x4AAAAAAEQyCmGw2i6fiaAq`. |
 | `APP_TOKEN` | prod | yes for the app | Bearer for `/api/app/fleet`; also the app's challenge bypass. |
 | `APP_TOKEN_PREVIOUS` | prod | temporary | Rotation window only — clear it once the new APK is out. |

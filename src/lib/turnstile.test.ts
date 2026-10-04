@@ -6,22 +6,25 @@ const ok = (success: boolean) => vi.fn(async () => ({ json: async () => ({ succe
 afterEach(() => vi.restoreAllMocks());
 
 describe("verifyTurnstile policy", () => {
-  it("skips the check when no secret is configured (documented fail-open)", async () => {
+  it("skips the check outside production when no secret is configured", async () => {
     const f = ok(false);
     expect(await verifyTurnstile(undefined, null, { env: {}, fetchImpl: f })).toBe(true);
     expect(f).not.toHaveBeenCalled();
   });
 
-  it("warns in production when it skips, so the gap is visible in logs", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await verifyTurnstile("t", null, { env: { VERCEL_ENV: "production" }, fetchImpl: ok(true) });
-    expect(warn).toHaveBeenCalledOnce();
+  it("fails closed in production when the secret is missing", async () => {
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    const f = ok(true);
+    expect(await verifyTurnstile("t", null, { env: { VERCEL_ENV: "production" }, fetchImpl: f })).toBe(false);
+    expect(await verifyTurnstile("t", null, { env: { NODE_ENV: "production" }, fetchImpl: f })).toBe(false);
+    expect(err).toHaveBeenCalledTimes(2);
+    expect(f).not.toHaveBeenCalled();
   });
 
   it("stays quiet outside production", async () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    await verifyTurnstile("t", null, { env: { NODE_ENV: "test" }, fetchImpl: ok(true) });
-    expect(warn).not.toHaveBeenCalled();
+    const err = vi.spyOn(console, "error").mockImplementation(() => {});
+    expect(await verifyTurnstile("t", null, { env: { NODE_ENV: "test" }, fetchImpl: ok(true) })).toBe(true);
+    expect(err).not.toHaveBeenCalled();
   });
 
   it("fails closed with a secret and no token", async () => {
