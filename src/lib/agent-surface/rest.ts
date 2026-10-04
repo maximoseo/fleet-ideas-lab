@@ -13,7 +13,7 @@ import type { AgentContext, AppInfo, Route } from "./types";
  * none of them was available, so nobody can tell what is running.
  */
 export function buildVersion(): string {
-  return (process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || process.env.BUILD_SHA || process.env.VERCEL_DEPLOYMENT_ID || "unknown").slice(0, 40);
+  return (process.env.VERCEL_GIT_COMMIT_SHA || process.env.GIT_COMMIT_SHA || process.env.BUILD_SHA || "unknown").slice(0, 40);
 }
 
 /** Write routes get `confirm: true` added to their schema exactly once, here. */

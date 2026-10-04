@@ -22,7 +22,7 @@ if (!res.ok) {
 const body = await res.json();
 const version = String(body.version ?? "");
 console.log(`health ok=${body.ok} version=${version}`);
-if (!version || version === "unknown") {
+if (!/^[0-9a-f]{7,40}$/i.test(version)) {
   console.error("FAIL: version is unknown, the deploy carried no commit sha (pass --build-env GIT_COMMIT_SHA=$(git rev-parse HEAD))");
   process.exit(1);
 }

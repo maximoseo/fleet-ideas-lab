@@ -3,7 +3,8 @@ import { authCookieOptions, createSessionToken, sessionUsername, validateCredent
 import { appChannelRateLimit, checkThrottle, clientKey, recordFailure, recordSuccess } from '@/lib/rateLimit';
 import { appTokenMatches } from '@/lib/appToken';
 import { verifyTurnstile } from '@/lib/turnstile';
-import { createHash } from 'crypto';
+import { createHmac } from 'crypto';
+import { authSecrets } from '@/lib/env';
 
 export const runtime = 'nodejs';
 
@@ -14,10 +15,13 @@ function noStore(res: NextResponse) {
 
 /**
  * Never log the typed username verbatim: a mistyped password in the username field
- * would land in the logs. A short hash still lets repeated attempts be correlated.
+ * would land in the logs. A short keyed tag still lets repeated attempts be correlated.
  */
 function userTag(username: string): string {
-  return createHash('sha256').update(username.trim().toLowerCase()).digest('hex').slice(0, 12);
+  // Keyed with the server secret: an unkeyed hash of a typed password could be matched
+  // against a dictionary by anyone who can read the logs.
+  const key = authSecrets()[0] || 'no-secret';
+  return createHmac('sha256', key).update('login-user|' + username.trim().toLowerCase()).digest('hex').slice(0, 12);
 }
 
 function audit(event: string, fields: Record<string, unknown>) {

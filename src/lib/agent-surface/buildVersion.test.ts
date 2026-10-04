@@ -10,9 +10,12 @@ describe("buildVersion", () => {
     expect(buildVersion()).toBe("unknown");
   });
 
-  it("falls back to the deploy-time SHA, then the deployment id", () => {
+  it("never reports a deployment id as the version (the panel only accepts SHAs)", () => {
     process.env.VERCEL_DEPLOYMENT_ID = "dpl_123";
-    expect(buildVersion()).toBe("dpl_123");
+    expect(buildVersion()).toBe("unknown");
+  });
+
+  it("falls back from the Vercel SHA to the deploy-time SHA", () => {
     process.env.BUILD_SHA = "abc1234";
     expect(buildVersion()).toBe("abc1234");
     process.env.GIT_COMMIT_SHA = "def5678";

@@ -17,11 +17,11 @@ export const AUDIT_BASIS =
   "Heuristic: declared capabilities, inventory snapshot age and a static health label. Not measured usage or quality.";
 
 function clamp(n: number, lo: number, hi: number) { return Math.max(lo, Math.min(hi, n)); }
-/** Whole days between `iso` (YYYY-MM-DD or full ISO) and `now`. Unparseable dates count as 999. */
+/** Completed days between `iso` (YYYY-MM-DD or full ISO) and `now`. Unparseable dates count as 999. */
 function daysSince(iso: string, now: number): number {
   const d = new Date(iso.includes("T") ? iso : iso + "T00:00:00Z").getTime();
   if (isNaN(d)) return 999;
-  return Math.max(0, Math.round((now - d) / 86400000));
+  return Math.max(0, Math.floor((now - d) / 86400000));
 }
 
 /**
@@ -173,8 +173,11 @@ const IDEA_POOL: Omit<DashboardIdea,"priority"|"effort">[] = [
  * An estimate, not a plan. (It used to be a hash of the slug, i.e. random.)
  */
 function effortFor(idea: Omit<DashboardIdea, "priority" | "effort">): Effort {
-  const points = idea.domains.length + (idea.dataSources.some((d) => /TBD/i.test(d)) ? 1 : 0) + (idea.widgets.length > 4 ? 1 : 0);
-  return points <= 2 ? "S" : points === 3 ? "M" : points === 4 ? "L" : "XL";
+  // Scope size: widgets plus screens. It is the only field of the pool that varies between
+  // ideas (every entry has 3 domains and a TBD source), so most ideas land on the same rung.
+  // That is a property of the data, not something to disguise with a hash.
+  const points = idea.widgets.length + idea.iaSketch.length;
+  return points <= 6 ? "S" : points <= 8 ? "M" : points <= 9 ? "L" : "XL";
 }
 const bySlug = (a: { slug: string }, b: { slug: string }) => (a.slug < b.slug ? -1 : a.slug > b.slug ? 1 : 0);
 function priorityFor(idx:number): Priority { if(idx<3) return "P0"; if(idx<6) return "P1"; if(idx<10) return "P2"; return "P3"; }

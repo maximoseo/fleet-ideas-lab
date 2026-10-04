@@ -39,7 +39,7 @@ export async function verifyTurnstile(token: string | undefined, ip: string | nu
     form.set("secret", secret);
     form.set("response", token);
     if (ip) form.set("remoteip", ip);
-    const res = await doFetch(TURNSTILE_VERIFY_URL, { method: "POST", body: form });
+    const res = await doFetch(TURNSTILE_VERIFY_URL, { method: "POST", body: form, signal: AbortSignal.timeout(5000) });
     const data = (await res.json()) as { success?: boolean };
     return data.success === true;
   } catch (err) {

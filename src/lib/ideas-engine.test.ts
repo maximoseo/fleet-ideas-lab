@@ -170,3 +170,30 @@ describe("inventorySnapshot", () => {
     expect(inventorySnapshot([])).toEqual({ latestUpdated: null, ageDays: null });
   });
 });
+
+describe("effort estimate", () => {
+  const rank = { S: 0, M: 1, L: 2, XL: 3 } as const;
+  it("never rates a smaller scope above a larger one", () => {
+    const ideas = generateIdeas(null, []);
+    for (const a of ideas) for (const b of ideas) {
+      if (a.widgets.length + a.iaSketch.length < b.widgets.length + b.iaSketch.length) {
+        expect(rank[a.effort as keyof typeof rank], `${a.slug} vs ${b.slug}`).toBeLessThanOrEqual(rank[b.effort as keyof typeof rank]);
+      }
+    }
+  });
+
+  it("does not depend on the slug", () => {
+    const [x] = generateIdeas(null, []);
+    expect(x.effort).toBe(generateIdeas(null, []).find((i) => i.slug === x.slug)?.effort);
+  });
+});
+
+describe("freshness boundaries", () => {
+  const p: FleetProject = { slug: "b", name: "B", domains: ["seo"], capabilities: ["analytics"], health: "healthy", updated: "2026-08-01" };
+  const day = 86400000;
+  const t0 = new Date("2026-08-01T00:00:00Z").getTime();
+  it("keeps 95 until two full days have passed, then drops", () => {
+    expect(auditFleet([p], t0 + 2 * day + 12 * 3600000)[0].freshness).toBe(95);
+    expect(auditFleet([p], t0 + 3 * day)[0].freshness).toBe(80);
+  });
+});
