@@ -158,7 +158,7 @@ export default function FleetStrip() {
               const rawState = liveHealth ? (r.live ? r.live.state : "unknown") : r.health || "unknown";
               const stateLabel = STATE_LABEL[rawState] ? pick(STATE_LABEL[rawState], lang) : rawState;
               return (
-                <li key={r.slug} className="min-w-[6px] flex-1">
+                <li key={r.slug} className="min-w-[3px] flex-1">
                 <Link
                   href={`/dashboard/${r.slug}`}
                   aria-label={`${r.name}: ${stateLabel}`}

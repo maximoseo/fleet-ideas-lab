@@ -50,11 +50,11 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
           >
             ◈
           </span>
-          <span className="leading-tight">
+          <span className="hidden leading-tight min-[360px]:inline">
             <span className="block text-[15px] font-bold text-white" style={{ fontFamily: "Rubik, sans-serif" }}>
               Fleet Ideas Lab
             </span>
-            {subtitle ? <span className="hidden text-[11px] text-white/50 sm:block">{subtitle}</span> : null}
+            {subtitle ? <span className="hidden max-w-[16rem] truncate text-[11px] text-white/50 sm:block lg:hidden 2xl:block">{subtitle}</span> : null}
           </span>
         </Link>
 
@@ -66,7 +66,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
                 key={item.href}
                 href={item.href}
                 title={pick(item.hint, lang)}
-                className={`rounded-lg px-3 py-2 text-[13px] font-medium transition ${active ? "bg-violet-600/90 text-white" : "text-white/65 hover:bg-white/10 hover:text-white"}`}
+                className={`rounded-lg px-2 py-2 text-[13px] font-medium transition xl:px-3 ${active ? "bg-violet-600/90 text-white" : "text-white/65 hover:bg-white/10 hover:text-white"}`}
               >
                 {t(item.key)}
               </Link>
@@ -81,7 +81,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
                 href={item.href}
                 title={pick(item.hint, lang)}
                 {...(item.external ? { target: "_blank" as const, rel: "noopener noreferrer" } : {})}
-                className={`rounded-lg px-2.5 py-2 text-[12px] font-medium transition ${active ? "bg-white/10 text-white" : "text-white/65 hover:bg-white/10 hover:text-white/80"}`}
+                className={`rounded-lg px-2 py-2 text-[12px] font-medium transition xl:px-2.5 ${active ? "bg-white/10 text-white" : "text-white/65 hover:bg-white/10 hover:text-white/80"}`}
               >
                 {t(item.key)}
                 {item.external ? " ↗" : ""}
@@ -108,21 +108,8 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
         <button onClick={() => setPaletteOpen(true)} className="lg:hidden inline-flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/75" aria-label={t("action.search")}>⌘</button>
         <span className="lg:hidden"><ThemeToggle /></span>
         <span className="lg:hidden"><LangToggle /></span>
-        {/* mobile quick nav */}
-        <nav className="hidden items-center gap-1 md:flex lg:hidden" aria-label={tr("Tablet primary", "ראשי לטאבלט")}>
-          {NAV.map((item) => {
-            const active = isActive(item.href);
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-full px-2.5 py-1.5 text-[12px] font-semibold transition ${active ? "bg-violet-600 text-white" : "text-white/75 hover:text-white"}`}
-              >
-                {t(item.key)}
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Below lg the bottom tab bar (MobileTabBar) is the primary navigation; a second row of pills here
+            only made the header overflow on phones and tablets. */}
       </div>
       <CommandPalette open={paletteOpen} onClose={() => setPaletteOpen(false)} />
     </header>

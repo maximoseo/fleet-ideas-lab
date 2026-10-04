@@ -10,7 +10,7 @@ export default function TrustLine({ compact = false }: { compact?: boolean }) {
       style={{ fontSize: compact ? 11 : 12 }}
       aria-label={tr("Trust and security", "אמון ואבטחה")}
     >
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-3 py-1.5 text-white/55">
+      <span className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-1.5 gap-y-1 rounded-2xl border border-white/10 bg-white/[0.03] px-3 py-1.5 text-white/55">
         {/* Cloudflare-style shield */}
         <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-[#F38020] text-[9px] font-black text-white" aria-hidden>☁</span>
         <span className="hidden sm:inline">{tr("Protected by", "מוגן על ידי")}</span>

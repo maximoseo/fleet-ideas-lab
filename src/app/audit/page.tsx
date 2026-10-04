@@ -145,7 +145,7 @@ export default function AuditPage() {
               <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && analyze()}
                 placeholder="https://example.com" dir="ltr"
                 className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-violet-500" />
-              <button onClick={analyze} className="rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">
+              <button onClick={analyze} className="rounded-xl bg-violet-600 px-4 py-3.5 sm:px-6 text-sm font-semibold text-white transition hover:bg-violet-500">
                 {tr("Audit", "ביקורת")}
               </button>
             </div>
