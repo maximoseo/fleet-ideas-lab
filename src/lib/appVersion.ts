@@ -8,11 +8,11 @@
  * app shipped 1.3.6).
  */
 export const APP_VERSION = {
-  versionCode: 37,
-  versionName: "1.5.1",
+  versionCode: 36,
+  versionName: "1.5.0",
   minSdk: 24,
   targetSdk: 36,
-  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.5.1/app-release.apk",
+  apkUrl: "https://github.com/maximoseo/fleet-ideas-lab/releases/download/v1.5.0/app-release.apk",
   fallbackUrl: "https://fleet-ideas-lab.maximo-seo.ai/api/app/download",
   /**
    * Public release notes. This object is served unauthenticated at
@@ -22,7 +22,7 @@ export const APP_VERSION = {
    * feed the whole internet can fetch.
    */
   changelog:
-    "1.5.1 — the gap matrix is now derived from each dashboard's primary domain instead of arbitrary numbers, and the inventory lists 9 more dashboards from the registry (45 in total, those not yet probed are marked \"not probed\").",
+    "1.5.0 — full Hebrew interface, a per-dashboard detail screen with probe history and p50/p95 latency, search across the fleet, a two-column layout on tablets and landscape, and an offline queue for actions taken with no signal.",
   mandatory: false,
-  releasedAt: "2026-10-04T22:00:00Z",
+  releasedAt: "2026-08-17T22:00:00Z",
 } as const;
