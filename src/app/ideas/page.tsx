@@ -312,7 +312,7 @@ export default function IdeasPage() {
             <p className="mt-1 max-w-2xl text-sm" style={{ color: VIOLET.textSecondary }}>{tr(FLEET_IDEAS.length + " professional briefs — deduplicated against " + FLEET_COUNT + " live dashboards. ", FLEET_IDEAS.length + " בריפים מקצועיים — ללא כפילויות מול " + FLEET_COUNT + " דשבורדים חיים. ")}<span className="font-semibold text-emerald-200">{tr("5 New dashboards", "5 דשבורדים חדשים")}</span>{tr(" (white-space) + ", " (שטח לבן) + ")}<span className="font-semibold text-amber-200">{tr("6 Enhancements", "6 הרחבות")}</span>{tr(" (add as tab inside existing dashboard) — 1 duplicate removed (Content Decay already live). Tap to expand full brief with evidence.", " (הוספה כטאב בתוך דשבורד קיים) — כפילות אחת הוסרה (Content Decay כבר חי). הקישו להרחבת הבריף המלא עם הראיות.")}</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1" role="tablist" aria-label={tr("Ideas view", "תצוגת רעיונות")}>
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1" role="tablist" aria-label={tr("Ideas view", "תצוגת רעיונות")}>
               {(["list", "board"] as const).map((v) => (
                 <button key={v} role="tab" aria-selected={view === v} onClick={() => setView(v)} className={`min-h-[32px] rounded-full px-4 text-[12px] font-semibold capitalize transition ${view === v ? "bg-violet-600 text-white" : "text-white/75 hover:text-white"}`}>{v === "list" ? tr("List", "רשימה") : tr("Board", "לוח")}</button>
               ))}
@@ -339,24 +339,24 @@ export default function IdeasPage() {
                 <button key={d} onClick={() => setDomain(d as FleetDomain | "all")} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold transition ${domain === d ? "bg-violet-600 text-white" : "text-white/75 hover:text-white"}`}>{d === "all" ? tr("All Domains", "כל התחומים") : domainLabel(d, lang)}</button>
               ))}
             </div>
-            <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1">
               {(["all", "new", "enhancement"] as const).map((k) => (
                 <button key={k} onClick={() => setKind(k)} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold capitalize ${kind === k ? "bg-violet-600 text-white" : "text-white/75 hover:text-white"}`}>{k === "all" ? tr("All kinds", "כל הסוגים") : k === "new" ? tr("New", "חדש") : tr("Enhancement", "הרחבה")}</button>
               ))}
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1">
               {(["all", "S", "M", "L", "XL"] as const).map((e) => (
                 <button key={e} onClick={() => setEffort(e as unknown as Effort)} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold ${effort === e ? "bg-white text-[#0f0b1a]" : "text-white/75 hover:text-white"}`}>{e === "all" ? tr("Any Effort", "כל רמת מאמץ") : e}</button>
               ))}
             </div>
-            <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1">
               {(["all", "high", "medium", "low"] as const).map((v) => (
                 <button key={v} onClick={() => setImpact(v as unknown as Impact)} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold capitalize ${impact === v ? "bg-white text-[#0f0b1a]" : "text-white/75 hover:text-white"}`}>{pick(IMPACT_LABEL[v], lang)}</button>
               ))}
             </div>
-            <div className="flex gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1">
+            <div className="flex max-w-full gap-1 overflow-x-auto rounded-full border border-white/10 bg-white/[0.04] p-1">
               {(["all", "new", "scoped", "backlog", "shipped"] as const).map((v) => (
                 <button key={v} onClick={() => setStatus(v as unknown as IdeaStatus)} className={`min-h-[32px] rounded-full px-3 text-xs font-semibold capitalize ${status === v ? "bg-white text-[#0f0b1a]" : "text-white/75 hover:text-white"}`}>{pick(STATUS_FILTER_LABEL[v], lang)}</button>
               ))}

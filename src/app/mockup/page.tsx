@@ -389,7 +389,7 @@ export default function MockupPage() {
             <p className="mb-6 text-sm text-white/50">{tr("Paste a URL — sections are extracted with real headings, images, buttons and forms, then re-skinned in your chosen style. No lorem.", "הדביקו כתובת URL — המקטעים מחולצים עם כותרות, תמונות, כפתורים וטפסים אמיתיים, ואז מעוצבים מחדש בסגנון שבחרתם. בלי lorem.")}</p>
             <div className="flex gap-2">
               <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && analyze()} placeholder="https://example.com" dir="ltr" className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-violet-500" />
-              <button onClick={analyze} className="rounded-xl bg-violet-600 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-violet-500">{tr("Generate", "יצירה")}</button>
+              <button onClick={analyze} className="rounded-xl bg-violet-600 px-4 py-3.5 sm:px-6 text-sm font-semibold text-white transition hover:bg-violet-500">{tr("Generate", "יצירה")}</button>
             </div>
             {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
           </div>

@@ -18,6 +18,21 @@ export interface ReleaseNote {
 
 export const RELEASE_NOTES: ReleaseNote[] = [
   {
+    version: "1.6.2",
+    date: "2026-10-04",
+    title: { en: "No more sideways scrolling", he: "בלי גלילה הצידה" },
+    changes: [
+      {
+        en: "Pages fit phones, tablets and laptop widths without scrolling sideways, in English and in Hebrew.",
+        he: "הדפים מתאימים לטלפונים, לטאבלטים ולמסכי לפטופ בלי גלילה הצידה, באנגלית ובעברית.",
+      },
+      {
+        en: "The version badge shows on wide screens; click it to see what changed.",
+        he: "תג הגרסה מופיע במסכים רחבים; לחיצה עליו מציגה מה השתנה.",
+      },
+    ],
+  },
+  {
     version: "1.6.1",
     date: "2026-10-04",
     title: { en: "Complete inventory and faster sign-in", he: "מלאי מלא וכניסה מהירה יותר" },
