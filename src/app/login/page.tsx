@@ -3,8 +3,32 @@
 import { useCallback, useRef, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Turnstile, type TurnstileHandle } from "@/components/Turnstile";
+import LangToggle from "@/components/LangToggle";
+import { useLang, pick, type Bi } from "@/components/i18n";
 
 const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "";
+
+/**
+ * Error text is kept in state as the English string (what the login API sends,
+ * or what this page composes) and resolved to the interface language at render,
+ * so toggling EN/HE while an error is on screen translates it. Unknown server
+ * messages fall through verbatim.
+ */
+const ERROR_TEXT: Record<string, Bi> = {
+  "Login failed": { en: "Login failed", he: "ההתחברות נכשלה" },
+  "Network error. Please try again.": { en: "Network error. Please try again.", he: "שגיאת רשת. נסו שוב." },
+  "Security check did not complete. Reload the page and try again.": {
+    en: "Security check did not complete. Reload the page and try again.",
+    he: "בדיקת האבטחה לא הושלמה. טענו את הדף מחדש ונסו שוב.",
+  },
+  "Too many attempts. Try again later.": { en: "Too many attempts. Try again later.", he: "יותר מדי ניסיונות. נסו שוב מאוחר יותר." },
+  "Password required": { en: "Password required", he: "נדרשת סיסמה" },
+  "Invalid credentials": { en: "Invalid credentials", he: "פרטי ההתחברות שגויים" },
+  "Security verification failed. Please complete the challenge and try again.": {
+    en: "Security verification failed. Please complete the challenge and try again.",
+    he: "אימות האבטחה נכשל. השלימו את האתגר ונסו שוב.",
+  },
+};
 
 /**
  * Show/hide-password icon. Inline SVG on purpose: this repo carries no icon
@@ -32,6 +56,7 @@ function EyeIcon({ shown }: { shown: boolean }) {
 function LoginForm() {
   const router = useRouter();
   const params = useSearchParams();
+  const { lang, tr } = useLang();
   const next = params.get("next") || "/";
 
   const [username, setUsername] = useState("");
@@ -119,7 +144,11 @@ function LoginForm() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-[var(--bg)]">
+    <main className="relative min-h-screen flex items-center justify-center px-4 bg-[var(--bg)]">
+      {/* Public page: no SiteHeader here, so the language switch lives in the corner. */}
+      <div className="absolute end-0 top-0 flex items-center p-3 sm:p-4">
+        <LangToggle />
+      </div>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-violet-500/15 border border-violet-500/30 mb-4">
@@ -141,12 +170,13 @@ function LoginForm() {
         >
           <div className="space-y-1.5">
             <label htmlFor="username" className="block text-xs font-medium text-violet-200/70">
-              Username
+              {tr("Username", "שם משתמש")}
             </label>
             <input
               id="username"
               type="text"
               autoComplete="username"
+              dir="auto"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               className="w-full rounded-lg bg-black/30 border border-violet-500/20 px-3 py-2 text-sm text-violet-50 placeholder:text-[var(--muted)] focus:border-violet-400/60 focus:outline-none"
@@ -156,14 +186,19 @@ function LoginForm() {
 
           <div className="space-y-1.5">
             <label htmlFor="password" className="block text-xs font-medium text-violet-200/70">
-              Password
+              {tr("Password", "סיסמה")}
             </label>
-            <div className="relative">
+            {/* dir="ltr" pins this wrapper so the toggle (end-0) is always on the
+                physical right, which is why the input keeps the physical pr-12
+                (ideaslab.regressions.test.ts couples it to the toggle width).
+                The input itself stays dir="auto". */}
+            <div className="relative" dir="ltr">
               <input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 required
                 autoComplete="current-password"
+                dir="auto"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full rounded-lg bg-black/30 border border-violet-500/20 pl-3 pr-12 py-2 text-sm text-violet-50 placeholder:text-[var(--muted)] focus:border-violet-400/60 focus:outline-none"
@@ -174,17 +209,17 @@ function LoginForm() {
                 onClick={() => setShowPassword((v) => !v)}
                 aria-controls="password"
                 aria-pressed={showPassword}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                title={showPassword ? "Hide password" : "Show password"}
+                aria-label={showPassword ? tr("Hide password", "הסתרת הסיסמה") : tr("Show password", "הצגת הסיסמה")}
+                title={showPassword ? tr("Hide password", "הסתרת הסיסמה") : tr("Show password", "הצגת הסיסמה")}
                 /**
                  * 44x44 hit area: WCAG 2.5.5 and Apple's HIG both set 44px as
                  * the floor, Material's 48dp is the tighter of the two. The icon
                  * stays 16px inside the padded area rather than the button
-                 * itself growing to icon size. `right-0` puts the box flush
-                 * inside the input, so the input carries pr-12 (48px) to keep
+                 * itself growing to icon size. `end-0` (physical right inside the
+                 * dir="ltr" wrapper) puts the box flush inside the input, so the input carries pr-12 (48px) to keep
                  * text and the caret clear of it.
                  */
-                className="absolute right-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-violet-200/50 hover:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400/60"
+                className="absolute end-0 top-1/2 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-md text-violet-200/50 hover:text-violet-50 focus:outline-none focus:ring-2 focus:ring-violet-400/60"
               >
                 <EyeIcon shown={showPassword} />
               </button>
@@ -204,13 +239,13 @@ function LoginForm() {
 
           {error && (
             <p role="alert" className="text-sm text-red-400 text-center">
-              {error}
+              {ERROR_TEXT[error] ? pick(ERROR_TEXT[error], lang) : error}
             </p>
           )}
 
           {waitingForCheck && !error && (
             <p role="status" aria-live="polite" className="text-sm text-violet-200/70 text-center">
-              Finishing the security check — signing you in automatically.
+              {tr("Finishing the security check — signing you in automatically.", "משלימים את בדיקת האבטחה — ההתחברות תתבצע אוטומטית.")}
             </p>
           )}
 
@@ -222,12 +257,12 @@ function LoginForm() {
             disabled={busy || waitingForCheck}
             className="w-full rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-40 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-medium text-white transition"
           >
-            {busy ? "Signing in…" : waitingForCheck ? "Checking…" : "Sign in"}
+            {busy ? tr("Signing in…", "מתחברים…") : waitingForCheck ? tr("Checking…", "בודקים…") : tr("Sign in", "התחברות")}
           </button>
         </form>
 
         <p className="text-center text-xs text-violet-200/65 mt-6">
-          This tool can publish to connected WordPress sites. Authorised operators only.
+          {tr("This tool can publish to connected WordPress sites. Authorised operators only.", "הכלי הזה יכול לפרסם באתרי WordPress מחוברים. למפעילים מורשים בלבד.")}
         </p>
       </div>
     </main>

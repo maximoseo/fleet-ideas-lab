@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useLang, pick, type Bi } from "@/components/i18n";
 
 export type Viewport = "desktop" | "tablet" | "mobile";
 
@@ -8,6 +9,13 @@ export const VIEWPORTS: Record<Viewport, { width: number; label: string }> = {
   desktop: { width: 1280, label: "Desktop 1280" },
   tablet: { width: 768, label: "Tablet 768" },
   mobile: { width: 390, label: "Mobile 390" },
+};
+
+/** Localised viewport names. `VIEWPORTS[v].label` stays English for other callers. */
+const VIEWPORT_LABEL: Record<Viewport, Bi> = {
+  desktop: { en: "Desktop 1280", he: "מחשב 1280" },
+  tablet: { en: "Tablet 768", he: "טאבלט 768" },
+  mobile: { en: "Mobile 390", he: "נייד 390" },
 };
 
 export interface FrameMeasurement {
@@ -41,9 +49,11 @@ export function PrototypeFrame({
   height?: number;
   onMeasure?: (m: FrameMeasurement) => void;
 }) {
+  const { lang, tr } = useLang();
   const ref = useRef<HTMLIFrameElement>(null);
   const [measurement, setMeasurement] = useState<FrameMeasurement | null>(null);
   const width = VIEWPORTS[viewport].width;
+  const viewportLabel = pick(VIEWPORT_LABEL[viewport], lang);
   // Scale the frame down to fit the column while keeping the real viewport width,
   // so media queries behave exactly as they would on the device.
   const [scale, setScale] = useState(1);
@@ -77,13 +87,16 @@ export function PrototypeFrame({
     <div className="space-y-2">
       <div
         ref={wrapRef}
+        // The framed page has its own direction; keep the scaled frame anchored
+        // top-left (transformOrigin) regardless of the interface direction.
+        dir="ltr"
         className="relative overflow-hidden rounded-lg border border-violet-500/20 bg-white"
         style={{ height: height * scale }}
       >
         <iframe
           ref={ref}
           srcDoc={html}
-          title={`Prototype preview at ${VIEWPORTS[viewport].label}`}
+          title={tr(`Prototype preview at ${viewportLabel}`, `תצוגה מקדימה של אב-טיפוס ב-${viewportLabel}`)}
           // Generated markup is untrusted, so it must never run script: there is NO
           // allow-scripts. allow-same-origin is here only so the parent can read the
           // framed document to measure its height, which is safe without scripts.
@@ -115,12 +128,15 @@ export function PrototypeFrame({
             }
           >
             {measurement.overflows > 1
-              ? `Horizontal overflow: ${measurement.overflows}px past ${VIEWPORTS[viewport].label}`
-              : `Fits ${VIEWPORTS[viewport].label}`}
+              ? tr(`Horizontal overflow: ${measurement.overflows}px past ${viewportLabel}`, `גלישה אופקית: ${measurement.overflows}px מעבר ל-${viewportLabel}`)
+              : tr(`Fits ${viewportLabel}`, `מתאים ל-${viewportLabel}`)}
           </span>
           {measurement.brokenImages > 0 && (
             <span className="rounded bg-amber-500/15 text-amber-200 border border-amber-500/30 px-2 py-0.5">
-              {measurement.brokenImages} broken image{measurement.brokenImages > 1 ? "s" : ""}
+              {tr(
+                `${measurement.brokenImages} broken image${measurement.brokenImages > 1 ? "s" : ""}`,
+                measurement.brokenImages > 1 ? `${measurement.brokenImages} תמונות שבורות` : "תמונה שבורה אחת",
+              )}
             </span>
           )}
         </div>

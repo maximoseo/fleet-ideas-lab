@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from "react";
 import SiteHeader from "@/components/SiteHeader";
+import { useLang } from "@/components/i18n";
 
 interface InspirationItem {
   id: string;
@@ -86,6 +87,7 @@ function autoTags(colors: string[]): string[] {
 
 /* ── Main page ── */
 export default function InspirationPage() {
+  const { tr } = useLang();
   const [items, setItems] = useState<InspirationItem[]>([]);
   const [collections, setCollections] = useState<string[]>(["General"]);
   const [url, setUrl] = useState("");
@@ -115,10 +117,10 @@ export default function InspirationPage() {
       saveItems(updated);
       setUrl("");
     } else {
-      setError("Could not analyze that URL");
+      setError(tr("Could not analyze that URL", "לא ניתן לנתח את הכתובת הזו"));
     }
     setAdding(false);
-  }, [url, items, activeCollection]);
+  }, [url, items, activeCollection, tr]);
 
   const removeItem = useCallback((id: string) => {
     const updated = items.filter(i => i.id !== id);
@@ -150,17 +152,17 @@ export default function InspirationPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg)] text-white">
-      <SiteHeader subtitle="Design references" />
+      <SiteHeader subtitle={tr("Design references", "רפרנסים לעיצוב")} />
 
       <main className="mx-auto max-w-6xl px-6 py-8">
         {/* Add URL */}
         <div className="mb-6 flex gap-2">
           <input value={url} onChange={(e) => setUrl(e.target.value)} onKeyDown={(e) => e.key === "Enter" && addSite()}
-            placeholder="Add a site URL to your library…" dir="ltr"
+            placeholder={tr("Add a site URL to your library…", "הוסיפו כתובת אתר לספרייה…")} dir="ltr"
             className="flex-1 rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/30 outline-none transition focus:border-violet-500" />
           <button onClick={addSite} disabled={adding}
             className="rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white transition hover:bg-violet-500 disabled:opacity-50">
-            {adding ? "Analyzing…" : "+ Add"}
+            {adding ? tr("Analyzing…", "מנתח…") : tr("+ Add", "+ הוספה")}
           </button>
         </div>
         {error && <p className="mb-4 text-sm text-red-400">{error}</p>}
@@ -169,7 +171,7 @@ export default function InspirationPage() {
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <button onClick={() => setActiveCollection("All")}
             className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${activeCollection === "All" ? "bg-violet-600 text-white" : "bg-white/10 text-white/50 hover:bg-white/20"}`}>
-            All ({items.length})
+            {tr("All", "הכול")} ({items.length})
           </button>
           {collections.map(col => (
             <button key={col} onClick={() => setActiveCollection(col)}
@@ -177,10 +179,10 @@ export default function InspirationPage() {
               {col} ({items.filter(i => i.collection === col).length})
             </button>
           ))}
-          <div className="ml-auto flex items-center gap-2">
+          <div className="ms-auto flex items-center gap-2">
             <input value={newCollection} onChange={(e) => setNewCollection(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && addCollection()}
-              placeholder="New collection…" dir="ltr"
+              placeholder={tr("New collection…", "אוסף חדש…")} dir="ltr"
               className="rounded-lg border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white placeholder-white/30 outline-none focus:border-violet-500" />
             <button onClick={addCollection} className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/75 transition hover:bg-white/20">+</button>
           </div>
@@ -188,7 +190,7 @@ export default function InspirationPage() {
 
         {/* Search */}
         <input value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search by name, URL, tag, platform…" dir="ltr"
+          placeholder={tr("Search by name, URL, tag, platform…", "חיפוש לפי שם, URL, תגית, פלטפורמה…")} dir="ltr"
           className="mb-6 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none transition focus:border-violet-500" />
 
         {/* Grid */}
@@ -196,7 +198,7 @@ export default function InspirationPage() {
           <div className="py-20 text-center">
             <p className="text-4xl">💡</p>
             <p className="mt-3 text-sm text-white/65">
-              {items.length === 0 ? "Add your first design reference above" : "No matches found"}
+              {items.length === 0 ? tr("Add your first design reference above", "הוסיפו למעלה את רפרנס העיצוב הראשון שלכם") : tr("No matches found", "לא נמצאו תוצאות")}
             </p>
           </div>
         ) : (
@@ -215,7 +217,7 @@ export default function InspirationPage() {
                   {item.colors.slice(0, 5).map(c => (
                     <span key={c} className="inline-block h-4 w-4 rounded border border-white/20" style={{ background: c }} />
                   ))}
-                  <span className="ml-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/65">{item.platform}</span>
+                  <span className="ms-auto rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/65">{item.platform}</span>
                 </div>
                 {item.tags.length > 0 && (
                   <div className="mt-2 flex flex-wrap gap-1">
@@ -232,7 +234,7 @@ export default function InspirationPage() {
         {/* Detail modal */}
         {selectedItem && (
           <>
-            <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSelectedItem(null)} aria-label="Close" />
+            <button className="fixed inset-0 z-40 bg-black/60" onClick={() => setSelectedItem(null)} aria-label={tr("Close", "סגירה")} />
             <div className="fixed inset-x-4 top-[10vh] z-50 mx-auto max-h-[80vh] max-w-2xl overflow-y-auto rounded-2xl border border-white/15 bg-[var(--panel)] p-6 shadow-2xl">
               <div className="mb-4 flex items-start justify-between">
                 <div>
@@ -248,7 +250,7 @@ export default function InspirationPage() {
               )}
 
               <div className="mb-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Palette</h4>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">{tr("Palette", "פלטת צבעים")}</h4>
                 <div className="flex flex-wrap gap-2">
                   {selectedItem.colors.map(c => (
                     <div key={c} className="text-center">
@@ -260,12 +262,12 @@ export default function InspirationPage() {
               </div>
 
               <div className="mb-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Fonts</h4>
-                <p className="text-sm text-white/75">{selectedItem.fonts.join(", ") || "None detected"}</p>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">{tr("Fonts", "גופנים")}</h4>
+                <p className="text-sm text-white/75">{selectedItem.fonts.join(", ") || tr("None detected", "לא זוהו")}</p>
               </div>
 
               <div className="mb-4">
-                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">Tags</h4>
+                <h4 className="mb-2 text-xs font-bold uppercase tracking-wider text-white/65">{tr("Tags", "תגיות")}</h4>
                 <div className="flex flex-wrap gap-1.5">
                   {selectedItem.tags.map(t => (
                     <span key={t} className="rounded-full bg-violet-500/15 px-2.5 py-1 text-xs text-violet-200">{t}</span>
@@ -280,12 +282,12 @@ export default function InspirationPage() {
                   navigator.clipboard.writeText(brief);
                 }}
                 className="w-full rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500">
-                📋 Copy Design Brief
+                {tr("📋 Copy Design Brief", "📋 העתקת בריף עיצוב")}
               </button>
 
               <button onClick={() => removeItem(selectedItem.id)}
                 className="mt-2 w-full rounded-lg bg-red-500/10 py-2.5 text-sm font-medium text-red-400 transition hover:bg-red-500/20">
-                🗑 Remove from library
+                {tr("🗑 Remove from library", "🗑 הסרה מהספרייה")}
               </button>
             </div>
           </>

@@ -6,30 +6,31 @@ import { useEffect, useState } from "react";
 import CommandPalette from "@/components/CommandPalette";
 import ThemeToggle from "@/components/ThemeToggle";
 import LangToggle from "@/components/LangToggle";
-import { useLang, type I18nKey } from "@/components/i18n";
+import VersionBadge from "@/components/VersionBadge";
+import { useLang, pick, type Bi, type I18nKey } from "@/components/i18n";
 
-const NAV: ReadonlyArray<{ href: string; key: I18nKey; hint: string }> = [
-  { href: "/", key: "nav.inventory", hint: "Fleet overview" },
-  { href: "/ideas", key: "nav.ideas", hint: "11 concepts" },
-  { href: "/favorites", key: "nav.favorites", hint: "Saved ideas" },
-  { href: "/gaps", key: "nav.gaps", hint: "Gap radar" },
-  { href: "/create", key: "nav.create", hint: "Scaffold" },
+const NAV: ReadonlyArray<{ href: string; key: I18nKey; hint: Bi }> = [
+  { href: "/", key: "nav.inventory", hint: { en: "Fleet overview", he: "סקירת הצי" } },
+  { href: "/ideas", key: "nav.ideas", hint: { en: "Ideas", he: "רעיונות" } },
+  { href: "/favorites", key: "nav.favorites", hint: { en: "Saved ideas", he: "רעיונות שמורים" } },
+  { href: "/gaps", key: "nav.gaps", hint: { en: "Gap radar", he: "מכ״ם פערים" } },
+  { href: "/create", key: "nav.create", hint: { en: "Scaffold", he: "שלד" } },
 ];
 
-const MORE: ReadonlyArray<{ href: string; key: I18nKey; hint: string; external?: boolean }> = [
-  { href: "/changelog", key: "nav.changelog", hint: "Pipeline transitions" },
-  { href: "/experiments", key: "nav.experiments", hint: "WP injection registry" },
-  { href: "/audit", key: "nav.audit", hint: "Audit a client site" },
-  { href: "/generate", key: "nav.generate", hint: "Tokens & CSS" },
-  { href: "/redesign", key: "nav.redesign", hint: "Redesign a live site" },
-  { href: "/mockup", key: "nav.mockup", hint: "Full-page mockups" },
-  { href: "/history", key: "nav.history", hint: "Past analyses" },
-  { href: "/prototypes/", key: "nav.prototypes", hint: "Client gallery", external: true },
+const MORE: ReadonlyArray<{ href: string; key: I18nKey; hint: Bi; external?: boolean }> = [
+  { href: "/changelog", key: "nav.changelog", hint: { en: "Pipeline transitions", he: "מעברי צנרת" } },
+  { href: "/experiments", key: "nav.experiments", hint: { en: "WP injection registry", he: "רישום הזרקות WordPress" } },
+  { href: "/audit", key: "nav.audit", hint: { en: "Audit a client site", he: "ביקורת לאתר לקוח" } },
+  { href: "/generate", key: "nav.generate", hint: { en: "Tokens & CSS", he: "טוקנים ו-CSS" } },
+  { href: "/redesign", key: "nav.redesign", hint: { en: "Redesign a live site", he: "עיצוב מחדש לאתר חי" } },
+  { href: "/mockup", key: "nav.mockup", hint: { en: "Full-page mockups", he: "מוקאפים לעמוד מלא" } },
+  { href: "/history", key: "nav.history", hint: { en: "Past analyses", he: "ניתוחים קודמים" } },
+  { href: "/prototypes/", key: "nav.prototypes", hint: { en: "Client gallery", he: "גלריית לקוחות" }, external: true },
 ];
 
 export default function SiteHeader({ subtitle }: { subtitle?: string }) {
   const pathname = usePathname();
-  const { t } = useLang();
+  const { t, tr, lang } = useLang();
   const [paletteOpen, setPaletteOpen] = useState(false);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPaletteOpen((v: boolean) => !v); } };
@@ -57,13 +58,14 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
           </span>
         </Link>
 
-        <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label={tr("Primary", "ראשי")}>
           {NAV.map((item) => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                title={pick(item.hint, lang)}
                 className={`rounded-lg px-3 py-2 text-[13px] font-medium transition ${active ? "bg-violet-600/90 text-white" : "text-white/65 hover:bg-white/10 hover:text-white"}`}
               >
                 {t(item.key)}
@@ -77,6 +79,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
               <Link
                 key={item.href}
                 href={item.href}
+                title={pick(item.hint, lang)}
                 {...(item.external ? { target: "_blank" as const, rel: "noopener noreferrer" } : {})}
                 className={`rounded-lg px-2.5 py-2 text-[12px] font-medium transition ${active ? "bg-white/10 text-white" : "text-white/65 hover:bg-white/10 hover:text-white/80"}`}
               >
@@ -88,6 +91,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
         </nav>
 
         <div className="hidden lg:flex items-center gap-2">
+          <VersionBadge />
           <LangToggle />
           <ThemeToggle />
           <button onClick={() => setPaletteOpen(true)} className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-3 text-[13px] font-medium text-white/70 hover:bg-white/10" aria-label={t("action.commandPalette")}>
@@ -105,7 +109,7 @@ export default function SiteHeader({ subtitle }: { subtitle?: string }) {
         <span className="lg:hidden"><ThemeToggle /></span>
         <span className="lg:hidden"><LangToggle /></span>
         {/* mobile quick nav */}
-        <nav className="flex items-center gap-1 lg:hidden" aria-label="Mobile primary">
+        <nav className="hidden items-center gap-1 md:flex lg:hidden" aria-label={tr("Tablet primary", "ראשי לטאבלט")}>
           {NAV.map((item) => {
             const active = isActive(item.href);
             return (

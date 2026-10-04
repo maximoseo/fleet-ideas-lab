@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useLang, pick, type Bi } from "@/components/i18n";
 
 type LiveState = "healthy" | "degraded" | "down" | "unknown";
 type Band = "healthy" | "degraded" | "down" | "unknown";
@@ -29,12 +30,23 @@ interface InventoryResponse {
 
 const BAND_ORDER: Record<Band, number> = { down: 0, degraded: 1, unknown: 2, healthy: 3 };
 
-const BAND_META: Record<Band, { label: string; height: number; color: string | null; word: string }> = {
-  healthy: { label: "Healthy", height: 48, color: "#a78bfa", word: "cool" },
-  degraded: { label: "Degraded", height: 32, color: "#e8b14c", word: "warm" },
-  down: { label: "Down", height: 20, color: "#f2637e", word: "warm" },
-  unknown: { label: "Unknown", height: 12, color: null, word: "no data" },
+const BAND_META: Record<Band, { label: Bi; height: number; color: string | null; word: string }> = {
+  healthy: { label: { en: "Healthy", he: "תקין" }, height: 48, color: "#a78bfa", word: "cool" },
+  degraded: { label: { en: "Degraded", he: "מדורדר" }, height: 32, color: "#e8b14c", word: "warm" },
+  down: { label: { en: "Down", he: "מושבת" }, height: 20, color: "#f2637e", word: "warm" },
+  unknown: { label: { en: "Unknown", he: "לא ידוע" }, height: 12, color: null, word: "no data" },
 };
+
+// Raw health/state values rendered as labels (stored values stay unchanged)
+const STATE_LABEL: Record<string, Bi> = {
+  healthy: { en: "healthy", he: "תקין" },
+  stale: { en: "stale", he: "מיושן" },
+  degraded: { en: "degraded", he: "מדורדר" },
+  down: { en: "down", he: "מושבת" },
+  unknown: { en: "unknown", he: "לא ידוע" },
+};
+
+const LOAD_FAILED = "Failed to load inventory";
 
 function bandOf(item: InventoryItem, liveHealth: boolean): Band {
   if (liveHealth) {
@@ -48,6 +60,7 @@ function bandOf(item: InventoryItem, liveHealth: boolean): Band {
 }
 
 export default function FleetStrip() {
+  const { lang, t, tr } = useLang();
   const [items, setItems] = useState<InventoryItem[]>([]);
   const [liveHealth, setLiveHealth] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
@@ -65,7 +78,7 @@ export default function FleetStrip() {
         setItems(data.inventory || []);
         setLiveHealth(data.liveHealth === true);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : "Failed to load inventory");
+        if (!cancelled) setError(e instanceof Error ? e.message : LOAD_FAILED);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -91,23 +104,23 @@ export default function FleetStrip() {
   }, [rows]);
 
   return (
-    <section aria-label="Fleet health strip" className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
+    <section aria-label={tr("Fleet health strip", "רצועת בריאות הצי")} className="mt-5 rounded-2xl border border-white/10 bg-white/[0.02] p-4 sm:p-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-sm font-bold text-white">Fleet strip</h2>
+          <h2 className="text-sm font-bold text-white">{t("section.fleetStrip")}</h2>
           <p className="text-[12px] text-white/50">
-            One segment per dashboard — height follows live health, worst first.
+            {tr("One segment per dashboard — height follows live health, worst first.", "פס אחד לכל דשבורד — הגובה משקף את הבריאות בזמן אמת, הגרוע ראשון.")}
             {!liveHealth && !loading ? (
-              <span className="ml-1 font-semibold text-amber-200">static snapshot — live probes offline</span>
+              <span className="ms-1 font-semibold text-amber-200">{tr("static snapshot — live probes offline", "תמונת מצב סטטית — בדיקות החיות כבויות")}</span>
             ) : null}
           </p>
         </div>
-        <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1" role="group" aria-label="Sort fleet strip">
+        <div className="flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.04] p-1" role="group" aria-label={tr("Sort fleet strip", "מיון רצועת הצי")}>
           {(
             [
-              { id: "worst", label: "Worst-first" },
-              { id: "name", label: "Name" },
-              { id: "domain", label: "Domain" },
+              { id: "worst", label: t("sort.worst") },
+              { id: "name", label: t("sort.name") },
+              { id: "domain", label: t("sort.domain") },
             ] as { id: SortMode; label: string }[]
           ).map((o) => (
             <button
@@ -126,11 +139,11 @@ export default function FleetStrip() {
         <div className="mt-4 h-14 animate-pulse rounded-xl border border-white/10 bg-white/[0.03]" />
       ) : error ? (
         <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/75">
-          Fleet strip could not load ({error}).
+          {tr("Fleet strip could not load (", "לא ניתן לטעון את רצועת הצי (")}{error === LOAD_FAILED ? tr(LOAD_FAILED, "טעינת המלאי נכשלה") : error}).
         </p>
       ) : rows.length === 0 ? (
         <p className="mt-4 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-[13px] text-white/75">
-          No dashboards in the inventory yet.
+          {tr("No dashboards in the inventory yet.", "עדיין אין דשבורדים במלאי.")}
         </p>
       ) : (
         <>
@@ -142,7 +155,8 @@ export default function FleetStrip() {
           <ul className="mt-4 flex list-none items-end gap-[3px] p-0">
             {rows.map((r) => {
               const meta = BAND_META[r.band];
-              const stateLabel = liveHealth ? (r.live ? r.live.state : "unknown") : r.health || "unknown";
+              const rawState = liveHealth ? (r.live ? r.live.state : "unknown") : r.health || "unknown";
+              const stateLabel = STATE_LABEL[rawState] ? pick(STATE_LABEL[rawState], lang) : rawState;
               return (
                 <li key={r.slug} className="min-w-[6px] flex-1">
                 <Link
@@ -179,13 +193,13 @@ export default function FleetStrip() {
                     }}
                     aria-hidden
                   />
-                  {meta.label}
+                  {pick(meta.label, lang)}
                   <span className="font-mono font-bold text-white">{counts[b]}</span>
                 </span>
               );
             })}
-            <span className="w-full text-white/65 sm:ml-auto sm:w-auto">
-              Warm colours mean a dashboard wants attention. Cool means it does not.
+            <span className="w-full text-white/65 sm:ms-auto sm:w-auto">
+              {tr("Warm colours mean a dashboard wants attention. Cool means it does not.", "צבעים חמים מסמנים דשבורד שדורש תשומת לב. צבעים קרים — שלא.")}
             </span>
           </div>
         </>

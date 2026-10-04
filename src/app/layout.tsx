@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Heebo, Rubik, JetBrains_Mono } from "next/font/google";
 import MobileTabBar from "@/components/MobileTabBar";
+import WhatsNew from "@/components/WhatsNew";
 import "./globals.css";
 
 const heebo = Heebo({ subsets: ["latin", "hebrew"], variable: "--font-heebo" });
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className={`${heebo.variable} ${rubik.variable} ${mono.variable} font-sans antialiased`}>
         {children}
         <MobileTabBar />
+        <WhatsNew />
       </body>
     </html>
   );

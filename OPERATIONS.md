@@ -61,6 +61,10 @@ returning 401. Adding a public route is an explicit, test-covered decision.
 
 ## 3. Releasing the web app
 
+Every user-visible change needs an entry at the top of `src/lib/releaseNotes.ts` (new version, date,
+English and Hebrew text). The "What's new" window shows unseen entries to each browser once, with the
+version number and what changed. `releaseNotes.test.ts` checks the order and that both languages exist.
+
 The Vercel project has **no git integration** — pushing to `main` runs CI but does not deploy.
 
 ```bash
@@ -160,6 +164,11 @@ Vercel — it drifted once and every local build produced an APK whose feed retu
 - Schema lives in `supabase/migrations/`. It previously existed only in the Supabase dashboard.
 
 ## 7. Known limitations
+
+- **Language**: English is the default; Hebrew (RTL) is switched with EN / עב, stored in
+  `localStorage["fil-lang"]`. Translated: all menus, pages and static copy. Not translated on purpose:
+  dashboard names and slugs, URLs, probe data, and content produced by AI or taken from client sites.
+  The Android app keeps its own strings.
 
 - **CSP keeps `'unsafe-inline'` for scripts.** `/redesign`, `/mockup` and `/prototypes` render
   generated HTML into `srcdoc` iframes, which inherit the parent CSP, so a nonce policy would
