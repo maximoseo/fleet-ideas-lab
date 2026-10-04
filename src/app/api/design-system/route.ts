@@ -14,6 +14,7 @@ import {
   extractShadowsFromHtml,
 } from "@/lib/design-system";
 
+import { wpFetch } from "@/lib/wp-safe";
 import JSZip from "jszip";
 
 export const maxDuration = 60;
@@ -71,10 +72,10 @@ function buildTokens(html: string, radiusFallback?: string): { tokens: DesignTok
 }
 
 async function fetchHtml(target: URL): Promise<string> {
-  const res = await fetch(target.href, {
+  // Operator-supplied URL fetched from the server: refuse internal hosts, re-check every redirect hop.
+  const res = await wpFetch(target, {
     headers: { "User-Agent": "Mozilla/5.0 (compatible; DesignLab/1.0)" },
     signal: AbortSignal.timeout(20000),
-    redirect: "follow",
   });
   return await res.text();
 }

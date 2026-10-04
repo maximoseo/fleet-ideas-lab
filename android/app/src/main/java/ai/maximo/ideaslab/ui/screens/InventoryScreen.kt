@@ -361,6 +361,7 @@ private fun InventoryRow(
     val (statusWord, statusColor) = when (site.status) {
         "live" -> "live" to p.healthy
         "beta" -> "beta" to p.accent
+        "concept" -> "not probed" to p.muted
         else -> "build" to p.warn
     }
     FilCard(

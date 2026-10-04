@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Heebo, Rubik, JetBrains_Mono } from "next/font/google";
 import MobileTabBar from "@/components/MobileTabBar";
 import WhatsNew from "@/components/WhatsNew";
+import { FLEET_COUNT } from "@/lib/fleet";
 import "./globals.css";
 
 const heebo = Heebo({ subsets: ["latin", "hebrew"], variable: "--font-heebo" });
@@ -10,7 +11,7 @@ const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
   title: "Fleet Ideas Lab — MaximoSEO",
-  description: "Fleet gap radar & idea engine — 38 verified dashboards, 29 ideas (11 curated + 18 pooled), plain-English explainers, BUILD vs IMPROVE briefs and one-click scaffold.",
+  description: `Fleet gap radar & idea engine — ${FLEET_COUNT} dashboards in the inventory, 29 ideas (11 curated + 18 pooled), plain-English explainers, BUILD vs IMPROVE briefs and one-click scaffold.`,
   keywords: ["fleet", "idea engine", "gap radar", "dashboard scaffold", "build brief", "improve brief", "MaximoSEO"],
   themeColor: "#7C3AED",
   icons: {
@@ -19,7 +20,7 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: "Fleet Ideas Lab — MaximoSEO",
-    description: "Fleet gap radar & idea engine — 38 verified dashboards, 29 ideas, plain-English explainers, BUILD vs IMPROVE briefs and one-click scaffold.",
+    description: `Fleet gap radar & idea engine — ${FLEET_COUNT} dashboards, 29 ideas, plain-English explainers, BUILD vs IMPROVE briefs and one-click scaffold.`,
     type: "website",
     url: "https://fleet-ideas-lab.maximo-seo.ai",
   },

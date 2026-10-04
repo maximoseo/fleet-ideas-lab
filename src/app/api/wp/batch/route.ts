@@ -1,8 +1,27 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { requireUser, unauthorized } from "@/lib/auth";
 import { checkHonesty } from "@/lib/honesty";
 import { adaptCssForBuilders, detectBuilders } from "@/lib/wp-detect";
 import type { SiteProfile } from "@/lib/types";
+import { recordInjection } from "@/lib/injection-registry";
+import {
+  MAX_BATCH_PAGES,
+  MAX_HTML_CHARS,
+  buildStyleBlock,
+  sanitizeCss,
+  stripPreviousInjections,
+  wrapPrototype,
+} from "@/lib/wp-content";
+import {
+  badRequest,
+  checkWpTarget,
+  isShortString,
+  parseId,
+  readJsonBody,
+  upstreamDetail,
+  wpFetch,
+  wpPreflight,
+} from "@/lib/wp-safe";
 
 export const maxDuration = 60;
 
@@ -19,30 +38,6 @@ interface BatchBody {
   confirmSlug?: string;
 }
 
-const MARKER_PREFIX = "design-lab-style";
-
-function buildStyleBlock(css: string, id: string): string {
-  return `\n<!-- ${MARKER_PREFIX}:${id}:start -->\n<style id="${MARKER_PREFIX}-${id}">\n${css}\n</style>\n<!-- ${MARKER_PREFIX}:${id}:end -->\n`;
-}
-
-function stripPreviousInjections(content: string): string {
-  return content.replace(/<!-- design-lab-style:[^:]+:start -->[\s\S]*?<!-- design-lab-style:[^:]+:end -->\n?/g, "");
-}
-
-function wrapPrototype(doc: string, id: string): string {
-  const wrapper = `${MARKER_PREFIX}-proto-${id}`;
-  const styles = [...doc.matchAll(/<style[^>]*>([\s\S]*?)<\/style>/gi)].map((m) => m[1]).join("\n");
-  const fontLinks = [...doc.matchAll(/<link[^>]+href="https:\/\/fonts\.[^"]+"[^>]*>/gi)].map((m) => m[0]).join("\n");
-  const bodyMatch = doc.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
-  const dir = /dir\s*=\s*["']rtl["']/i.test(doc) ? ' dir="rtl"' : "";
-  const inner = (bodyMatch ? bodyMatch[1] : doc).replace(/<script[\s\S]*?<\/script>/gi, "").trim();
-  const scoped = styles
-    .replace(/(^|\})\s*(:root|html|body)\s*(?=[,{])/g, `$1 .${wrapper} `)
-    .replace(/(^|\})\s*(html|body)\s*,\s*/g, `$1 .${wrapper}, `);
-  const langAttr = /lang\s*=\s*["']he["']/i.test(doc) ? ' lang="he"' : "";
-  return `<!-- ${MARKER_PREFIX}:${id}:start -->\n${fontLinks}\n<style id="${MARKER_PREFIX}-${id}">\n.${wrapper}{all:initial;display:block;}\n.${wrapper} *{box-sizing:border-box;}\n${scoped}\n</style>\n<div class="${wrapper}"${dir}${langAttr}>\n${inner}\n</div>\n<!-- ${MARKER_PREFIX}:${id}:end -->`;
-}
-
 async function processPage(
   apiBase: string,
   headers: Record<string, string>,
@@ -54,15 +49,19 @@ async function processPage(
   styleName: string | undefined,
   baseOrigin: string,
   confirmSlug: string | undefined,
+  deadline: number,
 ): Promise<{ pageId: number; ok: boolean; message?: string; error?: string; draftId?: number; draftEditUrl?: string; pageUrl?: string }> {
+  // The function is killed at maxDuration with no response; stop starting new
+  // pages in time to report what happened instead.
+  if (Date.now() > deadline) return { pageId, ok: false, error: "Skipped: batch time budget exhausted, nothing was written for this page" };
   // fetch page
-  const pageRes = await fetch(`${apiBase}/pages/${pageId}?context=edit`, {
+  const pageRes = await wpFetch(`${apiBase}/pages/${pageId}?context=edit`, {
     headers,
     signal: AbortSignal.timeout(15000),
   });
   if (!pageRes.ok) {
-    const err = await pageRes.text();
-    return { pageId, ok: false, error: `Fetch failed ${pageRes.status}: ${err.slice(0, 150)}` };
+    const err = await upstreamDetail(pageRes);
+    return { pageId, ok: false, error: `Fetch failed ${pageRes.status}: ${err}`.trim() };
   }
   const page = await pageRes.json();
   const originalContent: string = page.content?.raw || page.content?.rendered || "";
@@ -74,7 +73,7 @@ async function processPage(
   const styledContent = html ? wrapPrototype(html, injectId) : cleanContent + buildStyleBlock(adaptedCss || "", injectId);
 
   if (mode === "draft") {
-    const draftRes = await fetch(`${apiBase}/pages`, {
+    const draftRes = await wpFetch(`${apiBase}/pages`, {
       method: "POST",
       headers,
       body: JSON.stringify({
@@ -85,10 +84,19 @@ async function processPage(
       signal: AbortSignal.timeout(20000),
     });
     if (!draftRes.ok) {
-      const err = await draftRes.text();
-      return { pageId, ok: false, error: `Draft failed ${draftRes.status}: ${err.slice(0, 150)}` };
+      const err = await upstreamDetail(draftRes);
+      return { pageId, ok: false, error: `Draft failed ${draftRes.status}: ${err}`.trim() };
     }
     const draft = await draftRes.json();
+    after(() => recordInjection({
+      site_url: baseOrigin,
+      page_id: draft.id,
+      page_slug: pageSlug,
+      marker_id: injectId,
+      mode: "draft",
+      style_name: styleName || null,
+      status: "draft",
+    }));
     return {
       pageId,
       ok: true,
@@ -98,29 +106,32 @@ async function processPage(
     };
   }
 
-  // inject mode needs slug confirmation if pageIds > 1 we still check per-page slug?
-  // For batch inject, require confirmSlug to be empty or match each page's slug is impractical.
-  // So batch inject requires confirmSlug === "__batch__" or we skip slug check and add warning.
+  // Batch live-overwrite: the UI sends the literal "__batch__" as an explicit
+  // wildcard acknowledgement; any other value must match this page's slug.
   if (confirmSlug !== "__batch__" && (!confirmSlug || confirmSlug.trim().toLowerCase() !== pageSlug.trim().toLowerCase())) {
-    // For batch, allow __batch__ as wildcard confirmation; otherwise fail this page
-    if (confirmSlug === "__batch__") {
-      // fall through
-    } else {
-      return { pageId, ok: false, error: `Slug mismatch for page #${pageId} ("${pageTitle}" slug is "${pageSlug}")` };
-    }
+    return { pageId, ok: false, error: `Slug mismatch for page #${pageId} ("${pageTitle}" slug is "${pageSlug}")` };
   }
 
-  const updateRes = await fetch(`${apiBase}/pages/${pageId}`, {
+  const updateRes = await wpFetch(`${apiBase}/pages/${pageId}`, {
     method: "POST",
     headers,
     body: JSON.stringify({ content: styledContent }),
     signal: AbortSignal.timeout(20000),
   });
   if (!updateRes.ok) {
-    const err = await updateRes.text();
-    return { pageId, ok: false, error: `Update failed ${updateRes.status}: ${err.slice(0, 150)}` };
+    const err = await upstreamDetail(updateRes);
+    return { pageId, ok: false, error: `Update failed ${updateRes.status}: ${err}`.trim() };
   }
   const updated = await updateRes.json();
+  after(() => recordInjection({
+    site_url: baseOrigin,
+    page_id: pageId,
+    page_slug: pageSlug,
+    marker_id: injectId,
+    mode: "inject",
+    style_name: styleName || null,
+    status: "live",
+  }));
   return { pageId, ok: true, message: `Updated "${pageTitle}"`, pageUrl: updated.link || page.link };
 }
 
@@ -148,20 +159,43 @@ function pLimit<T>(concurrency: number) {
  * Applies the same CSS/HTML variation to N pages with concurrency 3.
  */
 export async function POST(req: NextRequest) {
+  let user;
   try {
-    await requireUser();
+    user = await requireUser();
   } catch {
     return unauthorized();
   }
+  const blocked = await wpPreflight(req, user, "write");
+  if (blocked) return blocked;
   try {
-    const body = (await req.json()) as BatchBody;
-    const { url, username, appPassword, pageIds, css, html, profile, mode, styleName, confirmSlug } = body;
-    if (!url || !username || !appPassword || !pageIds?.length) {
+    const startedAt = Date.now();
+    const raw = await readJsonBody(req);
+    if (!raw) return badRequest("Invalid JSON body");
+    const { url, username, appPassword, css, html, profile, mode, styleName, confirmSlug } = raw as unknown as BatchBody;
+    if (!url || !username || !appPassword || !Array.isArray(raw.pageIds) || !raw.pageIds.length) {
       return NextResponse.json({ error: "Missing required fields (url, username, appPassword, pageIds)" }, { status: 400 });
     }
+    if (!isShortString(username) || !isShortString(appPassword)) return badRequest("Invalid username or application password");
     if (!css && !html) return NextResponse.json({ error: "Either css or html is required" }, { status: 400 });
+    if ((css !== undefined && typeof css !== "string") || (html !== undefined && typeof html !== "string")) {
+      return badRequest("css and html must be strings");
+    }
     if (mode !== "draft" && mode !== "inject") return NextResponse.json({ error: "Mode must be draft or inject" }, { status: 400 });
-    if (pageIds.length > 100) return NextResponse.json({ error: "Too many pages (max 100)" }, { status: 400 });
+    if (raw.pageIds.length > MAX_BATCH_PAGES) return NextResponse.json({ error: `Too many pages (max ${MAX_BATCH_PAGES})` }, { status: 400 });
+
+    // Integer ids only (they go into URL paths), de-duplicated so one page is
+    // never written twice concurrently.
+    const parsedIds = raw.pageIds.map(parseId);
+    if (parsedIds.some((id) => id === null)) return badRequest("pageIds must be positive integers");
+    const pageIds = [...new Set(parsedIds as number[])];
+
+    if (html && html.length > MAX_HTML_CHARS) return badRequest(`HTML too large (max ${MAX_HTML_CHARS} characters)`, 413);
+    let safeCss = "";
+    if (css) {
+      const checked = sanitizeCss(css);
+      if (!checked.ok) return badRequest(checked.error, checked.error.startsWith("CSS too large") ? 413 : 400);
+      safeCss = checked.css;
+    }
 
     if (html) {
       if (!profile?.copy) return NextResponse.json({ error: "profile required with html" }, { status: 400 });
@@ -169,7 +203,9 @@ export async function POST(req: NextRequest) {
       if (honesty.length) return NextResponse.json({ error: "Honesty check failed", code: "honesty_failed", problems: honesty }, { status: 422 });
     }
 
-    const base = new URL(url.startsWith("http") ? url : `https://${url}`);
+    const target = await checkWpTarget(url);
+    if (!target.ok) return badRequest(target.error);
+    const base = target.base;
     const apiBase = `${base.origin}/wp-json/wp/v2`;
     const headers = {
       Authorization: "Basic " + Buffer.from(`${username}:${appPassword}`).toString("base64"),
@@ -183,18 +219,31 @@ export async function POST(req: NextRequest) {
       // Fetch one page's HTML to detect builder (best-effort)
       let sampleHtml = "";
       try {
-        const sampleRes = await fetch(`${apiBase}/pages/${pageIds[0]}?context=edit`, { headers, signal: AbortSignal.timeout(10000) });
+        const sampleRes = await wpFetch(`${apiBase}/pages/${pageIds[0]}?context=edit`, { headers, signal: AbortSignal.timeout(10000) });
         if (sampleRes.ok) {
           const j = await sampleRes.json();
           sampleHtml = j.content?.raw || j.content?.rendered || "";
         }
       } catch {}
       const detection = detectBuilders(sampleHtml);
-      adaptedCss = adaptCssForBuilders(css, detection);
+      adaptedCss = adaptCssForBuilders(safeCss, detection);
     }
 
-    const limit = pLimit<ReturnType<typeof processPage> extends Promise<infer U> ? U : never>(3);
-    const tasks = pageIds.map((id) => limit(() => processPage(apiBase, headers, id, adaptedCss, html, profile, mode, styleName, base.origin, confirmSlug)));
+    // maxDuration is 60s; leave headroom to serialise the response.
+    const deadline = startedAt + 50_000;
+    type PageResult = Awaited<ReturnType<typeof processPage>>;
+    const limit = pLimit<PageResult>(3);
+    const tasks = pageIds.map((id) =>
+      limit(async (): Promise<PageResult> => {
+        // One page's network error / timeout must not discard the results of
+        // pages that were already written to the live site.
+        try {
+          return await processPage(apiBase, headers, id, adaptedCss, html, profile, mode, styleName, base.origin, confirmSlug, deadline);
+        } catch (err) {
+          return { pageId: id, ok: false, error: `Request failed: ${err instanceof Error ? err.message : "unknown"}` };
+        }
+      }),
+    );
     const results = await Promise.all(tasks);
 
     const okCount = results.filter((r) => r.ok).length;
