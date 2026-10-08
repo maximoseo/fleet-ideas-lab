@@ -76,6 +76,35 @@ export function verifySessionToken(token: string | undefined | null): SessionUse
   }
 }
 
+/**
+ * Fleet SSO (owner directive 2026-10-04): the dashboards panel mints a
+ * domain-wide `fleet_session` cookie on .maximo-seo.ai ({email, exp} + HMAC).
+ * A valid one stands in for `dl_session` everywhere session auth applies.
+ * The fleet email is surfaced as the session username.
+ */
+export function verifyFleetSessionToken(token: string | undefined | null): SessionUser | null {
+  const secret = (process.env.PANEL_AUTH_SECRET || '').trim();
+  if (!secret || !token) return null;
+  const dot = token.lastIndexOf('.');
+  if (dot < 0) return null;
+  const body = token.slice(0, dot);
+  const sig = token.slice(dot + 1);
+  try {
+    const expected = signWith(body, secret);
+    const a = Buffer.from(sig);
+    const b = Buffer.from(expected);
+    if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
+    const data = JSON.parse(Buffer.from(body, 'base64url').toString('utf8')) as {
+      email?: string;
+      exp?: number;
+    };
+    if (!data.email || typeof data.exp !== 'number' || data.exp <= Date.now()) return null;
+    return { username: data.email };
+  } catch {
+    return null;
+  }
+}
+
 export class AuthError extends Error {
   status = 401;
   constructor(message: string) {
@@ -92,7 +121,9 @@ export class AuthError extends Error {
  */
 export async function requireUser(): Promise<SessionUser> {
   const jar = await cookies();
-  const user = verifySessionToken(jar.get(COOKIE)?.value);
+  const user =
+    verifySessionToken(jar.get(COOKIE)?.value) ||
+    verifyFleetSessionToken(jar.get('fleet_session')?.value);
   if (!user) throw new AuthError('Authentication required');
   return user;
 }

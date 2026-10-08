@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifySessionToken } from '@/lib/auth';
+import { verifyFleetSessionToken, verifySessionToken } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
@@ -53,7 +53,7 @@ export function middleware(req: NextRequest) {
   if (cronAuthorized(req)) return NextResponse.next();
 
   const token = req.cookies.get(COOKIE_NAME)?.value;
-  const user = verifySessionToken(token);
+  const user = verifySessionToken(token) || verifyFleetSessionToken(req.cookies.get('fleet_session')?.value);
 
   if (!user) {
     // API callers get a status code, not an HTML redirect.

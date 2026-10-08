@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import { verifySessionToken } from '@/lib/auth';
+import { verifyFleetSessionToken, verifySessionToken } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 
@@ -11,7 +11,9 @@ export const runtime = 'nodejs';
  */
 export async function GET() {
   const jar = await cookies();
-  const user = verifySessionToken(jar.get('dl_session')?.value);
+  const user =
+    verifySessionToken(jar.get('dl_session')?.value) ||
+    verifyFleetSessionToken(jar.get('fleet_session')?.value);
   const res = user
     ? NextResponse.json({ user })
     : NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
