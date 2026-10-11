@@ -1,7 +1,70 @@
 {
   "framework": "nextjs",
   "crons": [
-    { "path": "/api/fleet/probe", "schedule": "*/15 * * * *" },
-    { "path": "/api/fleet/sync", "schedule": "0 5 * * *" }
+    {
+      "path": "/api/fleet/probe",
+      "schedule": "*/15 * * * *"
+    },
+    {
+      "path": "/api/fleet/sync",
+      "schedule": "0 5 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/((?!api/|_next/|share/|prototypes/|.*\\.[a-z0-9]{1,6}$).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": ".*\\.maximo-seo\\.ai|.*\\.vercel\\.app"
+        }
+      ],
+      "missing": [
+        {
+          "type": "cookie",
+          "key": "fleet_session"
+        },
+        {
+          "type": "query",
+          "key": "app",
+          "value": "android"
+        },
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*; wv.*"
+        }
+      ],
+      "destination": "https://dashboards-panel.maximo-seo.ai/?mode=live&app=fleet-ideas-lab",
+      "permanent": false
+    },
+    {
+      "source": "/((?!api/|_next/|share/|prototypes/|.*\\.[a-z0-9]{1,6}$).*)",
+      "has": [
+        {
+          "type": "host",
+          "value": ".*\\.maximo-seo\\.ai|.*\\.vercel\\.app"
+        },
+        {
+          "type": "header",
+          "key": "sec-fetch-dest",
+          "value": "document"
+        }
+      ],
+      "missing": [
+        {
+          "type": "query",
+          "key": "app",
+          "value": "android"
+        },
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*; wv.*"
+        }
+      ],
+      "destination": "https://dashboards-panel.maximo-seo.ai/?mode=live&app=fleet-ideas-lab",
+      "permanent": false
+    }
   ]
 }
